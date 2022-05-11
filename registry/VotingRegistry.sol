@@ -45,7 +45,7 @@ error AlreadyRegistered(address contractSeekingRegistration);
 error notInterfaceImplementer(address contractSeekingRegistration);
 error NotRegistered(address notRegisteredContract);
 
-
+/// @title Voting Contract Registration
 /// @notice This abstract contract handles just the registration and needs to be inherited by the registry
 abstract contract VotingContractRegistration {
 
@@ -72,6 +72,7 @@ abstract contract VotingContractRegistration {
         _isRegistered = _registrationIndex[votingContract] > 0;
     }
 
+    /// @dev returns the current total number of registrations
     function numberOfRegistrations()
     external 
     view
@@ -80,6 +81,8 @@ abstract contract VotingContractRegistration {
         return _numberOfRegistrations;
     }
 
+    /// @dev returns the index of the given contract registration.
+    /// @param votingContract address of the registered voting Contract.
     function getRegistrationIndex(address votingContract)
     external
     view 
@@ -128,7 +131,8 @@ abstract contract VotingContractRegistration {
 }
 
 
-
+/// @title Category Registration 
+/// @notice Handles only the category registration
 abstract contract CategoryRegistration {
 
     //////////////////////////////////////////////////
@@ -160,6 +164,8 @@ abstract contract CategoryRegistration {
     // GETTER FUNCTIONS                             //
     //////////////////////////////////////////////////
 
+    /// @dev get the registered category from the registration index
+    /// @param index a uint256 index of the category.
     function getRegisteredCategoryFromIndex(uint256 index) 
     external 
     view 
@@ -168,15 +174,17 @@ abstract contract CategoryRegistration {
         return _registeredCategories[index];
     }
 
-
-    function isRegisteredCategory(bytes8 category) 
+    /// @dev queries the registry, whether a given category has been registered yet.
+    /// @param categoryId the category Id whose registration status is requested.
+    function isRegisteredCategory(bytes8 categoryId) 
     public 
     view 
     returns(bool)
     {
-        return _reverseCategoryLookup[category] > 0;
+        return _reverseCategoryLookup[categoryId] > 0;
     }
 
+    /// @dev Get the total number of registered categories
     function getNumberOfRegisteredCategories() 
     public 
     view 
@@ -187,14 +195,16 @@ abstract contract CategoryRegistration {
 
 }
 
-/// @dev An abstract helper contract that provides functions to check 
-///      whether a registering contract implements a given interface
+/// @title Vote Contract Implementer
+/// @notice An abstract helper contract that provides functions to check 
+///         whether a registering contract implements a given interface
 abstract contract VoteContractImplementer {
 
     //////////////////////////////////////////////////
     // INTERNAL HELPER FUNCTIONS                    //
     //////////////////////////////////////////////////
 
+    /// @dev An auxilliary internal function that checks whether the sending contract supports an ERC165-interface
     function _implementsInterface()
     internal 
     view 
@@ -221,11 +231,15 @@ contract Registry is VoteContractImplementer, CategoryRegistration, VotingContra
     mapping(address=>uint256) internal _numberOfCategoriesOfRegistration;
 
 
-    /*
-    * MUTATIVE FUNCTIONS
-    */
+    //////////////////////////////////////////////////
+    // WRITE FUNCTIONS                              //
+    //////////////////////////////////////////////////
 
-
+    /// @dev registration of a new contract. It checks whether the contract satisfies the interface
+    ///      requirements and whether it has already been registered. Then it registers it to the
+    ///      registry and adds the category, updating the category registry if necessary.
+    /// @param _categoryId the categoryId that the contract seeks registration to.
+    /// @return registrationIndex the registration index for this voting contract registration.
     function register(bytes8 _categoryId)
     external
     notYetRegistered
@@ -237,6 +251,8 @@ contract Registry is VoteContractImplementer, CategoryRegistration, VotingContra
         
     }
 
+    /// @dev add another category to the registration
+    /// @param categoryid the category id that the contract seeks to register.
     function addCategoryToRegistration(bytes8 categoryId)
     external
     onlyRegistered
@@ -248,6 +264,10 @@ contract Registry is VoteContractImplementer, CategoryRegistration, VotingContra
     // INTERNAL HELPER FUNCTIONS                    //
     //////////////////////////////////////////////////    
 
+    /// @dev this auxiliary function helps to add a category to the registration and if its not already
+    ///      in the registry it will be added. The function body is only executed when the category does not
+    ///      exist. In any case the code in the addCategoryToRegistrationWrapper-wrapper are executed.
+    /// @param categoryId the categoryId that the contract seeks to add to the registration.
     function _addCategoryToRegistrationAndUpdateCategoryRegistry(bytes8 categoryId) 
     internal
     addCategoryToRegistrationWrapper(categoryId)
@@ -261,6 +281,8 @@ contract Registry is VoteContractImplementer, CategoryRegistration, VotingContra
     // WRAPPER MODIFIERS                            //
     //////////////////////////////////////////////////
 
+    /// @dev this wrapper updates the category registry and adds a new category if it is not already there.
+    /// @param categoryId the category id that the contract seeks to add.
     modifier addCategoryToRegistrationWrapper(bytes8 categoryId)
     {
         if (!isRegisteredCategory(categoryId)){
