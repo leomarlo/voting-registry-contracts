@@ -3,8 +3,6 @@ pragma solidity ^0.8.4;
 
 import {IVoteContract} from "../voteContract/IVoteContract.sol";
 
-
-
 interface IVotingRegistry {
 
     /// @dev handles the registration of new voting contracts with a category id.
