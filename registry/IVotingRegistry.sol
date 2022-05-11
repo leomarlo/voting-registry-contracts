@@ -7,7 +7,7 @@ interface IVotingRegistry {
 
     /// @dev handles the registration of new voting contracts with a category id.
     /// @param categoryId the category id that the voting contract seeks to add to the registration.
-    /// @return the registration index for the successfully registered new voting contract.
+    /// @return registrationIndex the registration index for the successfully registered new voting contract.
     function register(bytes8 categoryId) external returns(uint256 registrationIndex);
 
     /// @dev allows anyone and any contract to check whether a given voting contract has registered.

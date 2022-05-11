@@ -4,7 +4,8 @@ pragma solidity ^0.8.4;
 import {REGISTRY} from "../registry/RegistryAddress.sol";
 import {IVotingRegistry} from "../registry/IVotingRegistry.sol";
 import {IVoteContract, IVoteAndImplementContract} from "../voteContract/IVoteContract.sol";
-import {CanVotePrimitive, Whitelisting, FunctionGuard, VoteInfo} from "./CanVoteUtils.sol";
+import {Whitelisting, FunctionGuard, VoteInfo} from "./CanVoteUtils.sol";
+import {CanVotePrimitive} from "./CanVotePrimitive.sol";
 
 /// @title Can Vote and Delegate the Implementation
 /// @dev This contract can be inherited, if one likes to cast votes and let the voting contract implement them.

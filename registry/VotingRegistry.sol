@@ -252,7 +252,7 @@ contract Registry is VoteContractImplementer, CategoryRegistration, VotingContra
     }
 
     /// @dev add another category to the registration
-    /// @param categoryid the category id that the contract seeks to register.
+    /// @param categoryId the category id that the contract seeks to register.
     function addCategoryToRegistration(bytes8 categoryId)
     external
     onlyRegistered

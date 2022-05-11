@@ -6,7 +6,8 @@ import {REGISTRY} from "../registry/RegistryAddress.sol";
 import {IVotingRegistry} from "../registry/IVotingRegistry.sol";
 import {IVoteContract, Callback, Response} from "../voteContract/IVoteContract.sol";
 import {ImplementCallback} from "../voteContract/VoteContract.sol";
-import {CanVoteWithoutStarting, CanVotePrimitive, Whitelisting, FunctionGuard} from "./CanVoteUtils.sol";
+import {CanVoteWithoutStarting, Whitelisting, FunctionGuard} from "./CanVoteUtils.sol";
+import {CanVotePrimitive} from "./CanVotePrimitive.sol";
 
 /// @title Can Vote and Implement Votes.
 /// @dev This contract needs to be inherited if one would like to implement the function calls on the side of the integration contract.
@@ -24,7 +25,6 @@ abstract contract CanVoteAndImplement is Whitelisting, ImplementCallback, Functi
     //////////////////////////////////////////////////
 
     /// @dev The inheriting contract needs to implement this public start function that initiates a new voting instance.
-    /// @param selector the function selector that this voting instance is targeting
     /// @param votingParams the bytes-encoded voting parameters that are received by the voteContract. 
     /// @param _callbackSelector the bytes4 selector of the function that will be called by this contract, when the conditions are met.
     /// @param _callbackArgs the byte-encoded arguments for the function that will be called. 
@@ -45,7 +45,6 @@ abstract contract CanVoteAndImplement is Whitelisting, ImplementCallback, Functi
     //////////////////////////////////////////////////
 
     /// @dev An internal function that provides the interace with the voting contract to start a new voting instance and stores the calldata for the function locally on this contract.
-    /// @param selector the function selector that this voting instance is targeting
     /// @param votingParams the bytes-encoded voting parameters that are received by the voteContract. 
     /// @param _callbackSelector the bytes4 selector of the function that will be called by this contract, when the conditions are met.
     /// @param _callbackArgs the byte-encoded arguments for the function that will be called. 
