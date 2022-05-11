@@ -68,7 +68,7 @@ abstract contract CanVoteAndImplement is Whitelisting, ImplementCallback, Functi
     /// @dev internal helper function that implements the outcome of the vote.
     /// @param voteIndex the index of this vote instance, as saved in the inheriting contract.
     function _implement(uint256 voteIndex) internal {
-        callback[voteIndex].response = _implement(address(this), callback[voteIndex]); 
+        callback[voteIndex].response = _implement(address(this), callback[voteIndex].selector, callback[voteIndex].arguments); 
     }
 
     /// @dev customizable function guard. 
