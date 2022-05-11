@@ -1,4 +1,35 @@
-//SPDX-License-Identifier: Unlicense
+////////////////////////////////////////////////////////////////////////////
+//                                                                        //
+// ░░░░░░░░░░░██╗░░░██╗░█████╗░████████╗██╗███╗░░██╗░██████╗░░░░░░░░░░░░░ //
+// ░░░░░░░░░░░██║░░░██║██╔══██╗╚══██╔══╝██║████╗░██║██╔════╝░░░░░░░░░░░░░ //
+// ░░░░░░░░░░░╚██╗░██╔╝██║░░██║░░░██║░░░██║██╔██╗██║██║░░██╗░░░░░░░░░░░░░ //
+// ░░░░░░░░░░░░╚████╔╝░██║░░██║░░░██║░░░██║██║╚████║██║░░╚██╗░░░░░░░░░░░░ //
+// ░░░░░░░░░░░░░╚██╔╝░░╚█████╔╝░░░██║░░░██║██║░╚███║╚██████╔╝░░░░░░░░░░░░ //
+// ░░░░░░░░░░░░░░╚═╝░░░░╚════╝░░░░╚═╝░░░╚═╝╚═╝░░╚══╝░╚═════╝░░░░░░░░░░░░░ //
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ //    
+// ░░░█████╗░░█████╗░███╗░░██╗████████╗██████╗░░█████╗░░█████╗░████████╗░ //
+// ░░██╔══██╗██╔══██╗████╗░██║╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝░ //
+// ░░██║░░╚═╝██║░░██║██╔██╗██║░░░██║░░░██████╔╝███████║██║░░╚═╝░░░██║░░░░ //
+// ░░██║░░██╗██║░░██║██║╚████║░░░██║░░░██╔══██╗██╔══██║██║░░██╗░░░██║░░░░ //
+// ░░╚█████╔╝╚█████╔╝██║░╚███║░░░██║░░░██║░░██║██║░░██║╚█████╔╝░░░██║░░░░ //
+// ░░░╚════╝░░╚════╝░╚═╝░░╚══╝░░░╚═╝░░░╚═╝░░╚═╝╚═╝░░╚═╝░╚════╝░░░░╚═╝░░░░ //
+//                                                                        //
+////////////////////////////////////////////////////////////////////////////
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY without even the implied warranty of MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE. See the 
+// GNU Affero General Public License for more details.
+
+
+///@author Leonhard Horstmeyer  <leonhard.horstmeyer@gmail.com>
+///@notice This contract adds liquidity to Curve pools with ETH or ERC tokens.
+// SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -8,8 +39,11 @@ import {IVotingRegistry} from "../registry/IVotingRegistry.sol";
 import {IVoteContract, IVoteAndImplementContract, Callback, Response} from "./IVoteContract.sol";
 
 
+enum VotingStatus {inactive, completed, failed, active}
+
 error StatusPermitsVoting(address caller, uint256 voteIndex);
 error MayOnlyRegisterOnceByDeployer(address caller, bytes8 categoryId);
+
 
 abstract contract RegisterVoteContract is IERC165 {
 
@@ -37,9 +71,6 @@ abstract contract RegisterVoteContract is IERC165 {
     }
 }
 
-
-enum VotingStatus {inactive, completed, failed, active}
-
 abstract contract VotingStatusHandling{
     // votingStatus:  0 = inactive, 1 = completed, 2 = failed, 3 = active,
     // we deliberately don't use enums that are fixed, because the end user should choose how many statuses there are.
@@ -66,11 +97,6 @@ abstract contract VoteContractPrimitive is IERC165, RegisterVoteContract, Voting
 
     mapping(address=>uint256) internal _registeredVotes;
 
-    // constructor(bytes8 _categoryId, address _registry) { 
-    //     // _register(_categoryId,_registry);
-    // }
-
-    // VOTING PRIMITIVES
 
     function _start(bytes memory votingParams) 
     internal
