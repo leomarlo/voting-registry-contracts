@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+//SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
 
@@ -9,7 +9,7 @@ abstract contract CanVote is CanVoteWithoutStarting {
     //////////////////////////////////////////////////
     // WRITE FUNCTIONS                              //
     //////////////////////////////////////////////////
-    
+
     /// @dev The inheriting contract needs to implement this public vote function
     /// @param voteIndex the index of the voting instance where one would like to cast a vote.
     /// @param option the option that one wishes to vote on.

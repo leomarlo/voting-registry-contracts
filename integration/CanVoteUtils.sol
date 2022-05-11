@@ -1,5 +1,6 @@
-//SPDX-License-Identifier: MIT
+//SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
+
 import {REGISTRY} from "../registry/RegistryAddress.sol";
 import {IVotingRegistry} from "../registry/IVotingRegistry.sol";
 import {IVoteContract} from "../voteContract/IVoteContract.sol";
