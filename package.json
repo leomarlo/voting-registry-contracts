@@ -1,20 +1,24 @@
 {
-  "name": "@leomarlo/test",
-  "version": "3.0.0",
-  "description": "test package",
+  "name": "@leomarlo/voting-registry-contracts",
+  "version": "0.0.1",
+  "description": "This package contains solidity contracts, abstract contracts and interfaces for a voting-registry and its inheritable template integrations.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run compile",
     "compile-abi": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis voteContract/* integration/* registry/*",
     "compile-bin": "solcjs --bin --include-path node_modules/ --base-path . -o compiler-output/bins voteContract/* integration/* registry/*",
     "compile": "npm run compile-abi && npm run compile-bin"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leomarlo/test-npm-publishing.git"
+    "url": "git+https://github.com/leomarlo/voting-registry-contracts.git"
   },
   "keywords": [
-    "test"
+    "voting",
+    "registry",
+    "solidity",
+    "ethereum",
+    "contracts"
   ],
   "author": "Leonhard Horstmeyer <leonhard.horstmeyer@gmail.com>",
   "license": "GPL-2.0",
