@@ -27,3 +27,7 @@ Developers may consult the extensive documentation inside the solidity files. Co
 ```
 npm run compile
 ``` 
+
+## Contract
+
+Leonhard Horstmeyer <leonhard.horstmeyer@gmail.com> 
