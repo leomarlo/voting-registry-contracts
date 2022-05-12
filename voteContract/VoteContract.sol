@@ -281,7 +281,7 @@ abstract contract ImplementCallback {
     /// @param selector the bytes4-encoding of the function that ought to be called.
     /// @param callback the calldata for the function call.
     /// @return _response a response flag that can be either successful (1) or failed (2).
-    function _implement(address _contract, bytes4 selector, Callback memory callback) 
+    function _implement(address _contract, bytes4 selector, bytes memory callback) 
     internal 
     returns(Response _response)
     {

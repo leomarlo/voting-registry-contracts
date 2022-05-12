@@ -6,8 +6,8 @@ import {REGISTRY} from "../registry/RegistryAddress.sol";
 import {IVotingRegistry} from "../registry/IVotingRegistry.sol";
 import {IVoteContract, Callback, Response} from "../voteContract/IVoteContract.sol";
 import {ImplementCallback} from "../voteContract/VoteContract.sol";
-import {CanVoteWithoutStarting, Whitelisting, FunctionGuard} from "./CanVoteUtils.sol";
-import {CanVotePrimitive} from "./CanVotePrimitive.sol";
+import { Whitelisting, FunctionGuard} from "./CanVoteUtils.sol";
+import {CanVotePrimitive, CanVoteWithoutStarting} from "./CanVotePrimitive.sol";
 
 /// @title Can Vote and Implement Votes.
 /// @dev This contract needs to be inherited if one would like to implement the function calls on the side of the integration contract.

@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
-import { Whitelisting, VoteInfo} from "./CanVoteUtils.sol";
+import { Whitelisting, VoteInfo, DoesNotPermitVoting} from "./CanVoteUtils.sol";
+import {IVoteContract} from "../voteContract/IVoteContract.sol";
 
 /// @title Can Vote Primitive Abstract Contract
 /// @dev handles just the core functionalities of the integration interface
