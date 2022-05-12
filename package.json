@@ -17,7 +17,7 @@
     "test"
   ],
   "author": "Leonhard Horstmeyer <leonhard.horstmeyer@gmail.com>",
-  "license": "MIT",
+  "license": "GPL-2.0",
   "bugs": {
     "url": "https://github.com/leomarlo/test-npm-publishing/issues"
   },
