@@ -4,7 +4,10 @@
   "description": "test package",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile-abi": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis voteContract/* integration/* registry/*",
+    "compile-bin": "solcjs --bin --include-path node_modules/ --base-path . -o compiler-output/bins voteContract/* integration/* registry/*",
+    "compile": "npm run compile-abi && npm run compile-bin"
   },
   "repository": {
     "type": "git",
@@ -20,6 +23,7 @@
   },
   "homepage": "https://github.com/leomarlo/test-npm-publishing#readme",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.6.0"
+    "@openzeppelin/contracts": "^4.6.0",
+    "solc": "^0.8.13"
   }
 }
