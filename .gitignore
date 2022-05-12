@@ -1,4 +1,10 @@
+# npm local storage
 node_modules
 package-lock.json
 
+
+## sensitive information
 .npmignore
+
+## contract compilation info
+compiler-output
