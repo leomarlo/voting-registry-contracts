@@ -3,36 +3,22 @@ pragma solidity ^0.8.4;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-enum Response {none, successful, failed}
+/*
+This contract allows for voting with on-chain consequences as well as without.
+*/
 
-struct Callback {
-    bytes4 selector;
-    bytes arguments;
-    Response response;
+/// @title Voting Contract Interface - A basic interface for the essential on-chain voting functionality
+/// @notice 
+interface IVotingContract is IERC165{
+
+    event VotingInstanceStarted(uint256 identifier, address caller);
+
+    function start(bytes memory votingParams, bytes memory callback) external returns(uint256 identifier); 
+
+    function vote(uint256 identifier, bytes memory votingData) external returns(uint256 status);
+
+    /// @notice The result can be the casted version of an address, an integer or a pointer to a mapping that contains the entire result.
+    function result(uint256 identifier) external view returns(bytes memory resultData);
+
 }
 
-interface IVoteContract is IERC165{
-    function start(bytes memory votingParams) external returns(uint256 voteIndex); 
-
-    function vote(uint256 voteIndex, address voter, uint256 option) external returns(uint256 status);
-
-    /**
-     * @notice The result can be the casted version of an address, an integer or a pointer to a mapping that contains the entire result.
-     */
-    function result(uint256 voteIndex) external view returns(bytes32 votingResult);
-
-    function statusPermitsVoting(uint256 voteIndex) external view returns(bool);
-}
-
-
-interface IVoteAndImplementContract is IVoteContract {
-    function start(
-        bytes memory votingParams,
-        bytes4 _callbackSelector,
-        bytes memory _callbackArgs)
-    external returns(uint256 index); 
-
-    function getCallbackResponse(uint256 voteIndex) external view returns(uint8);
-
-    function getCallbackData(uint256 voteIndex) external view returns(bytes4 selector, bytes memory arguments);
-}
