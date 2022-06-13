@@ -29,22 +29,18 @@ contract VotingWithCallbackFingerprint is VotingContract {
 }
 
 
-contract VotingAndImplement is VotingContract, VotingWithCallbackFingerprint {
+contract VotingAndImplement is VotingContract {
 
     /// @dev a generic internal helper function that calls a function with a given selector in a given contract with some calldata.
     /// @param _contract the address of the contract, whose function ought to be called.
-    /// @param selector the bytes4-encoding of the function that ought to be called.
     /// @param callbackData the calldata for the function call.
     /// @return _response a response flag that can be either successful (1) or failed (2).
-    function _implement(address _contract, bytes4 selector, bytes memory callbackData) 
+    function _implement(address _contract, bytes memory callbackData) 
     internal 
     virtual
     returns(Response _response)
     {
-        (bool success, bytes memory errorMessage) = _contract.call(
-            abi.encodePacked(
-                selector,
-                callbackData));
+        (bool success, bytes memory errorMessage) = _contract.call(callbackData);
         _response = success ? Response.successful : Response.failed; 
     }
 
@@ -64,3 +60,7 @@ contract Voting_10 is VotingContract {
     // the voteData contains the 
 
 }
+
+
+
+ 

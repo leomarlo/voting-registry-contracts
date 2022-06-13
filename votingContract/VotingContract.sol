@@ -36,128 +36,10 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IVotingContract} from "./IVotingContract.sol";
 
 
-enum VotingStatus {inactive, completed, failed, active}
-
-error StatusPermitsVoting(address caller, uint256 voteIndex);
-error MayOnlyRegisterOnce(address caller, bytes8 categoryId);
-
-
-/// @title Voting Status Handling - Abstract Contract.
-/// @dev This contract handles just the voting status, its getter functions and its modifiers.
-///      The basic states that should be respected by every vote contract are 
-///      0 = inactive, 1 = completed, 2 = failed, 3 = active
-///      There is an enum called VotingStatus that can be inherited to enforce those fixed alocations. 
-///      However we deliberately want to leave it open to the implementation to add further states, depending on the needs of the logic.
-abstract contract VotingStatusHandling{
-    
-
-
-    //////////////////////////////////////////////////
-    // INTERNAL HELPER FUNCTIONS                    //
-    //////////////////////////////////////////////////
-
-    function _statusPermitsVoting(uint256 voteIndex) internal view returns(bool) {
-        return votingStatus[msg.sender][voteIndex] >= 3;
-    }
-
-
-    //////////////////////////////////////////////////
-    // GETTER FUNCTIONS                             //
-    //////////////////////////////////////////////////
-
-    function getCurrentVotingStatus(uint256 voteIndex) public view returns(uint256) {
-        return votingStatus[msg.sender][voteIndex];
-    }
-
-
-    //////////////////////////////////////////////////
-    // GUARD MODIFIERS                              //
-    //////////////////////////////////////////////////
-
-    modifier permitsVoting(uint256 voteIndex) {
-        if (!_statusPermitsVoting(voteIndex)) {
-            revert StatusPermitsVoting(msg.sender, voteIndex);
-        }
-        _;
-    }
-}
-
-/// @title Vote Contract Primitive 
-/// @author Leonhard Horstmeyer  <leonhard.horstmeyer@gmail.com>
-/// @dev These is the basic ingredients that any vote contract should have or implement.
-abstract contract VoteContractPrimitive is IERC165, RegisterVoteContract, VotingStatusHandling, IVoteContract {
-
-    //////////////////////////////////////////////////
-    // STATE VARIABLES                              //
-    //////////////////////////////////////////////////
-
-    mapping(address=>uint256) internal _registeredVotes;
-
-
-    //////////////////////////////////////////////////
-    // WRITE FUNCTIONS                              //
-    //////////////////////////////////////////////////
-
-    function vote(uint256 voteIndex, address voter, uint256 option) external virtual override(IVoteContract) returns(uint256 status);
-
-
-    //////////////////////////////////////////////////
-    // INTERNAL HELPER FUNCTIONS                    //
-    //////////////////////////////////////////////////
-
-    function _start(bytes memory votingParams) 
-    internal
-    virtual
-    returns(uint256 voteIndex)
-    {
-        votingParams;  // silence compiler warnings.
-        return 0;
-    }
-
-    /// @dev This function checks whether the conditions are met for the vote instance transition out of the active status. It still needs to be checked then whether it will fail or be complete
-    /// @param voteIndex the index for the voting instance in question
-    function condition(uint voteIndex) internal view virtual returns(bool);    
-
-
-    //////////////////////////////////////////////////
-    // GETTER FUNCTIONS                             //
-    //////////////////////////////////////////////////
-    
-    /// @dev This function needs to be implemented so that the contract that calls this voting instance can also query its result. One may of course also allow anyone to query the result. It is up to the creator of the inheriting contract to choose.
-    /// @param voteIndex the index for the voting instance in question
-    function result(uint256 voteIndex) external view virtual override(IVoteContract) returns(bytes32 votingResult);
-
-    /// @dev Checks whether the current voting instance permits voting. This is customizable.
-    /// @param voteIndex the index for the voting instance in question
-    function statusPermitsVoting(uint256 voteIndex) external view virtual override(IVoteContract) returns(bool);
-
-    /// @dev get the number of vote instances that this caller has already initiated.
-    /// @param caller The address of the calling contract, whose number of vote instances is queried.
-    function getCurrentVoteIndex(address caller) public view returns(uint256){
-        return _registeredVotes[caller];
-    }
-
-    /// @dev the ERC165 function that allows other contracts to check whether the relevant interfaces are present.
-    function supportsInterface(bytes4 interfaceId) public pure virtual override(IERC165, RegisterVoteContract) returns (bool) {
-        return 
-            super.supportsInterface(interfaceId) ||
-            interfaceId == type(VoteContract).interfaceId;
-    }
-
-    modifier activateNewVote {
-        _registeredVotes[msg.sender] += 1;
-        _;
-        votingStatus[msg.sender][getCurrentVoteIndex(msg.sender)] = uint256(uint8(VotingStatus.active));
-    }
-    
-}
-
-
-
 /// @title Vote Contract - Main implementation of the inheritable vote contract.
 /// @author Leonhard Horstmeyer  <leonhard.horstmeyer@gmail.com>
 /// @dev This contract implements the necessary functions that a simple Vote Contract should implement.
-abstract contract VotingContract is IERC721, IVotingContract {
+abstract contract VotingContract is IERC165, IVotingContract {
     
 
     //////////////////////////////////////////////////
@@ -177,31 +59,34 @@ abstract contract VotingContract is IERC721, IVotingContract {
     function start(bytes memory votingParams, bytes memory callback)
     public
     virtual
-    override(IVoteContract) 
-    returns(uint256 voteIndex) {
+    override(IVotingContract) 
+    returns(uint256 identifier) {
         
         // This hook may be used to store the calldata or its hash
-        _beforeStart(currentIndex, votingParams, callback);
+        _beforeStart(_currentIndex, votingParams, callback);
 
         // Start the voting Instance
         _start(votingParams);
 
         // Store the caller and status in storage.
-        _caller[currentIndex] = msg.sender;
-        _status[currentIndex] = uint256(VotingStatus.active);
+        _caller[_currentIndex] = msg.sender;
+        _status[_currentIndex] = uint256(IVotingContract.VotingStatus.active);
 
         // emit event
-        emit VotingInstanceStarted(currentIndex, msg.sender);
+        emit VotingInstanceStarted(_currentIndex, msg.sender);
         
         // increment currentIndex
-        currentIndex += 1;
+        _currentIndex += 1;
+
+        // return the identifier of this voting instance
+        identifier = _currentIndex;
     }
 
 
     /// @dev The vote function needs to be implemented by the inheriting contract. There is quite a bit of liberty in the choice of implementation here.
-    /// @param index the index for the voting instance in question
-    /// @param data some extra data passed into the function call, like proxy or delegate votes or options.
-    function vote(uint256 index, bytes memory data) 
+    /// @param identifier the index for the voting instance in question
+    /// @param votingData some extra data passed into the function call, like proxy or delegate votes or options.
+    function vote(uint256 identifier, bytes memory votingData) 
     external 
     virtual 
     override(IVotingContract) 
@@ -214,149 +99,28 @@ abstract contract VotingContract is IERC721, IVotingContract {
 
     /// @dev A helper function that handles the initiation of a new voting instance. It needs to be implemented by the creator of the inheriting contract.
     /// @param votingParams these are the bytes-encoded voting parameters that allow the inheriting contract to decide about the specifics of this vote.
-    /// @return voteIndex the index of the vote instance on this vote Contract.
     function _start(bytes memory votingParams) virtual internal;
 
 
     /// @dev This function checks whether the conditions are met for the vote instance transition out of the active status. It still needs to be checked then whether it will fail or be complete
-    /// @param index the index for the voting instance in question
-    function _checkCondition(uint256 index) internal view virtual returns(bool);
+    /// @param identifier the index for the voting instance in question
+    function _checkCondition(uint256 identifier) internal view virtual returns(bool condition) {}
 
     /// @dev This function is a hook for developers to include some customized functions.
     /// @param votingParams these are the bytes-encoded voting parameters that allow the inheriting contract to decide about the specifics of this vote.
-    function _beforeStart(uint256 index, bytes memory votingParams, bytes memory callback) internal virtual {}
+    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes memory callback) internal virtual {}
 
     //////////////////////////////////////////////////
     // GETTER FUNCTIONS                             //
     //////////////////////////////////////////////////
 
     /// @dev This function needs to be implemented so that the contract that calls this voting instance can also query its result. One may of course also allow anyone to query the result. It is up to the creator of the inheriting contract to choose.
-    /// @param index the index for the voting instance in question
-    function result(uint256 index) external view virtual override(IVotingContract) returns(bytes32 result);
+    /// @param identifier the index for the voting instance in question
+    function result(uint256 identifier) external view virtual override(IVotingContract) returns(bytes memory resultData);
 
-    /// @dev Checks whether the current voting instance permits voting. This is customizable.
-    /// @param index the index for the voting instance in question
-    function _votingPermitted(uint256 index) public view virtual returns(bool);
-
-    function supportsInterface(bytes4 interfaceId) public pure virtual override(IERC165, IVotingContract) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public pure virtual override(IERC165) returns (bool) {
         return 
-            super.supportsInterface(interfaceId) ||
+            interfaceId == type(IERC165).interfaceId ||
             interfaceId == type(IVotingContract).interfaceId;
     }
 }
-
-
-/// @title Implement Callback
-/// @dev A generic abstract contract that can call functions on a target contract.
-abstract contract ImplementCallback {
-
-    //////////////////////////////////////////////////
-    // INTERNAL HELPER FUNCTIONS                    //
-    //////////////////////////////////////////////////
-
-    /// @dev a generic internal helper function that calls a function with a given selector in a given contract with some calldata.
-    /// @param _contract the address of the contract, whose function ought to be called.
-    /// @param selector the bytes4-encoding of the function that ought to be called.
-    /// @param callback the calldata for the function call.
-    /// @return _response a response flag that can be either successful (1) or failed (2).
-    function _implement(address _contract, bytes4 selector, bytes memory callback) 
-    internal 
-    returns(Response _response)
-    {
-        (bool success, ) = _contract.call(
-            abi.encodePacked(
-                selector,
-                callback));
-        _response = success ? Response.successful : Response.failed; 
-    }
-}
-
-abstract contract VoteAndImplementContract is IVoteContract, VoteContractPrimitive, ImplementCallback, IVoteAndImplementContract {
-
-    //////////////////////////////////////////////////
-    // STATE VARIABLES                              //
-    //////////////////////////////////////////////////
-
-    mapping(address=>mapping(uint256=>Callback)) internal callback;
-
-
-    //////////////////////////////////////////////////
-    // WRITE FUNCTIONS                              //
-    //////////////////////////////////////////////////
-
-    /// @dev This function exposes the initiation of a new voting instance to an external caller.
-    /// @param votingParams these are the bytes-encoded voting parameters that allow the inheriting contract to decide about the specifics of this vote.
-    function start(bytes memory votingParams)
-    public
-    override(IVoteContract) 
-    activateNewVote
-    returns(uint256 voteIndex) {
-        voteIndex = _start(votingParams);
-    }
-
-    /// @dev The vote function needs to be implemented by the inheriting contract. There is quite a bit of liberty in the choice of implementation here.
-    /// @param voteIndex the index for the voting instance in question
-    function vote(uint256 voteIndex, address voter, uint256 option) external virtual override(IVoteContract, VoteContractPrimitive) returns (uint256 status);
-    
-
-    //////////////////////////////////////////////////
-    // INTERNAL HELPER FUNCTIONS                    //
-    //////////////////////////////////////////////////
-
-    function _implement(uint256 voteIndex) 
-    internal
-    {
-        callback[msg.sender][voteIndex].response = _implement(msg.sender, callback[msg.sender][voteIndex].selector, callback[msg.sender][voteIndex].arguments);
-    }
-
-    function _start(bytes memory votingParams) 
-    virtual
-    internal
-    override(VoteContractPrimitive)
-    returns(uint256 voteIndex)
-    {
-        votingParams;  // silence compiler warnings.
-        return 0;
-    }
-
-    
-    function result(uint256 voteIndex) external view virtual override(IVoteContract, VoteContractPrimitive) returns(bytes32 votingResult);
-
-    function condition(uint voteIndex) internal view virtual override(VoteContractPrimitive) returns(bool);
-
-    function statusPermitsVoting(uint256 voteIndex) external view virtual override(IVoteContract, VoteContractPrimitive) returns(bool);
-
-    function start(
-        bytes memory votingParams,
-        bytes4 _callbackSelector,
-        bytes memory _callbackArgs)
-    external
-    override(IVoteAndImplementContract) 
-    activateNewVote
-    returns(uint256 index) {
-        index = _start(votingParams);
-        callback[msg.sender][index] = Callback({
-            selector: _callbackSelector,
-            arguments: _callbackArgs,
-            response: Response.none});
-    }
-
-    function getCallbackResponse(uint256 voteIndex) external view override(IVoteAndImplementContract) returns(uint8) {
-        return uint8(callback[msg.sender][voteIndex].response);
-    }
-
-    function getCallbackData(uint256 voteIndex) external view override(IVoteAndImplementContract) returns(bytes4 selector, bytes memory arguments) {
-        selector = callback[msg.sender][voteIndex].selector;
-        arguments = callback[msg.sender][voteIndex].arguments;
-    }
-
-
-    function supportsInterface(bytes4 interfaceId) public pure virtual override(IERC165, VoteContractPrimitive) returns (bool) {
-        return 
-            super.supportsInterface(interfaceId) ||
-            interfaceId == type(IVoteAndImplementContract).interfaceId;
-    }
-}
-
-
-    

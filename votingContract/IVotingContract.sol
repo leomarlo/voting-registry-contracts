@@ -11,6 +11,8 @@ This contract allows for voting with on-chain consequences as well as without.
 /// @notice 
 interface IVotingContract is IERC165{
 
+    enum VotingStatus {inactive, completed, failed, active}
+
     event VotingInstanceStarted(uint256 identifier, address caller);
 
     function start(bytes memory votingParams, bytes memory callback) external returns(uint256 identifier); 
