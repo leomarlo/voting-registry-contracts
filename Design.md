@@ -43,6 +43,8 @@ function result(uint256 identifier) external view returns(bytes memory resultDat
 
 The function should be a `view` function whose single argument is the `uint256 identifier` of the voting instance. The output `bytes memory resultData` could be the current status of the vote. Apart from the status one could add some information about the aggregated votes, such as the number of approvals, disapprovals and abstentions.
 
+
+
 ## Voting Registry Contract System
 
 The voting registry contract system consists of three components. In its design it is a stripped down version of the ENS system:
