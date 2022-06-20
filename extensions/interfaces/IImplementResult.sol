@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 interface IImplementResult {
 
-    enum Response {none, successful, failed}
+    enum Response {precall, successful, failed}
 
     event Implemented(uint256 identifier, bytes callbackData);
 

@@ -53,14 +53,15 @@ The function should be a `view` function whose single argument is the `uint256 i
 
 ### Implement the Voting Result
 
-This standard is really meant for voting with on-chain consequences, but it can also be used like snapshot. The `implement` function executes the `bytes memory callbackData` directly on the calling contract. As arguments it takes the `uint256 identifier` and the `bytes memory callbackData`. It returns a response that can be either `successful` or `unsuccessful`. Calls that have not yet been made get the state `none`.
+This standard is really meant for voting with on-chain consequences, but it can also be used like snapshot. The `implement` function executes the `bytes memory callbackData` directly on the calling contract. As arguments it takes the `uint256 identifier` and the `bytes memory callbackData`. It returns a response that can be either `successful` or `unsuccessful`. Calls that have not yet been made get the state `precall`.
 
 ```js
-enum Response {none, successful, failed}
+enum Response {precall, successful, failed}
 
 function implement(uint256 identifier, bytes memory callbackData) external returns(Response response); 
 ```
 The `implement` function `MAY` be implemented. Having another contract make low-level calls with calldata that it could potentially temper with requires a high level of trust. The voting contract `SHOULD NOT` be a proxy contract, which would open possible attack vectors. The target contract, that calls the `implement` function `SHOULD` be able to block calls from a voting instance that implements this function. (see **Voting Integration**). These concerns lead to the suggestion of having the `implement` function as an optional but recommended extension of the minimal voting standard.
+
 
 
 ## Voting Registry Contract System
