@@ -53,7 +53,7 @@ The function should be a `view` function whose single argument is the `uint256 i
 
 ### Implement the Voting Result
 
-This standard is really meant for voting with on-chain consequences, but it can also be used like snapshot. The consequences are encoded in the `bytes memory callbackData` that are passed into the `start` function. The `implement` function executes this calldata directly on the calling contract. As arguments it takes the `uint256 identifier` and the `bytes memory callbackData`. It returns a response that can be either `successful` or `unsuccessful`. Calls that have not yet been made get the state `none`.
+This standard is really meant for voting with on-chain consequences, but it can also be used like snapshot. The `implement` function executes the `bytes memory callbackData` directly on the calling contract. As arguments it takes the `uint256 identifier` and the `bytes memory callbackData`. It returns a response that can be either `successful` or `unsuccessful`. Calls that have not yet been made get the state `none`.
 
 ```js
 enum Response {none, successful, failed}
