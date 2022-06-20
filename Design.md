@@ -9,6 +9,14 @@ The voting contract should implement at least three function:
  2. `vote`
  3. `result` (view)
 
+We `RECOMMEND` that it also implement these functions:
+
+ 4. `implement` (optional)
+ 5. `encodeVotingParams` (view, optional)
+ 6. `decodeVotingParams` (view, optional)
+
+and any set of extensions.
+
 ### **Start a Voting Instance**
 
 The start function should create a new voting instance. Two arguments should be passed to it, namely `bytes memory votingParams` and `bytes memory callback`. The `uint256 identifier` of the instance should be returned:
@@ -18,7 +26,7 @@ function start(bytes memory votingParams, bytes memory callback) external return
 
 The configuration of the voting instance should be passed through the `votingParams`. Parameters could for instance be the duration of the vote, a quorum threshold, a majority threshold and in many cases a token address for token-weighted votes. The choice of parameter serialization is left as a matter of the contract's internal logic. Typically the configuration is stored at least for the duration of the voting. 
 
-On-chain votes should have on-chain consequences. Those are encoded in the `callback` argument. It contains the calldata for the low-level call triggering the outcome. However, this voting interface could just aswell be written without on-chain consequences, simply by ignoring that argument and allowing it to be set to `""`. The callback data could either be stored entirely and retrieved once the outcome has been determined or it could be hashed and later used as a key to trigger the low-level call.  
+On-chain votes should have on-chain consequences. Those are encoded in the `callback` argument. It contains the calldata for the low-level call triggering the outcome. However, this voting interface could just aswell be written without on-chain consequences, simply by ignoring that argument and allowing it to be set to `""`. The callback data could either be stored entirely and retrieved once the outcome has been determined or it could be hashed and later used as a key to trigger the low-level call. (see **Implement the Voting Result**)
 
 Once the voting instance has been configured and created a pointer to that instance should be returned. This could be a hash that uniquely identifies a voting instance or an index of sorts.
 
@@ -43,6 +51,16 @@ function result(uint256 identifier) external view returns(bytes memory resultDat
 
 The function should be a `view` function whose single argument is the `uint256 identifier` of the voting instance. The output `bytes memory resultData` could be the current status of the vote. Apart from the status one could add some information about the aggregated votes, such as the number of approvals, disapprovals and abstentions.
 
+### Implement the Voting Result
+
+This standard is really meant for voting with on-chain consequences, but it can also be used like snapshot. The consequences are encoded in the `bytes memory callbackData` that are passed into the `start` function. The `implement` function executes this calldata directly on the calling contract. As arguments it takes the `uint256 identifier` and the `bytes memory callbackData`. It returns a response that can be either `successful` or `unsuccessful`. Calls that have not yet been made get the state `none`.
+
+```js
+enum Response {none, successful, failed}
+
+function implement(uint256 identifier, bytes memory callbackData) external returns(Response response); 
+```
+The `implement` function `MAY` be implemented. Having another contract make low-level calls with calldata that it could potentially temper with requires a high level of trust. The voting contract `SHOULD NOT` be a proxy contract, which would open possible attack vectors. The target contract, that calls the `implement` function `SHOULD` be able to block calls from a voting instance that implements this function. (see **Voting Integration**). These concerns lead to the suggestion of having the `implement` function as an optional but recommended extension of the minimal voting standard.
 
 
 ## Voting Registry Contract System
