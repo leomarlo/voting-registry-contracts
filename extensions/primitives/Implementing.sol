@@ -2,13 +2,28 @@
 pragma solidity ^0.8.4;
 
 import {IImplementResult} from "../interfaces/IImplementResult.sol";
-import {IQueryCallingContract} from "../interfaces/IQueryIdentifier.sol";
+import {IQueryCaller} from "../interfaces/IQueryIdentifier.sol";
 import {AImplementingPermitted} from "../interfaces/AQueryStatus.sol";
-import {QueryCallingContract} from "./QueryIdentifier.sol";
+import {QueryCaller} from "./QueryIdentifier.sol";
 import {ACheckCalldataValidity} from "../interfaces/ACheckCalldataValidity.sol";
 import {CheckCalldataValidity} from "./CheckCalldataValidity.sol";
 
 
+import { IImplementingPermitted } from "../interfaces/IQueryStatus.sol";
+import { QueryStatus } from "../primitives/QueryIdentifier.sol";
+
+
+abstract contract ImplementingPermitted is QueryStatus, AImplementingPermitted {
+    function _implementingPermitted(uint256 identifier) virtual internal view override(AImplementingPermitted) returns(bool permitted) {
+        permitted = _getStatus(identifier) == uint256(IImplementResult.VotingStatus.awaitcall);
+    }
+}
+
+abstract contract ImplementingPermittedPublicallyVisible is IImplementingPermitted, ImplementingPermitted {
+    function implementingPermitted(uint256 identifier) external view override(IImplementingPermitted) returns(bool permitted) {
+        permitted = _implementingPermitted(identifier);
+    }
+}
 
 abstract contract ImplementResultPrimitive {
 
@@ -32,10 +47,10 @@ abstract contract ImplementResultPrimitive {
 
 abstract contract ImplementResult is 
 ImplementResultPrimitive, 
-AImplementingPermitted,
+ImplementingPermitted,
 ACheckCalldataValidity,
 IImplementResult, 
-QueryCallingContract
+QueryCaller
 {
 
     /// @dev Checks whether the current voting instance permits voting. This is customizable.
@@ -56,7 +71,7 @@ QueryCallingContract
         _requireValidCallbackData(identifier, callbackData);
 
         // retrieve calling contract from the identifier.
-        address votingContract = QueryCallingContract.getCallingContract(identifier);
+        address votingContract = _getCaller(identifier);
         
         // implement the result
         (

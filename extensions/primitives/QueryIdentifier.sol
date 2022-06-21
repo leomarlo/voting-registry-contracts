@@ -1,23 +1,48 @@
 // SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
+import { AQueryCaller } from "../interfaces/AQueryCaller.sol";
+import { AQueryStatus } from "../interfaces/AQueryStatus.sol";
 import {
-    IQueryCallingContract,
+    IQueryCaller,
     IQueryCallbackHash,
     IQueryCallbackData
 } from "../interfaces/IQueryIdentifier.sol";
 
-abstract contract QueryCallingContract is IQueryCallingContract {
-    
-    mapping (uint256=>address) internal _callingContract;
 
-    function getCallingContract(uint256 identifier) public view virtual override(IQueryCallingContract) returns(address callingContract) {
-        return _callingContract[identifier];
+
+abstract contract QueryStatus is AQueryStatus {
+    
+    mapping (uint256=>uint256) internal _status;
+
+    function _getStatus(uint256 identifier) public view virtual override(AQueryStatus) returns(uint256 status) {
+        status = _status[identifier];
     } 
 
-    function _setCallingContract(uint256 identifier, address callingContract) internal virtual {
-        _callingContract[identifier] = callingContract;
+    function _setStatus(uint256 identifier, uint256 status) internal virtual override(AQueryStatus) {
+        _status[identifier] = status;
     }
+}
+
+
+abstract contract QueryCaller is AQueryCaller {
+    
+    mapping (uint256=>address) internal _caller;
+
+    function _getCaller(uint256 identifier) public view virtual override(AQueryCaller) returns(address caller) {
+        caller = _caller[identifier];
+    } 
+
+    function _setCaller(uint256 identifier, address caller) internal virtual override(AQueryCaller) {
+        _caller[identifier] = caller;
+    }
+}
+
+
+abstract contract QueryCallerPublicly is QueryCaller, IQueryCaller {
+    function getCaller(uint256 identifier) public view virtual override(IQueryCaller) returns(address caller) {
+        caller = _getCaller(identifier);
+    } 
 }
 
 

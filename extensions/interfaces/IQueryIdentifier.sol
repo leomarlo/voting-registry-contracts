@@ -2,8 +2,9 @@
 pragma solidity ^0.8.4;
 
 
-interface IQueryCallingContract {
-    function getCallingContract(uint256 identifier) external view returns(address callingContract);
+
+interface IQueryCaller {
+    function getCaller(uint256 identifier) external view returns(address caller);
 }
 
 

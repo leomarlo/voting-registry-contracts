@@ -8,5 +8,5 @@ abstract contract ADoubleVoting {
     function _hasAlreadyVoted(uint256 identifier, address voter) virtual internal view returns(bool alreadyVoted);
 
     function _setAlreadyVoted(uint256 identifier, address voter) virtual internal;
-    
+
 }

@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 interface IImplementResult {
 
+    enum VotingStatus {inactive, completed, failed, awaitcall}
+    
     enum Response {precall, successful, failed}
 
     event Implemented(uint256 identifier, bytes callbackData);

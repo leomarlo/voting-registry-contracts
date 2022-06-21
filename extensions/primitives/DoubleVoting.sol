@@ -25,6 +25,14 @@ abstract contract DoubleVoting is ADoubleVoting {
         _alreadyVoted[identifier][voter] = true;
     }
 
+    modifier doubleVotingGuard(uint256 identifier, address voter) {
+        if(_alreadyVoted[identifier][voter]){
+            revert ADoubleVoting.AlreadyVoted(identifier, voter);
+        }
+        _;
+        _alreadyVoted[identifier][voter] = true;
+    } 
+
 }
 
 
