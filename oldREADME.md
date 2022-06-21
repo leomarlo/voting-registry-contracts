@@ -21,13 +21,3 @@ The whole setup consists of
 The following figure summarizes the basic working mechanism of the voting registry.
 ![votingRegistry](img/votingRegistry.drawio.png)
 
-## Developers
-
-Developers may consult the extensive documentation inside the solidity files. Compilation of the contracts is done via the [`solc` package](https://www.npmjs.com/package/solc-js). The following command bundles the compilation up and copies the output into the `compiler-output` folder, which is created if it doesn't exist:
-```
-npm run compile
-``` 
-
-## Contract
-
-Leonhard Horstmeyer <leonhard.horstmeyer@gmail.com> 

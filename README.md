@@ -63,6 +63,30 @@ function implement(uint256 identifier, bytes memory callbackData) external retur
 The `implement` function `MAY` be implemented. Having another contract make low-level calls with calldata that it could potentially temper with requires a high level of trust. The voting contract `SHOULD NOT` be a proxy contract, which would open possible attack vectors. The target contract, that calls the `implement` function `SHOULD` be able to block calls from a voting instance that implements this function. (see **Voting Integration**). These concerns lead to the suggestion of having the `implement` function as an optional but recommended extension of the minimal voting standard.
 
 
+## Implementations
+
+We maintain a selection of basic implementations of the proposed voting contract standard inside the `implementations`-folder. There is a great amount of flexibility in the implementation. The most trivial one being a snapshot vote. The general idea is to mix and match certain features. Here we provide a non-exhaustive list of possible features, some of which can be found in the `extensions`-folder:
+
+- majority vote (MV)
+- first-past-the-post (FPTP)
+- token-weighted vote (TWV)
+- duration (DUR)
+- quorum (QR)
+- threshold (THR)
+- delegation (DLG)
+- implemented (IMP)
+- one-account-one-vote (OAOV)
+- one-person-one-vote (OPOV)
+- only-proponents (!YES)
+- yes-or-no (YN)
+- yes-no-or-abstain (YNA)
+- non-binary-options (NBO)
+- ...
+
+A list of maintained implementations:
+
+- snapshot vote (YN/DUR)
+- majority vote with deadline and implementation (YN/DUR/IMP)
 
 ## Voting Registry Contract System
 
