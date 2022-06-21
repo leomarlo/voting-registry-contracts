@@ -44,7 +44,7 @@ VotingContract
     {
         require(status==uint256(IVotingContract.VotingStatus.active), "Voting Status!");
         
-        // update status and check whether voting finality condition is reached
+        // check whether voting is closed. If yes, then update the status, if no then cast a vote.
         status = _getStatus(identifier);
         if (_checkCondition(identifier)) {
             status = (CastSimpleVote._getVotes(identifier)==0) ?
