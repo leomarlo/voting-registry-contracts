@@ -15,7 +15,6 @@ import {ImplementResultFromFingerprint} from "../primitives/Implementing.sol";
 // IQueryCallingContract, QueryCallingContract
 
 abstract contract VotingWithImplementing is QueryCallbackHash, QueryCaller, VotingContract, ImplementResultFromFingerprint {
-
     
 
     function _beforeStart(uint256 identifier, bytes memory votingParams, bytes memory callback) internal virtual override(VotingContract){
