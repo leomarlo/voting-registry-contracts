@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
-import {ADoubleVoting} from "../interfaces/ADoubleVoting.sol";
+import {ANoDoubleVoting} from "../interfaces/ANoDoubleVoting.sol";
 import {IQueryDoubleVoting} from "../interfaces/IQueryIdentifier.sol";
 
 
-abstract contract DoubleVoting is ADoubleVoting {
+abstract contract NoDoubleVoting is ANoDoubleVoting {
     
     mapping(uint256=>mapping(address=>bool)) internal _alreadyVoted;
 
     function _hasAlreadyVoted(uint256 identifier, address voter)
-    override(ADoubleVoting) 
+    override(ANoDoubleVoting) 
     internal 
     view
     returns(bool alreadyVoted)
@@ -19,7 +19,7 @@ abstract contract DoubleVoting is ADoubleVoting {
     }
 
     function _setAlreadyVoted(uint256 identifier, address voter) 
-    override(ADoubleVoting)
+    override(ANoDoubleVoting)
     internal
     {
         _alreadyVoted[identifier][voter] = true;
@@ -27,7 +27,7 @@ abstract contract DoubleVoting is ADoubleVoting {
 
     modifier doubleVotingGuard(uint256 identifier, address voter) {
         if(_alreadyVoted[identifier][voter]){
-            revert ADoubleVoting.AlreadyVoted(identifier, voter);
+            revert ANoDoubleVoting.AlreadyVoted(identifier, voter);
         }
         _;
         _alreadyVoted[identifier][voter] = true;
@@ -38,7 +38,7 @@ abstract contract DoubleVoting is ADoubleVoting {
 
 abstract contract DoubleVotingPublicQuery is 
 IQueryDoubleVoting,
-DoubleVoting 
+NoDoubleVoting 
 {
     function hasAlreadyVoted(uint256 identifier, address voter) 
     external 

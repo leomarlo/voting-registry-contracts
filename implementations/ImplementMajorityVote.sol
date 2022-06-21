@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 
 import {IVotingContract} from "../votingContract/IVotingContract.sol";
 import {VotingContract} from "../extensions/abstracts/BareVotingContract.sol";
-import {DoubleVoting} from "../extensions/primitives/DoubleVoting.sol";
+import {NoDoubleVoting} from "../extensions/primitives/NoDoubleVoting.sol";
 import {Deadline} from "../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../extensions/primitives/CastVotes.sol";
 import {VotingWithImplementing} from "../extensions/abstracts/VotingAndImplement.sol";
@@ -13,7 +13,7 @@ import {IImplementResult} from "../extensions/interfaces/IImplementResult.sol";
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract ImplementMajorityVote is 
-DoubleVoting,
+NoDoubleVoting,
 CastSimpleVote,
 Deadline,
 ImplementingPermitted,
@@ -52,7 +52,7 @@ VotingWithImplementing
     external 
     virtual 
     override(VotingWithImplementing)
-    DoubleVoting.doubleVotingGuard(identifier, msg.sender) 
+    NoDoubleVoting.doubleVotingGuard(identifier, msg.sender) 
     returns (uint256 status)
     {
         require(status==uint256(IImplementResult.VotingStatus.active), "Voting Status!");
