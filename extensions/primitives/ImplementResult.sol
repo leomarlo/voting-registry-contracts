@@ -2,55 +2,18 @@
 pragma solidity ^0.8.4;
 
 import {IImplementResult} from "../interfaces/IImplementResult.sol";
-import {IQueryCaller} from "../interfaces/IQueryIdentifier.sol";
-import {AImplementingPermitted} from "../interfaces/AQueryStatus.sol";
-import {QueryCaller} from "./QueryIdentifier.sol";
-import {ACheckCalldataValidity} from "../interfaces/ACheckCalldataValidity.sol";
+import {IImplementingPermitted} from "../interfaces/IImplementingPermitted.sol";
+import {CallerGetterAndSetter} from "./CallerGetterAndSetter.sol";
 import {CheckCalldataValidity} from "./CheckCalldataValidity.sol";
+import {ImplementingPermitted} from "./ImplementingPermitted.sol";
+import {ImplementResultPrimitive} from "./ImplementResultPrimitive.sol";
 
 
-import { IImplementingPermitted } from "../interfaces/IQueryStatus.sol";
-import { QueryStatus } from "../primitives/QueryIdentifier.sol";
-
-
-abstract contract ImplementingPermitted is QueryStatus, AImplementingPermitted {
-    function _implementingPermitted(uint256 identifier) virtual internal view override(AImplementingPermitted) returns(bool permitted) {
-        permitted = _getStatus(identifier) == uint256(IImplementResult.VotingStatus.awaitcall);
-    }
-}
-
-abstract contract ImplementingPermittedPublicallyVisible is IImplementingPermitted, ImplementingPermitted {
-    function implementingPermitted(uint256 identifier) external view override(IImplementingPermitted) returns(bool permitted) {
-        permitted = _implementingPermitted(identifier);
-    }
-}
-
-abstract contract ImplementResultPrimitive {
-
-    /// @dev a generic internal helper function that calls a function with a given selector in a given contract with some calldata.
-    /// @param _contract the address of the contract, whose function ought to be called.
-    /// @param callbackData the calldata for the function call.
-    /// @return _response a response flag that can be either successful (1) or failed (2).
-    /// @return errorMessage error message.
-    function _implement(address _contract, bytes memory callbackData) 
-    internal 
-    virtual
-    returns(IImplementResult.Response, bytes memory)
-    {
-        (bool success, bytes memory errorMessage) = _contract.call(callbackData);
-        IImplementResult.Response response = success ? IImplementResult.Response.successful : IImplementResult.Response.failed; 
-        return (response, errorMessage);
-    }
-}
-
-
-
-abstract contract ImplementResult is 
-ImplementResultPrimitive, 
+abstract contract ImplementResult is
+CallerGetterAndSetter,
+IImplementResult,
 ImplementingPermitted,
-ACheckCalldataValidity,
-IImplementResult, 
-QueryCaller
+ImplementResultPrimitive
 {
 
     /// @dev Checks whether the current voting instance permits voting. This is customizable.
@@ -64,14 +27,14 @@ QueryCaller
 
         // check whether the current voting instance allows implementation
         if(!_implementingPermitted(identifier)) {
-            revert AImplementingPermitted.ImplementingNotPermitted(identifier);
+            revert IImplementingPermitted.ImplementingNotPermitted(identifier);
         }
 
         // check wether this is the correct calldata for the voting instance
         _requireValidCallbackData(identifier, callbackData);
 
         // retrieve calling contract from the identifier.
-        address votingContract = _getCaller(identifier);
+        address votingContract = CallerGetterAndSetter._getCaller(identifier);
         
         // implement the result
         (
@@ -111,14 +74,13 @@ QueryCaller
 
 
 abstract contract ImplementResultFromFingerprint is 
-ACheckCalldataValidity,
 CheckCalldataValidity,
 ImplementResult 
 {
     
     function _requireValidCallbackData(uint256 identifier, bytes memory callbackData) internal view override(ImplementResult) {
         if(!CheckCalldataValidity._isValidCalldata(identifier, callbackData)){
-            revert ACheckCalldataValidity.InvalidCalldata();
+            revert CheckCalldataValidity.InvalidCalldata();
         }
     }
 }

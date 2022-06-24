@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
-import {ANoDoubleVoting} from "../interfaces/ANoDoubleVoting.sol";
-import {IQueryDoubleVoting} from "../interfaces/IQueryIdentifier.sol";
+
+import {IHasAlreadyVoted} from "../interfaces/IHasAlreadyVoted.sol";
 
 
-abstract contract NoDoubleVoting is ANoDoubleVoting {
+abstract contract NoDoubleVoting  {
+    
+    error AlreadyVoted(uint256 identifier, address voter);
     
     mapping(uint256=>mapping(address=>bool)) internal _alreadyVoted;
 
     function _hasAlreadyVoted(uint256 identifier, address voter)
-    override(ANoDoubleVoting) 
     internal 
     view
     returns(bool alreadyVoted)
@@ -19,7 +20,6 @@ abstract contract NoDoubleVoting is ANoDoubleVoting {
     }
 
     function _setAlreadyVoted(uint256 identifier, address voter) 
-    override(ANoDoubleVoting)
     internal
     {
         _alreadyVoted[identifier][voter] = true;
@@ -27,7 +27,7 @@ abstract contract NoDoubleVoting is ANoDoubleVoting {
 
     modifier doubleVotingGuard(uint256 identifier, address voter) {
         if(_alreadyVoted[identifier][voter]){
-            revert ANoDoubleVoting.AlreadyVoted(identifier, voter);
+            revert AlreadyVoted(identifier, voter);
         }
         _;
         _alreadyVoted[identifier][voter] = true;
@@ -36,14 +36,14 @@ abstract contract NoDoubleVoting is ANoDoubleVoting {
 }
 
 
-abstract contract DoubleVotingPublicQuery is 
-IQueryDoubleVoting,
+abstract contract NoDoubleVotingPublic is 
+IHasAlreadyVoted,
 NoDoubleVoting 
 {
     function hasAlreadyVoted(uint256 identifier, address voter) 
     external 
     view 
-    override(IQueryDoubleVoting)
+    override(IHasAlreadyVoted)
     returns(bool alreadyVoted)
     {
         alreadyVoted = _hasAlreadyVoted(identifier, voter); 
