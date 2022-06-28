@@ -28,7 +28,6 @@
   "homepage": "https://github.com/leomarlo/voting-registry-contracts#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0",
-    "remix-plugin": "^0.0.2-alpha.11",
     "solc": "^0.8.13"
   }
 }
