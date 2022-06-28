@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run compile",
-    "compile-abi": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis votingContract/* extensions/*/* implementations/*",
-    "compile-bin": "solcjs --bin --include-path node_modules/ --base-path . -o compiler-output/bins votingContract/* extensions/*/* implementations/*",
-    "compile": "npm run compile-abi && npm run compile-bin"
+    "compile-abi": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis votingContract/* extensions/*/* implementations/* registration/*",
+    "compile-bin": "solcjs --bin --include-path node_modules/ --base-path . -o compiler-output/bins votingContract/* extensions/*/* implementations/* registration/*",
+    "compile": "npm run compile-abi"
   },
   "repository": {
     "type": "git",
