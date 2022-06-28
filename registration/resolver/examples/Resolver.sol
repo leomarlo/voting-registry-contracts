@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.4;
 
-import { OwnerControl } from "./primitives/OwnerControl.sol";
-import { GovernanceControl } from "./primitives/GovernanceControl.sol";
+import { OwnerControl } from "../primitives/OwnerControl.sol";
+import { GovernanceControl } from "../primitives/GovernanceControl.sol";
 
-import {RequiredDirectCallResolver} from "./resolvers/RequiredDirectCall.sol";
-import {IsImplementerResolver} from "./resolvers/IsImplementer.sol";
-import {IsProxyResolver} from "./resolvers/IsProxy.sol";
-import {MethodsResolver} from "./resolvers/Methods.sol";
-import {UsageResolver} from "./resolvers/Usage.sol";
+import {RequiredDirectCallResolver} from "../resolvers/RequiredDirectCall.sol";
+import {IsImplementerResolver} from "../resolvers/IsImplementer.sol";
+import {IsProxyResolver} from "../resolvers/IsProxy.sol";
+import {MethodsResolver} from "../resolvers/Methods.sol";
+import {UsageResolver} from "../resolvers/Usage.sol";
 
 
 contract OwnerControlledResolver is 
