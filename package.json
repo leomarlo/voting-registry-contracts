@@ -1,6 +1,6 @@
 {
   "name": "@leomarlo/voting-registry-contracts",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "This package contains solidity contracts, abstract contracts and interfaces for a voting-registry and its inheritable template integrations.",
   "main": "index.js",
   "scripts": {
