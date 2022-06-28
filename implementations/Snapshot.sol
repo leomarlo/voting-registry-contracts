@@ -3,17 +3,17 @@ pragma solidity ^0.8.4;
 
 
 import {IVotingContract} from "../votingContract/IVotingContract.sol";
-import {VotingContract} from "../extensions/abstracts/BareVotingContract.sol";
+import {BareVotingContract} from "../extensions/abstracts/BareVotingContract.sol";
 import {NoDoubleVoting} from "../extensions/primitives/NoDoubleVoting.sol";
 import {Deadline} from "../extensions/primitives/Deadline.sol";
-import {CastSimpleVote} from "../extensions/primitives/CastVotes.sol";
+import {CastSimpleVote} from "../extensions/primitives/CastSimpleVote.sol";
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract Snapshot is 
 NoDoubleVoting,
 CastSimpleVote,
 Deadline,
-VotingContract
+BareVotingContract
 {
 
     // GLOBAL DURATION
@@ -27,7 +27,7 @@ VotingContract
     function _start(uint256 identifier, bytes memory votingParams)
     virtual
     internal
-    override(VotingContract) 
+    override(BareVotingContract) 
     {
         Deadline._setDeadline(identifier, VOTING_DURATION);
 
@@ -38,14 +38,14 @@ VotingContract
     function vote(uint256 identifier, bytes memory votingData) 
     external 
     virtual 
-    override(VotingContract)
+    override(BareVotingContract)
     NoDoubleVoting.doubleVotingGuard(identifier, msg.sender) 
     returns (uint256 status)
     {
         require(status==uint256(IVotingContract.VotingStatus.active), "Voting Status!");
         
         // check whether voting is closed. If yes, then update the status, if no then cast a vote.
-        status = _getStatus(identifier);
+        status = _status[identifier];
         if (_checkCondition(identifier)) {
             status = (CastSimpleVote._getVotes(identifier)==0) ?
                      uint256(IVotingContract.VotingStatus.failed) :
@@ -54,16 +54,15 @@ VotingContract
             CastSimpleVote._castVote(identifier, 1);
         }
                  
-        
     }
 
     /// @dev We must implement a result function 
-    function result(uint256 identifier) external view override(VotingContract) returns(bytes memory resultData) {
+    function result(uint256 identifier) external view override(BareVotingContract) returns(bytes memory resultData) {
         return abi.encode(CastSimpleVote._getVotes(identifier));   
     }
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
-    function _checkCondition(uint256 identifier) internal view override(VotingContract) returns(bool condition) {
+    function _checkCondition(uint256 identifier) internal view override(BareVotingContract) returns(bool condition) {
         condition = Deadline._deadlineHasPast(identifier);
     }
 
