@@ -33,7 +33,7 @@ Once the voting instance has been configured and created a pointer to that insta
 
 ### **Casting a Vote**
 
-The vote function should be called to cast a vote. It needs to receive the `uint256 identifier` as one argument and information about the vote via `bytes memory votingData`. The current status `uint256 status` should be returned, so that a calling contract could immediately act upon a status-change.
+The vote function should be called to cast a vote. It needs to receive the `uint256 identifier` as one argument and information about the vote via `bytes memory votingData`. The current status `uint256 status` should be returned, so that a calling contract could immediately act upon a status-change. To allow for greater flexibility the status is of type `uint256`. We recommend that the first four are reserved to `inactive`, `completed`, `failed` and `active`.
 
 ```js
 function vote(uint256 identifier, bytes memory votingData) external returns(uint256 status);
@@ -41,6 +41,11 @@ function vote(uint256 identifier, bytes memory votingData) external returns(uint
 
 Typically one would encode the voter's choice in the `votingData`. The options `approve`, `disapprove` and `abstain` could be encoded. Depending on the typ of vote one might also choose to leave it blank and consider the bare vote as sufficient indication of preference. When the `vote`-function is called via a contract rather than directly, the voter's address should be encoded in the `votingData`. When it is called directly the voter is the `msg.sender`. One might also encode data that can be inserted into the callback. For instance, if the vote is about choosing between several candidates, then the candidate address could be passed into the `votingData`. Care must be taken in the `callback` argument when defining the bytes range where the option can be inserted.  
 
+In order to follow the recommendation of fixing the first four status categories one `MAY` define an `enum` data-type
+```js
+enum VotingStatus {inactive, completed, failed, active}
+```
+that enforces them.
 
 ### **Querying the Result of the Voting Instance**
 
@@ -63,6 +68,9 @@ function implement(uint256 identifier, bytes memory callbackData) external retur
 The `implement` function `MAY` be implemented. Having another contract make low-level calls with calldata that it could potentially temper with requires a high level of trust. The voting contract `SHOULD NOT` be a proxy contract, which would open possible attack vectors. The target contract, that calls the `implement` function `SHOULD` be able to block calls from a voting instance that implements this function. (see **Voting Integration**). These concerns lead to the suggestion of having the `implement` function as an optional but recommended extension of the minimal voting standard.
 
 
+
+
+
 ## Implementations
 
 We maintain a selection of basic implementations of the proposed voting contract standard inside the `implementations`-folder. There is a great amount of flexibility in the implementation. The most trivial one being a snapshot vote. The general idea is to mix and match certain features. Here we provide a non-exhaustive list of possible features, some of which can be found in the `extensions`-folder:
@@ -83,10 +91,15 @@ We maintain a selection of basic implementations of the proposed voting contract
 - non-binary-options (NBO)
 - ...
 
-A list of maintained implementations:
+A list of maintained implementations (contract testing is outsourced to [voting-registry](https://github.com/leomarlo/voting-registry)):
 
-- snapshot vote (YN/DUR)
-- majority vote with deadline and implementation (YN/DUR/IMP)
+1. snapshot vote (YN/DUR)
+2. majority vote with implementation (YN/DUR/IMP)
+
+**1. Snapshot Vote**: The snapshot vote is an implementation of the off-chain voting that simply records votes with two options (Yes or No) and has a non-adjustable deadline of 5 days.
+
+**2. Majority vote with implementation**: This is a simple majority vote. The implementation calldata is passed into the creation of the voting instance and stored as a hash. After a deadline of 5 days has passed and the majority voted in favor of implementation, anyone can trigger the implement function using the correct calldata as a key.
+
 
 ## Voting Registry Contract System
 
