@@ -35,13 +35,13 @@ pragma solidity ^0.8.4;
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IVotingContract} from "../../votingContract/IVotingContract.sol";
 
-import {CallerGetterAndSetter} from "../primitives/CallerGetterAndSetter.sol";
-import {StatusGetterAndSetter} from "../primitives/StatusGetterAndSetter.sol";
+import { CallerPrimitive} from "../primitives/Caller.sol";
+import { StatusPrimitive} from "../primitives/Status.sol";
 
 /// @title Vote Contract - Main implementation of the inheritable vote contract.
 /// @author Leonhard Horstmeyer  <leonhard.horstmeyer@gmail.com>
 /// @dev This contract implements the necessary functions that a simple Vote Contract should implement.
-abstract contract VotingContract is StatusGetterAndSetter, CallerGetterAndSetter, IERC165, IVotingContract {
+abstract contract BareVotingContract is CallerPrimitive, StatusPrimitive, IERC165, IVotingContract {
     
 
     //////////////////////////////////////////////////
@@ -69,8 +69,8 @@ abstract contract VotingContract is StatusGetterAndSetter, CallerGetterAndSetter
         _start(_currentIndex, votingParams);
 
         // Store the caller and status in storage.
-        _setCaller(_currentIndex, msg.sender);
-        _setStatus(_currentIndex, uint256(IVotingContract.VotingStatus.active));
+        _caller[_currentIndex] = msg.sender;
+        _status[_currentIndex] = uint256(IVotingContract.VotingStatus.active);
 
         // emit event
         emit VotingInstanceStarted(_currentIndex, msg.sender);

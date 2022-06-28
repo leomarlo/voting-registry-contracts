@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 interface IImplementResult {
 
-    enum VotingStatus {inactive, completed, failed, awaitcall}
+    enum VotingStatusImplement {inactive, completed, failed, active, awaitcall}
     
     enum Response {precall, successful, failed}
 

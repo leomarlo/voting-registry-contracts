@@ -3,15 +3,13 @@ pragma solidity ^0.8.4;
 
 import {IImplementResult} from "../interfaces/IImplementResult.sol";
 import { IImplementingPermitted } from "../interfaces/IImplementingPermitted.sol";
-import { StatusGetterAndSetter } from "../primitives/StatusGetterAndSetter.sol";
+import { StatusPrimitive } from "../primitives/Status.sol";
 
 
-abstract contract ImplementingPermitted is StatusGetterAndSetter {
-
+abstract contract ImplementingPermitted is StatusPrimitive {
     
-
     function _implementingPermitted(uint256 identifier) virtual internal view returns(bool permitted) {
-        permitted = _getStatus(identifier) == uint256(IImplementResult.VotingStatus.awaitcall);
+        permitted = _status[identifier] == uint256(IImplementResult.VotingStatusImplement.awaitcall);
     }
 
 }

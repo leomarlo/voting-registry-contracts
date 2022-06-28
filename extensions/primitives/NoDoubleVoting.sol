@@ -11,19 +11,6 @@ abstract contract NoDoubleVoting  {
     
     mapping(uint256=>mapping(address=>bool)) internal _alreadyVoted;
 
-    function _hasAlreadyVoted(uint256 identifier, address voter)
-    internal 
-    view
-    returns(bool alreadyVoted)
-    {
-        alreadyVoted = _alreadyVoted[identifier][voter];
-    }
-
-    function _setAlreadyVoted(uint256 identifier, address voter) 
-    internal
-    {
-        _alreadyVoted[identifier][voter] = true;
-    }
 
     modifier doubleVotingGuard(uint256 identifier, address voter) {
         if(_alreadyVoted[identifier][voter]){
@@ -46,6 +33,6 @@ NoDoubleVoting
     override(IHasAlreadyVoted)
     returns(bool alreadyVoted)
     {
-        alreadyVoted = _hasAlreadyVoted(identifier, voter); 
+        alreadyVoted = _alreadyVoted[identifier][voter]; 
     }   
 } 

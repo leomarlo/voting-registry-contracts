@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
-import {CallbackHashGetterAndSetter} from "./CallbackHashGetterAndSetter.sol";
+import {CallbackHashPrimitive} from "./CallbackHash.sol";
 
 
-abstract contract CheckCalldataValidity is CallbackHashGetterAndSetter {
+abstract contract CheckCalldataValidity is CallbackHashPrimitive {
     
     error InvalidCalldata();
     
@@ -13,6 +13,6 @@ abstract contract CheckCalldataValidity is CallbackHashGetterAndSetter {
     view
     returns(bool isValid)
     {
-        isValid = CallbackHashGetterAndSetter._callbackHash[identifier] == keccak256(callbackData);
+        isValid = CallbackHashPrimitive._callbackHash[identifier] == keccak256(callbackData);
     }
 }

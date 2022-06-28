@@ -10,10 +10,6 @@ contract Deadline {
         _deadline[identifier] = block.timestamp + duration;
     }
 
-    function _getDeadline(uint256 identifier) internal view returns(uint256 deadline) {
-        return _deadline[identifier];
-    }
-
     function _deadlineHasPast(uint256 identifier) internal view returns(bool hasPast) {
         return block.timestamp > _deadline[identifier];
     }

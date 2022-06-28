@@ -3,15 +3,15 @@ pragma solidity ^0.8.4;
 
 import {IImplementResult} from "../interfaces/IImplementResult.sol";
 import {IImplementingPermitted} from "../interfaces/IImplementingPermitted.sol";
-import {CallerGetterAndSetter} from "./CallerGetterAndSetter.sol";
+import {CallerPrimitive} from "./Caller.sol";
 import {CheckCalldataValidity} from "./CheckCalldataValidity.sol";
 import {ImplementingPermitted} from "./ImplementingPermitted.sol";
 import {ImplementResultPrimitive} from "./ImplementResultPrimitive.sol";
 
 
 abstract contract ImplementResult is
-CallerGetterAndSetter,
 IImplementResult,
+CallerPrimitive,
 ImplementingPermitted,
 ImplementResultPrimitive
 {
@@ -26,7 +26,7 @@ ImplementResultPrimitive
     returns(IImplementResult.Response) {
 
         // check whether the current voting instance allows implementation
-        if(!_implementingPermitted(identifier)) {
+        if(!ImplementingPermitted._implementingPermitted(identifier)) {
             revert IImplementingPermitted.ImplementingNotPermitted(identifier);
         }
 
@@ -34,7 +34,7 @@ ImplementResultPrimitive
         _requireValidCallbackData(identifier, callbackData);
 
         // retrieve calling contract from the identifier.
-        address votingContract = CallerGetterAndSetter._getCaller(identifier);
+        address votingContract = CallerPrimitive._caller[identifier];
         
         // implement the result
         (
@@ -74,8 +74,8 @@ ImplementResultPrimitive
 
 
 abstract contract ImplementResultFromFingerprint is 
-CheckCalldataValidity,
-ImplementResult 
+ImplementResult,
+CheckCalldataValidity 
 {
     
     function _requireValidCallbackData(uint256 identifier, bytes memory callbackData) internal view override(ImplementResult) {
