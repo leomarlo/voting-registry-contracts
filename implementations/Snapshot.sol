@@ -30,7 +30,6 @@ BareVotingContract
     override(BareVotingContract) 
     {
         Deadline._setDeadline(identifier, VOTING_DURATION);
-
     }
 
 
