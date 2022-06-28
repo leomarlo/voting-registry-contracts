@@ -143,6 +143,7 @@ function register(
 external
 returns(bytes32 votingContractId)
 {
+    require(records[contractAddress].registrar == address(0));
     require(checkInterface(contractAddress));
     records[contractAddress] = Record({
         registrar: msg.sender,
@@ -167,6 +168,7 @@ external
 }
 ```
 
+
 ### **Registrar**
 
 The registrar is the msg.sender for the registration. Although an externally owned account could perfectly register a new voting contract, there are many advantages of having a contract doing the job. The main ones being visibility, reliability, governance and maintenance.
@@ -183,12 +185,12 @@ function _register(address votingContract, address resolver) internal {
 The rights to that registry record may conferred to a controller, who may transfer the rights if desired. The registrar is then simply the executer of any logic regarding the records. One convenient way to handle the issuance of controller rights as well as their transferral would be through an implementation of a `ERC721` interface. However, other implementations are equally possible. 
 ```js
 function _setController(address votingContract, address controller) internal {
-    bytes32 tokenId = bytes32(votingContract);
+    uint256 tokenId = uint256(uint160(votingContract));
     ERC721._mint(controller, tokenId);
 }
 
-function getController(address votingContract) public returns(address controller) {
-    bytes32 tokenId = bytes32(votingContract);
+function getController(address votingContract) public view returns(address controller) {
+    uint256 tokenId = uint256(uint160(votingContract));
     controller = ERC721.ownerOf(tokenId);
 }
 ```
@@ -230,7 +232,7 @@ function _setIsImplementer(address votingContract, bool _isImplementer) internal
     isImplementer[votingContract] = _isImplementer;
 }
 
-function getIsImplementer(address votingContract) external returns(bool) {
+function getIsImplementer(address votingContract) external view returns(bool) {
     return isImplementer[votingContract];
 }
 ```
