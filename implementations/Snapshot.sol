@@ -79,7 +79,7 @@ BareVotingContract
             revert StatusError(identifier, _status[identifier]);
         }
         if(!_checkCondition(identifier)) {
-            revert Deadline.DeadlineHasNotPast(identifier, _deadline[identifier]);
+            revert Deadline.DeadlineHasNotPassed(identifier, _deadline[identifier]);
         }
 
         _setStatus(identifier);
@@ -93,7 +93,7 @@ BareVotingContract
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
     function _checkCondition(uint256 identifier) internal view override(BareVotingContract) returns(bool condition) {
-        condition = Deadline._deadlineHasPast(identifier);
+        condition = Deadline._deadlineHasPassed(identifier);
     }
 
 

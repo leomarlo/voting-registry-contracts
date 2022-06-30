@@ -4,8 +4,8 @@ pragma solidity ^0.8.4;
 
 contract Deadline {
 
-    error DeadlineHasPast(uint256 identifier, uint256 deadline);
-    error DeadlineHasNotPast(uint256 identifier, uint256 deadline);
+    error DeadlineHasPassed(uint256 identifier, uint256 deadline);
+    error DeadlineHasNotPassed(uint256 identifier, uint256 deadline);
 
     mapping(uint256=>uint256) internal _deadline;
 
@@ -13,7 +13,7 @@ contract Deadline {
         _deadline[identifier] = block.timestamp + duration;
     }
 
-    function _deadlineHasPast(uint256 identifier) internal view returns(bool hasPast) {
-        return block.timestamp > _deadline[identifier];
+    function _deadlineHasPassed(uint256 identifier) internal view returns(bool hasPassed) {
+        hasPassed = block.timestamp > _deadline[identifier];
     }
 }
