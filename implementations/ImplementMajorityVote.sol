@@ -62,7 +62,6 @@ BareVotingContract
     external 
     virtual 
     override(BareVotingContract)
-    NoDoubleVoting.doubleVotingGuard(identifier, msg.sender) 
     returns (uint256)
     {
         if(_status[identifier]!=uint256(IVotingContract.VotingStatus.active)) {
@@ -74,6 +73,12 @@ BareVotingContract
             return _status[identifier];
         } 
         
+        if(NoDoubleVoting._alreadyVoted[identifier][msg.sender]){
+            revert NoDoubleVoting.AlreadyVoted(identifier, msg.sender);
+        }
+        
+        NoDoubleVoting._alreadyVoted[identifier][msg.sender] = true;
+
         bool approve = abi.decode(votingData, (bool));
         CastSimpleVote._castVote(identifier, approve ? int256(1) : int256(-1));
         
