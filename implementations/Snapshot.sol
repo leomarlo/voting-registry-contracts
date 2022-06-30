@@ -7,12 +7,16 @@ import {BareVotingContract} from "../extensions/abstracts/BareVotingContract.sol
 import {NoDoubleVoting} from "../extensions/primitives/NoDoubleVoting.sol";
 import {Deadline} from "../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../extensions/primitives/CastSimpleVote.sol";
+import {StatusGetter} from "../extensions/primitives/Status.sol";
+import {CallerGetter} from "../extensions/primitives/Caller.sol";
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract Snapshot is 
 NoDoubleVoting,
 CastSimpleVote,
 Deadline,
+StatusGetter,
+CallerGetter,
 BareVotingContract
 {
 
