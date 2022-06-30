@@ -47,7 +47,7 @@ BareVotingContract
     returns (uint256)
     {
 
-        if(_status[identifier]==uint256(IVotingContract.VotingStatus.active)) {
+        if(_status[identifier]!=uint256(IVotingContract.VotingStatus.active)) {
             revert StatusError(identifier, _status[identifier]);
         }
         
@@ -70,7 +70,7 @@ BareVotingContract
     }
 
     function conclude(uint256 identifier) external {
-        if(_status[identifier]==uint256(IVotingContract.VotingStatus.active)) {
+        if(_status[identifier]!=uint256(IVotingContract.VotingStatus.active)) {
             revert StatusError(identifier, _status[identifier]);
         }
         if(_checkCondition(identifier)) {

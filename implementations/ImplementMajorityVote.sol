@@ -12,11 +12,13 @@ import {BareVotingContract} from "../extensions/abstracts/BareVotingContract.sol
 import {VotingWithImplementing} from "../extensions/abstracts/VotingWithImplementing.sol";
 import {ImplementingPermitted} from "../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../extensions/interfaces/IImplementResult.sol";
+import {StatusGetter, StatusError} from "../extensions/primitives/Status.sol";
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract ImplementMajorityVote is 
 CallbackHashPrimitive,
 CallerPrimitive,
+StatusGetter,
 NoDoubleVoting,
 CastSimpleVote,
 Deadline,
@@ -63,8 +65,9 @@ BareVotingContract
     NoDoubleVoting.doubleVotingGuard(identifier, msg.sender) 
     returns (uint256)
     {
-        require(_status[identifier]==uint256(IImplementResult.VotingStatusImplement.active), "Voting Status!");
-        
+        if(_status[identifier]!=uint256(IVotingContract.VotingStatus.active)) {
+            revert StatusError(identifier, _status[identifier]);
+        }
         // check whether voting is closed. If yes, then update the status, if no then cast a vote.
         if (_checkCondition(identifier)) {
             _setStatus(identifier);
@@ -84,8 +87,12 @@ BareVotingContract
     }
 
     function conclude(uint256 identifier) external {
-        require(_status[identifier]==uint256(IVotingContract.VotingStatus.active), "Snapshot: Voting is not active!");
-        require(_checkCondition(identifier), "Snapshot: vote cannot be concluded");
+        if(_status[identifier]!=uint256(IVotingContract.VotingStatus.active)) {
+            revert StatusError(identifier, _status[identifier]);
+        }
+        if(_checkCondition(identifier)) {
+            revert Deadline.DeadlineHasPast(identifier, _deadline[identifier]);
+        }
         _setStatus(identifier);
     }
 
