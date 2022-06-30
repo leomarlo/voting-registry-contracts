@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import {IStatusGetter} from "../interfaces/IStatusGetter.sol";
 
+error StatusError(uint256 identifier, uint256 status);
 
 abstract contract StatusPrimitive {
     mapping (uint256=>uint256) internal _status;

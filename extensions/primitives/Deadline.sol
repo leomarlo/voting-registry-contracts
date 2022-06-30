@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 
 contract Deadline {
 
+    error DeadlineHasPast(uint256 identifier, uint256 deadline);
+
     mapping(uint256=>uint256) internal _deadline;
 
     function _setDeadline(uint256 identifier, uint256 duration) internal {
