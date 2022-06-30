@@ -43,27 +43,38 @@ BareVotingContract
     virtual 
     override(BareVotingContract)
     NoDoubleVoting.doubleVotingGuard(identifier, msg.sender) 
-    returns (uint256 status)
+    returns (uint256)
     {
         require(_status[identifier]==uint256(IVotingContract.VotingStatus.active), "Voting Status!");
         
         // check whether voting is closed. If yes, then update the status, if no then cast a vote.
-        status = _status[identifier];
         if (_checkCondition(identifier)) {
-            status = (CastSimpleVote._getVotes(identifier)==0) ?
-                     uint256(IVotingContract.VotingStatus.failed) :
-                     uint256(IVotingContract.VotingStatus.completed); 
-        } else {
-            bool approve = abi.decode(votingData, (bool));
-            int256 votingOption = approve ? int256(1) : int256(-1);
-            CastSimpleVote._castVote(identifier, votingOption);
-        }
+            _setStatus(identifier);
+            return _status[identifier]; 
+        } 
+        
+        bool approve = abi.decode(votingData, (bool));
+        CastSimpleVote._castVote(identifier, approve ? int256(1) : int256(-1));
+
+        return _status[identifier]; 
                  
     }
 
     /// @dev We must implement a result function 
     function result(uint256 identifier) external view override(BareVotingContract) returns(bytes memory resultData) {
         return abi.encode(CastSimpleVote._getVotes(identifier));   
+    }
+
+    function conclude(uint256 identifier) external {
+        require(_status[identifier]==uint256(IVotingContract.VotingStatus.active), "Snapshot: Voting is not active!");
+        require(_checkCondition(identifier), "Snapshot: vote cannot be concluded");
+        _setStatus(identifier);
+    }
+
+    function _setStatus(uint256 identifier) internal {
+        _status[identifier] = (CastSimpleVote._getVotes(identifier)==0) ?
+                     uint256(IVotingContract.VotingStatus.failed) :
+                     uint256(IVotingContract.VotingStatus.completed); 
     }
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not

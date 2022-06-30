@@ -61,20 +61,20 @@ BareVotingContract
     virtual 
     override(BareVotingContract)
     NoDoubleVoting.doubleVotingGuard(identifier, msg.sender) 
-    returns (uint256 status)
+    returns (uint256)
     {
         require(_status[identifier]==uint256(IImplementResult.VotingStatusImplement.active), "Voting Status!");
         
         // check whether voting is closed. If yes, then update the status, if no then cast a vote.
-        status = _status[identifier];
         if (_checkCondition(identifier)) {
-            status = (CastSimpleVote._getVotes(identifier)<=0) ?
-                     uint256(IImplementResult.VotingStatusImplement.failed) :
-                     uint256(IImplementResult.VotingStatusImplement.awaitcall);
-        } else {
-            CastSimpleVote._castVote(identifier, 1);
-        }
-       
+            _setStatus(identifier);
+            return _status[identifier];
+        } 
+        
+        bool approve = abi.decode(votingData, (bool));
+        CastSimpleVote._castVote(identifier, approve ? int256(1) : int256(-1));
+        
+        return _status[identifier];
     }
 
 
@@ -83,6 +83,18 @@ BareVotingContract
         return abi.encode(CastSimpleVote._getVotes(identifier));   
     }
 
+    function conclude(uint256 identifier) external {
+        require(_status[identifier]==uint256(IVotingContract.VotingStatus.active), "Snapshot: Voting is not active!");
+        require(_checkCondition(identifier), "Snapshot: vote cannot be concluded");
+        _setStatus(identifier);
+    }
+
+
+    function _setStatus(uint256 identifier) internal {
+        _status[identifier] = (CastSimpleVote._getVotes(identifier)<=0) ?
+            uint256(IImplementResult.VotingStatusImplement.failed) :
+            uint256(IImplementResult.VotingStatusImplement.awaitcall); 
+    }
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
     function _checkCondition(uint256 identifier) internal view override(BareVotingContract) returns(bool condition) {
