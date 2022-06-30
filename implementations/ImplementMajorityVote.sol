@@ -91,7 +91,7 @@ BareVotingContract
             revert StatusError(identifier, _status[identifier]);
         }
         if(_checkCondition(identifier)) {
-            revert Deadline.DeadlineHasPast(identifier, _deadline[identifier]);
+            revert Deadline.DeadlineHasNotPast(identifier, _deadline[identifier]);
         }
         _setStatus(identifier);
     }

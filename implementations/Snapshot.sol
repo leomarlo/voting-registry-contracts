@@ -73,8 +73,8 @@ BareVotingContract
         if(_status[identifier]!=uint256(IVotingContract.VotingStatus.active)) {
             revert StatusError(identifier, _status[identifier]);
         }
-        if(_checkCondition(identifier)) {
-            revert Deadline.DeadlineHasPast(identifier, _deadline[identifier]);
+        if(!_checkCondition(identifier)) {
+            revert Deadline.DeadlineHasNotPast(identifier, _deadline[identifier]);
         }
 
         _setStatus(identifier);
