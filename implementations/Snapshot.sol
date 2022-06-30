@@ -45,7 +45,7 @@ BareVotingContract
     NoDoubleVoting.doubleVotingGuard(identifier, msg.sender) 
     returns (uint256 status)
     {
-        require(status==uint256(IVotingContract.VotingStatus.active), "Voting Status!");
+        require(_status[identifier]==uint256(IVotingContract.VotingStatus.active), "Voting Status!");
         
         // check whether voting is closed. If yes, then update the status, if no then cast a vote.
         status = _status[identifier];
