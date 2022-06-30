@@ -54,7 +54,9 @@ BareVotingContract
                      uint256(IVotingContract.VotingStatus.failed) :
                      uint256(IVotingContract.VotingStatus.completed); 
         } else {
-            CastSimpleVote._castVote(identifier, 1);
+            bool approve = abi.decode(votingData, (bool));
+            int256 votingOption = approve ? int256(1) : int256(-1);
+            CastSimpleVote._castVote(identifier, votingOption);
         }
                  
     }
