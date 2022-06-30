@@ -21,7 +21,7 @@
     "contracts"
   ],
   "author": "Leonhard Horstmeyer <leonhard.horstmeyer@gmail.com>",
-  "license": "GPL-2.0",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/leomarlo/voting-registry-contracts/issues"
   },
