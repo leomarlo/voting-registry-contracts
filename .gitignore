@@ -1,7 +1,15 @@
-# npm local storage
+## npm local storage
 node_modules
 package-lock.json
 
+## cache
+cache
+
+## artifacts
+artifacts
+
+## might need scripts at some later point
+scripts
 
 ## sensitive information
 .npmignore
