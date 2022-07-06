@@ -8,7 +8,6 @@ import {CheckCalldataValidity} from "./CheckCalldataValidity.sol";
 import {ImplementingPermitted} from "./ImplementingPermitted.sol";
 import {ImplementResultPrimitive} from "./ImplementResultPrimitive.sol";
 
-
 abstract contract ImplementResult is
 IImplementResult,
 CallerPrimitive,
@@ -26,8 +25,8 @@ ImplementResultPrimitive
     returns(IImplementResult.Response) {
 
         // check whether the current voting instance allows implementation
-        if(!ImplementingPermitted._implementingPermitted(identifier)) {
-            revert IImplementingPermitted.ImplementingNotPermitted(identifier);
+        if(!_implementingPermitted(identifier)) {
+            revert IImplementingPermitted.ImplementingNotPermitted(identifier, _status[identifier]);
         }
 
         // check wether this is the correct calldata for the voting instance
@@ -38,51 +37,41 @@ ImplementResultPrimitive
         
         // implement the result
         (
-            IImplementResult.Response _response,
-            bytes memory errorMessage
+            IImplementResult.Response _responseStatus,
+            bytes memory _responseData
         ) = ImplementResultPrimitive._implement(votingContract, callbackData);
         
         // check whether the response from the call was susccessful
-        if (_response==IImplementResult.Response.successful) {
-            // TODO: Maybe implementation callback Data is expensive to store on-chain?
-            emit IImplementResult.Implemented(identifier, callbackData);
+        if (_responseStatus == IImplementResult.Response.successful) {
+            // calling a non-contract address by accident can result in a successful response, when it shouldn't.
+            // That's why the user is encouraged to implement a return value to the target function and pass to the 
+            // votingParams a flag that a return value should be expected.
+            _responseStatus = _handleNotFailedImplementation(identifier, _responseData);
         } else {
             // this can be implemented by the user.
-            _handleFailedImplementation(errorMessage);
+            _responseStatus = _handleFailedImplementation(identifier, _responseData);
         } 
 
-        return _response;
-    } 
+        _status[identifier] = _responseStatus == IImplementResult.Response.successful? 
+            uint256(IImplementResult.VotingStatusImplement.completed): 
+            uint256(IImplementResult.VotingStatusImplement.failed);
 
+        return _responseStatus;
+    } 
 
     function _requireValidCallbackData(uint256 identifier, bytes memory callbackData) internal virtual view {}
 
 
     /// @dev This is a hook for logic that handles failed implementations.
     /// @dev This function should be overridden if a failed implementation should be recorded on-chain or wrapped in a try and except construction.
-    /// @param errorMessage the bytes error message
-    function _handleFailedImplementation(bytes memory errorMessage) internal virtual {
-        if (errorMessage.length > 0) {
-            // bubble up the error
-            revert(string(errorMessage));
-        } else {
-            revert("ImplementResult: implementation failed");
-        }
-    }
+    /// @param responseData the bytes response data
+    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal virtual returns(IImplementResult.Response responseStatus){}
 
+    function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) internal virtual returns(IImplementResult.Response responseStatus){}
+
+        
 }
 
 
-abstract contract ImplementResultFromFingerprint is 
-ImplementResult,
-CheckCalldataValidity 
-{
-    
-    function _requireValidCallbackData(uint256 identifier, bytes memory callbackData) internal view override(ImplementResult) {
-        if(!CheckCalldataValidity._isValidCalldata(identifier, callbackData)){
-            revert CheckCalldataValidity.InvalidCalldata();
-        }
-    }
-}
 
         

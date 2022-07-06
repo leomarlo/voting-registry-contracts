@@ -68,8 +68,7 @@ abstract contract BareVotingContract is CallerPrimitive, StatusPrimitive, IERC16
         // Start the voting Instance
         _start(_currentIndex, votingParams);
 
-        // Store the caller and status in storage.
-        _caller[_currentIndex] = msg.sender;
+        // Store the status in storage.
         _status[_currentIndex] = uint256(IVotingContract.VotingStatus.active);
 
         // emit event

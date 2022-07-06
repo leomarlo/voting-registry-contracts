@@ -7,7 +7,7 @@ pragma solidity ^0.8.4;
 
 interface IImplementingPermitted {
 
-    error ImplementingNotPermitted(uint256 identifier);
+    error ImplementingNotPermitted(uint256 identifier, uint256 status);
 
     
     /// @dev Checks whether the current voting instance permits implementation of the result. This is customizable.
