@@ -101,6 +101,34 @@ A list of maintained implementations (contract testing is outsourced to [voting-
 **2. Majority vote with implementation**: This is a simple majority vote. The implementation calldata is passed into the creation of the voting instance and stored as a hash. After a deadline of 5 days has passed and the majority voted in favor of implementation, anyone can trigger the implement function using the correct calldata as a key.
 
 
+## Integration
+
+It is `RECOMMENDED` to access the voting contracts through a proxy contract, the *caller*. Ideally this is the contract affected by the outcome of the voting. It `SHOULD` contain two components:
+1. An interface that connects to the voting contract
+2. A security layer that (dis-)allows certain function selectors and voting contracts.
+
+### Interface for the Voting Contract 
+
+The interface `MAY` contain a `start` and a `vote` function. These functions do not need a return value. They are supposed to call the `start` and `vote` function of the voting contract under the hood and use their return values to inform the *caller* contract about the current state of the voting instance. 
+
+```js
+function start(bytes memory votingParams, bytes memory callback) external; 
+function vote(uint256 identifier, bytes memory votingData) external;
+```
+
+The implementation of the vote is then either left to the voting contract or to internal logic of the *caller*.
+
+### Function Selectors and Voting Contracts
+
+One might want to add another layer of control and security by specifying those functions that can be acted upon through a vote. Moreover one could specify which voting contract should be responsible for voting on a given function. A mapping from the `bytes4` function selector to the `address` of the voting contract would achieve this:
+
+```js
+mapping(bytes4=>address) assignedContract; 
+```
+
+When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback)]`. This gives a high degree of control. In a hypothetical scenario one could use for example a `simple token-weighted majority` for a function `foo` that decides how to allocate funds and for example an `m-out-of-n` for a function `bar` that changes a contract-specific role.
+
+
 ## Voting Registry Contract System
 
 The voting registry contract system consists of three components. In its design it is a stripped down version of the ENS system:
