@@ -3,6 +3,7 @@ import { Result } from "ethers/lib/utils";
 import { ContractReceipt, BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../scripts/interfaceIds";
 
 import {
     Snapshot
@@ -26,6 +27,11 @@ let VotingStatus = {
     "failed": 2,
     "active": 3
 }
+
+
+// let IVOTINGCONTRACT_ID = '0x9452d78d'
+// let IERC165_ID = '0x01ffc9a7'
+
 let APPROVE = abi.encode(["bool"],[true])
 let DISAPPROVE = abi.encode(["bool"],[false])
 
@@ -63,16 +69,22 @@ describe("Snapshot", function(){
         it("Should instantiate the public state variable 'VOTING_DURATION'.", async ()=> {
             expect(await contracts.snapshot.VOTING_DURATION()).to.equal(BigNumber.from("432000"))
         });
+        it("Should check whether the voting contract supports the IERC165 interface.", async function(){
+            expect(await contracts.snapshot.supportsInterface(IVOTINGCONTRACT_ID)).to.equal(true)
+            expect(await contracts.snapshot.supportsInterface(IERC165_ID)).to.equal(true)
+        })
     });
 
     describe("Voting Instance", function(){
         it("Should start a new voting instance.", async ()=> {
             let firstIdentifier: number = 0;
+            expect(await contracts.snapshot.getCurrentIndex()).to.equal(0)
             await expect(contracts.snapshot.connect(Alice).start("0x", "0x"))
                 .to.emit(contracts.snapshot,'VotingInstanceStarted')
                 .withArgs(firstIdentifier, Alice.address)
             let currentStatus = (await contracts.snapshot.getStatus(firstIdentifier)).toNumber()
             expect(currentStatus).to.equal(VotingStatus.active)
+            expect(await contracts.snapshot.getCurrentIndex()).to.equal(1)
         });
     });
 
