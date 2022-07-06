@@ -9,7 +9,10 @@ cache
 artifacts
 
 ## might need scripts at some later point
-scripts
+# scripts
+
+## coverage
+coverage
 
 ## sensitive information
 .npmignore
