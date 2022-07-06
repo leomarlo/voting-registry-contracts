@@ -11,6 +11,9 @@ artifacts
 ## might need scripts at some later point
 # scripts
 
+## types
+typechain
+
 ## coverage
 coverage
 
