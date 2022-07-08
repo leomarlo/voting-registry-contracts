@@ -41,7 +41,7 @@ import { StatusPrimitive} from "../primitives/Status.sol";
 /// @title Vote Contract - Main implementation of the inheritable vote contract.
 /// @author Leonhard Horstmeyer  <leonhard.horstmeyer@gmail.com>
 /// @dev This contract implements the necessary functions that a simple Vote Contract should implement.
-abstract contract BareVotingContract is CallerPrimitive, StatusPrimitive, IERC165, IVotingContract {
+abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC165, IVotingContract {
     
 
     //////////////////////////////////////////////////

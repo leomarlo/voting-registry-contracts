@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 
 import {IVotingContract} from "../votingContractStandard/IVotingContract.sol";
-import {BareVotingContract} from "../extensions/abstracts/BareVotingContract.sol";
+import {BaseVotingContract} from "../extensions/abstracts/BaseVotingContract.sol";
 import {NoDoubleVoting} from "../extensions/primitives/NoDoubleVoting.sol";
 import {Deadline} from "../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../extensions/primitives/CastSimpleVote.sol";
@@ -18,7 +18,7 @@ CastSimpleVote,
 Deadline,
 StatusGetter,
 CallerGetter,
-BareVotingContract
+BaseVotingContract
 {
 
     // GLOBAL DURATION
@@ -32,7 +32,7 @@ BareVotingContract
     function _start(uint256 identifier, bytes memory votingParams)
     virtual
     internal
-    override(BareVotingContract) 
+    override(BaseVotingContract) 
     {
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
@@ -42,7 +42,7 @@ BareVotingContract
     function vote(uint256 identifier, bytes memory votingData) 
     external 
     virtual 
-    override(BareVotingContract)
+    override(BaseVotingContract)
     returns (uint256)
     {
 
@@ -70,7 +70,7 @@ BareVotingContract
     }
 
     /// @dev We must implement a result function 
-    function result(uint256 identifier) external view override(BareVotingContract) returns(bytes memory resultData) {
+    function result(uint256 identifier) external view override(BaseVotingContract) returns(bytes memory resultData) {
         return abi.encode(CastSimpleVote._getVotes(identifier));   
     }
 
@@ -92,7 +92,7 @@ BareVotingContract
     }
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
-    function _checkCondition(uint256 identifier) internal view override(BareVotingContract) returns(bool condition) {
+    function _checkCondition(uint256 identifier) internal view override(BaseVotingContract) returns(bool condition) {
         condition = Deadline._deadlineHasPassed(identifier);
     }
 

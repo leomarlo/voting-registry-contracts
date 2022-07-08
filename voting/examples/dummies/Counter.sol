@@ -10,6 +10,10 @@ contract Counter {
         i = i + 1;
     }
 
+    function incrementBy(uint256 a) external returns(bool){
+        i = i + a;
+    }
+
     function incrementWithReturn() external returns(bool) {
         i = i + 1;
     }
@@ -21,3 +25,4 @@ contract Counter {
     }
 
 }
+

@@ -1,15 +1,12 @@
 //SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.4;
 
-import {IVotingIntegration} from "../interface/IVotingIntegration.sol";
-import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
 import {VotingIntegrationPrimitive} from "../primitives/VotingIntegrationPrimitive.sol";
+import {IndexedVotingContracts} from "../primitives/IndexedVotingContractsMapping.sol";
 
 
-contract BaseVotingIntegration1 is VotingIntegrationPrimitive {
+contract BaseVotingIntegrationMapping is IndexedVotingContracts, VotingIntegrationPrimitive {
     
-    mapping(uint256=>address) public votingContracts;    
-
     function _afterStart(
         uint256 identifier,
         bytes memory votingParams,
@@ -18,7 +15,7 @@ contract BaseVotingIntegration1 is VotingIntegrationPrimitive {
     override(VotingIntegrationPrimitive) 
     {
         votingParams;
-        votingContracts[identifier] = assignedContract[bytes4(callback)];
+        indexedVotingContracts[identifier] = assignedContract[bytes4(callback)];
     }
 
     function getVotingContract(uint256 identifier)
@@ -27,6 +24,6 @@ contract BaseVotingIntegration1 is VotingIntegrationPrimitive {
     override(VotingIntegrationPrimitive)
     returns(address votingContract)
     {
-        return votingContracts[identifier];
+        return indexedVotingContracts[identifier];
     }
 }

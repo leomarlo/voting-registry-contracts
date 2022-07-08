@@ -9,7 +9,7 @@ import {CastSimpleVote} from "../extensions/primitives/CastSimpleVote.sol";
 import {CallbackHashPrimitive} from "../extensions/primitives/CallbackHash.sol";
 import {CheckCalldataValidity} from "../extensions/primitives/CheckCalldataValidity.sol";
 import {CallerPrimitive, CallerGetter} from "../extensions/primitives/Caller.sol";
-import {BareVotingContract} from "../extensions/abstracts/BareVotingContract.sol";
+import {BaseVotingContract} from "../extensions/abstracts/BaseVotingContract.sol";
 import {ImplementingPermitted} from "../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../extensions/interfaces/IImplementResult.sol";
 import {StatusGetter, StatusError} from "../extensions/primitives/Status.sol";
@@ -25,7 +25,7 @@ NoDoubleVoting,
 CastSimpleVote,
 Deadline,
 ImplementingPermitted,
-BareVotingContract,
+BaseVotingContract,
 ImplementResult
 {
 
@@ -46,12 +46,12 @@ ImplementResult
     // We implement a trivial _start function for the snapshot vote.
     function _start(uint256 identifier, bytes memory votingParams)
     internal
-    override(BareVotingContract) 
+    override(BaseVotingContract) 
     {
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
 
-    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes memory callback) internal override(BareVotingContract){
+    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes memory callback) internal override(BaseVotingContract){
         _callbackHash[identifier] = keccak256(callback);
         (_caller[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
     }
@@ -72,7 +72,7 @@ ImplementResult
     /// @dev We must implement a vote function 
     function vote(uint256 identifier, bytes memory votingData) 
     external 
-    override(BareVotingContract)
+    override(BaseVotingContract)
     returns (uint256)
     {
         if(_status[identifier]!=uint256(IVotingContract.VotingStatus.active)) {
@@ -98,7 +98,7 @@ ImplementResult
 
 
     /// @dev We must implement a result function 
-    function result(uint256 identifier) external view override(BareVotingContract) returns(bytes memory resultData) {
+    function result(uint256 identifier) external view override(BaseVotingContract) returns(bytes memory resultData) {
         return abi.encode(CastSimpleVote._getVotes(identifier));   
     }
 
@@ -116,7 +116,7 @@ ImplementResult
     }
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
-    function _checkCondition(uint256 identifier) internal view override(BareVotingContract) returns(bool condition) {
+    function _checkCondition(uint256 identifier) internal view override(BaseVotingContract) returns(bool condition) {
         condition = Deadline._deadlineHasPassed(identifier);
     }
 
