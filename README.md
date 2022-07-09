@@ -109,14 +109,27 @@ It is `RECOMMENDED` to access the voting contracts through a proxy contract, the
 
 ### Interface for the Voting Contract 
 
-The interface `MAY` contain a `start` and a `vote` function. These functions do not need a return value. They are supposed to call the `start` and `vote` function of the voting contract under the hood and use their return values to inform the *caller* contract about the current state of the voting instance. 
+The interface `SHOULD` contain a `start` function, which calls the standardized `start` function of the voting contract under the hood and uses customized logic for its return value, the *identifier* of the voting instance so that the *caller* may track the journey of that instance as votes are coming in.
 
 ```js
-function start(bytes memory votingParams, bytes memory callback) external; 
+function start(bytes memory votingParams, bytes memory callback) external {
+    // customized logic
+    IVotingContract()
+};
+```
+
+If one is not using this framework as a substitute for snapshot to record votes for ever on the chain without triggering on-chain consequences, then one may implement a simple `vote` function that calls the standardized vote function under the hood:
+
+```js
 function vote(uint256 identifier, bytes memory votingData) external;
 ```
 
-The implementation of the vote is then either left to the voting contract or to internal logic of the *caller*.
+
+Regarding the integration of the `voting` and `implement` there are bascially three options:
+
+1. 
+
+The implementation of the vote is then either left to the voting contractt or to internal logic of the *caller*.
 
 ### Function Selectors and Voting Contracts
 
