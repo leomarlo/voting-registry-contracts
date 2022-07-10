@@ -10,7 +10,7 @@ import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol
 
 abstract contract MinimalIntegrationPrimitive is IVotingIntegration, IndexedVotingContracts, SecurityPrimitive {
 
-    function start(bytes memory votingParams, bytes memory callback) 
+    function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IVotingIntegration)
     {
@@ -22,7 +22,7 @@ abstract contract MinimalIntegrationPrimitive is IVotingIntegration, IndexedVoti
         indexedVotingContracts[identifier] = assignedContract[bytes4(callback)];
     }
 
-    function vote(uint256 identifier, bytes memory votingData, bytes memory callback) 
+    function vote(uint256 identifier, bytes memory votingData, bytes calldata callback) 
     external 
     override(IVotingIntegration)
     {

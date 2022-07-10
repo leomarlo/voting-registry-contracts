@@ -10,7 +10,7 @@ import {IndexedVotingContracts} from "../primitives/IndexedVotingContractsMappin
 
 abstract contract VoteWithoutCallbackWithHooks is IIntegrationVoteWithoutCallback, SecurityPrimitive {
 
-    function start(bytes memory votingParams, bytes memory callback) 
+    function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IIntegrationVoteWithoutCallback){
         _beforeStart(votingParams, callback);
@@ -33,9 +33,9 @@ abstract contract VoteWithoutCallbackWithHooks is IIntegrationVoteWithoutCallbac
 
     function getVotingContract(uint256 identifier) virtual public view returns(address votingContract) {}
 
-    function _beforeStart(bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _beforeStart(bytes memory votingParams, bytes calldata callback) virtual internal {}
 
-    function _afterStart(uint256 identifier, bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 
@@ -46,7 +46,7 @@ abstract contract VoteWithoutCallbackWithHooks is IIntegrationVoteWithoutCallbac
 
 abstract contract VoteWithoutCallbackMinimal is IIntegrationVoteWithoutCallback, IndexedVotingContracts, SecurityPrimitive {
 
-    function start(bytes memory votingParams, bytes memory callback) 
+    function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IIntegrationVoteWithoutCallback){
         _beforeStart(votingParams, callback);
@@ -66,7 +66,7 @@ abstract contract VoteWithoutCallbackMinimal is IIntegrationVoteWithoutCallback,
         IVotingContract(indexedVotingContracts[identifier]).vote(identifier, votingData);
     }
 
-    function _beforeStart(bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _beforeStart(bytes memory votingParams, bytes calldata callback) virtual internal {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 

@@ -10,7 +10,7 @@ contract BaseVotingIntegrationMapping is IndexedVotingContracts, VotingIntegrati
     function _afterStart(
         uint256 identifier,
         bytes memory votingParams,
-        bytes memory callback) 
+        bytes calldata callback) 
     internal 
     override(VotingIntegrationPrimitive) 
     {

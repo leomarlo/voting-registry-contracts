@@ -19,9 +19,9 @@ and any set of extensions.
 
 ### **Start a Voting Instance**
 
-The start function should create a new voting instance. Two arguments should be passed to it, namely `bytes memory votingParams` and `bytes memory callback`. The `uint256 identifier` of the instance should be returned:
+The start function should create a new voting instance. Two arguments should be passed to it, namely `bytes memory votingParams` and `bytes calldata callback`. The `uint256 identifier` of the instance should be returned:
 ```js
-function start(bytes memory votingParams, bytes memory callback) external returns(uint256 identifier); 
+function start(bytes memory votingParams, bytes calldata callback) external returns(uint256 identifier); 
 ```
 
 The configuration of the voting instance should be passed through the `votingParams`. Parameters could for instance be the duration of the vote, a quorum threshold, a majority threshold and in many cases a token address for token-weighted votes. The choice of parameter serialization is left as a matter of the contract's internal logic. Typically the configuration is stored at least for the duration of the voting. 
@@ -58,12 +58,12 @@ The function should be a `view` function whose single argument is the `uint256 i
 
 ### Implement the Voting Result
 
-This standard is really meant for voting with on-chain consequences, but it can also be used like snapshot. The `implement` function executes the `bytes memory callbackData` directly on the calling contract. As arguments it takes the `uint256 identifier` and the `bytes memory callbackData`. It returns a response that can be either `successful` or `unsuccessful`. Calls that have not yet been made get the state `precall`.
+This standard is really meant for voting with on-chain consequences, but it can also be used like snapshot. The `implement` function executes the `bytes calldata callbackData` directly on the calling contract. As arguments it takes the `uint256 identifier` and the `bytes calldata callbackData`. It returns a response that can be either `successful` or `unsuccessful`. Calls that have not yet been made get the state `precall`.
 
 ```js
 enum Response {precall, successful, failed}
 
-function implement(uint256 identifier, bytes memory callbackData) external returns(Response response); 
+function implement(uint256 identifier, bytes calldata callbackData) external returns(Response response); 
 ```
 The `implement` function `MAY` be implemented. Having another contract make low-level calls with calldata that it could potentially temper with requires a high level of trust. The voting contract `SHOULD NOT` be a proxy contract, which would open possible attack vectors. The target contract, that calls the `implement` function `SHOULD` be able to block calls from a voting instance that implements this function. (see **Voting Integration**). These concerns lead to the suggestion of having the `implement` function as an optional but recommended extension of the minimal voting standard.
 
@@ -104,43 +104,61 @@ A list of maintained implementations (contract testing is outsourced to [voting-
 ## Integration
 
 It is `RECOMMENDED` to access the voting contracts through a proxy contract, the *caller*. Ideally this is the contract affected by the outcome of the voting. It `SHOULD` contain two components:
-1. An interface that connects to the voting contract
-2. A security layer that (dis-)allows certain function selectors and voting contracts.
+1. A security layer that (dis-)allows certain function selectors and voting contracts.
+2. An interface that connects to the voting contract
 
-### Interface for the Voting Contract 
+### 1. Function Selectors and Voting Contracts
 
-The interface `SHOULD` contain a `start` function, which calls the standardized `start` function of the voting contract under the hood and uses customized logic for its return value, the *identifier* of the voting instance so that the *caller* may track the journey of that instance as votes are coming in.
+One `SHOULD` add another layer of control and security by specifying those functions that can be acted upon through a vote. Moreover one could specify which voting contract should be responsible for voting on a given function. A mapping from the `bytes4` function selector to the `address` of the voting contract would achieve this:
 
 ```js
-function start(bytes memory votingParams, bytes memory callback) external {
-    // customized logic
-    IVotingContract()
-};
+mapping(bytes4=>address) assignedContract; 
 ```
 
-If one is not using this framework as a substitute for snapshot to record votes for ever on the chain without triggering on-chain consequences, then one may implement a simple `vote` function that calls the standardized vote function under the hood:
+To prevent votes to ever be made that affect sensitive external functions one can check whether the function selector of the callback data has an assigned voting contract:
+
+```js
+function _isVotableFunction(bytes4 selector) internal view returns(bool votable){
+        return assignedContract[selector]!=address(0);
+    }
+```
+
+When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback[0:4])]`. This gives a high degree of control. In a hypothetical scenario one could use for example a `simple token-weighted majority` for a function `foo` that decides how to allocate funds and for example an `m-out-of-n` for a function `bar` that changes a contract-specific role.
+
+### 2. Interface for the Voting Contract 
+
+The interface `SHOULD` contain a `start` function, `MAY` contain a `vote` function and `MAY` contain an `implement` function. We discuss them in turn. The `start` function calls the standardized start function of the voting contract under the hood and uses customized logic for its return value, the *identifier* of the voting instance so that the *caller* may track the journey of that instance as votes are coming in.
+
+```js
+function start(bytes memory votingParams, bytes calldata callback) external;
+```
+
+The suggested pattern for this function is to first check whether the callback data is secure and then to call the voting contract's start function. If this framework is used as a substitute for snapshot to record votes on the chain without triggering on-chain consequences, then empty calldata can be passed and there is no need to check whether a votable function is targeted. Otherwise one may use the security pattern to check whether the selector of the callback data has an assigned voting contract, e.g. `_isVotableFunction(bytes4(callback[0:4]))`. One may integrate snapshot-type votes or votes with on-chain consequences or both, all in one calling contract. If there are only votes that trigger functions then the voting contracts may be recovered from the `assignedContract` mapping discussed in the security pattern. If one uses only the snapshot-type functions without on-chain consequences -- it would be a bit of an anti-pattern but nevertheless possible -- then it might make sense to just store the address of the voting contract in a state variable. In either case one can call the voting contract's start function like so:
+
+```js
+function start(bytes memory votingParams, bytes calldata callback) external{
+    // security guards and custom logic
+    uint256 identifier = IVotingContract(votingContract).start(votingParams, callback);
+    // custom logic with identifier
+}
+```
+
+The `vote` function allows users to cast a vote by calling the voting contract's vote function under the hood. Its return value, the *status* can be handled with custom logic. One could for for instance immediately implement the outcome of the vote when the returned status is *complete* or *awaitcall*. In this case it would be helpful to have the value of the callback data stored in cache and trigger an implement routine that is either intrinsic to the caller contract or the one on the voting contract's side, if it exists. The recommended interface is:
 
 ```js
 function vote(uint256 identifier, bytes memory votingData) external;
 ```
 
 
+
+
+TODO
+
 Regarding the integration of the `voting` and `implement` there are bascially three options:
 
 1. 
 
 The implementation of the vote is then either left to the voting contractt or to internal logic of the *caller*.
-
-### Function Selectors and Voting Contracts
-
-One might want to add another layer of control and security by specifying those functions that can be acted upon through a vote. Moreover one could specify which voting contract should be responsible for voting on a given function. A mapping from the `bytes4` function selector to the `address` of the voting contract would achieve this:
-
-```js
-mapping(bytes4=>address) assignedContract; 
-```
-
-When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback)]`. This gives a high degree of control. In a hypothetical scenario one could use for example a `simple token-weighted majority` for a function `foo` that decides how to allocate funds and for example an `m-out-of-n` for a function `bar` that changes a contract-specific role.
-
 
 ## Voting Registry Contract System
 

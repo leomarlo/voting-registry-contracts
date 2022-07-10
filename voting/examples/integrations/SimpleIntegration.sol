@@ -25,7 +25,7 @@ contract SimpleIntegrationStruct is BaseIntegrationWithSimpleStruct, Counter {
         require(isDAOMember[msg.sender], "Only DAO Members");
     }
     
-    function _afterVote(uint256 identifier, uint256 status, bytes memory callback)
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata callback)
     internal 
     override(BaseIntegrationWithSimpleStruct)
     {
@@ -57,7 +57,7 @@ contract SimpleIntegrationWithStatusStruct is BaseIntegrationWithStatusStruct, C
         require(isDAOMember[msg.sender], "Only DAO Members");
     }
     
-    function _afterVote(uint256 identifier, uint256 status, bytes memory callback)
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata callback)
     internal 
     override(BaseIntegrationWithStatusStruct)
     {

@@ -12,7 +12,7 @@ import {IndexedVotingContracts} from "../primitives/IndexedVotingContractsMappin
 
 abstract contract VoteWithCallbackWithHooks is IIntegrationVoteWithCallback, SecurityPrimitive {
 
-    function start(bytes memory votingParams, bytes memory callback) 
+    function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IIntegrationVoteWithCallback){
         _beforeStart(votingParams, callback);
@@ -24,7 +24,7 @@ abstract contract VoteWithCallbackWithHooks is IIntegrationVoteWithCallback, Sec
         _afterStart(identifier, votingParams, callback);
     }
 
-    function vote(uint256 identifier, bytes memory votingData, bytes memory callback) 
+    function vote(uint256 identifier, bytes memory votingData, bytes calldata callback) 
     external 
     override(IIntegrationVoteWithCallback)
     {
@@ -33,15 +33,15 @@ abstract contract VoteWithCallbackWithHooks is IIntegrationVoteWithCallback, Sec
         _afterVote(identifier, status, callback);
     }
 
-    function _beforeStart(bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _beforeStart(bytes memory votingParams, bytes calldata callback) virtual internal {}
 
-    function _afterStart(uint256 identifier, bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
 
     function getVotingContract(uint256 identifier) virtual public view returns(address votingContract) {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 
-    function _afterVote(uint256 identifier, uint256 status, bytes memory callback) virtual internal {}
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata callback) virtual internal {}
 
 }
 
@@ -49,7 +49,7 @@ abstract contract VoteWithCallbackWithHooks is IIntegrationVoteWithCallback, Sec
 
 abstract contract VoteWithCallbackMinimal is IIntegrationVoteWithCallback, IndexedVotingContracts, SecurityPrimitive {
 
-    function start(bytes memory votingParams, bytes memory callback) 
+    function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IIntegrationVoteWithCallback){
         _beforeStart(votingParams, callback);
@@ -63,7 +63,7 @@ abstract contract VoteWithCallbackMinimal is IIntegrationVoteWithCallback, Index
 
     
 
-    function vote(uint256 identifier, bytes memory votingData, bytes memory callback) 
+    function vote(uint256 identifier, bytes memory votingData, bytes calldata callback) 
     external 
     override(IIntegrationVoteWithCallback)
     {
@@ -74,7 +74,7 @@ abstract contract VoteWithCallbackMinimal is IIntegrationVoteWithCallback, Index
         }
     }
 
-    function _beforeStart(bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _beforeStart(bytes memory votingParams, bytes calldata callback) virtual internal {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 

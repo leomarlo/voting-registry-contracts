@@ -51,7 +51,7 @@ ImplementResult
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
 
-    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes memory callback) internal override(BaseVotingContract){
+    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) internal override(BaseVotingContract){
         _callbackHash[identifier] = keccak256(callback);
         (_caller[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
     }
@@ -120,7 +120,7 @@ ImplementResult
         condition = Deadline._deadlineHasPassed(identifier);
     }
 
-    function _requireValidCallbackData(uint256 identifier, bytes memory callbackData) internal view override(ImplementResult) {
+    function _requireValidCallbackData(uint256 identifier, bytes calldata callbackData) internal view override(ImplementResult) {
         if(!CheckCalldataValidity._isValidCalldata(identifier, callbackData)){
             revert CheckCalldataValidity.InvalidCalldata();
         }

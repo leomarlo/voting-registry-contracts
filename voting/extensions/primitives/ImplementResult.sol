@@ -19,7 +19,7 @@ ImplementResultPrimitive
     /// @param identifier the index for the voting instance in question
     /// @param callbackData data that is passed along with the function call.
     /// @return response information on whether the call was successful or unsuccessful.
-    function implement(uint256 identifier, bytes memory callbackData) 
+    function implement(uint256 identifier, bytes calldata callbackData) 
     external 
     override(IImplementResult)
     returns(IImplementResult.Response) {
@@ -59,7 +59,7 @@ ImplementResultPrimitive
         return _responseStatus;
     } 
 
-    function _requireValidCallbackData(uint256 identifier, bytes memory callbackData) internal virtual view {}
+    function _requireValidCallbackData(uint256 identifier, bytes calldata callbackData) internal virtual view {}
 
 
     /// @dev This is a hook for logic that handles failed implementations.

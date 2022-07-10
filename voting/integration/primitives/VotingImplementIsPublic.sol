@@ -10,7 +10,7 @@ import { IndexedVotingContracts } from "../primitives/IndexedVotingContractsMapp
 
 abstract contract ImplementIsPublicWithHooks is IIntegrationImplementIsPublic, SecurityPrimitive {
 
-    function start(bytes memory votingParams, bytes memory callback) 
+    function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IIntegrationImplementIsPublic){
         _beforeStart(votingParams, callback);
@@ -31,7 +31,7 @@ abstract contract ImplementIsPublicWithHooks is IIntegrationImplementIsPublic, S
         _afterVote(identifier, status);
     }
 
-    function implement(uint256 identifier, bytes memory callbackData)
+    function implement(uint256 identifier, bytes calldata callbackData)
     virtual
     external {
         IImplementResult.Response response; 
@@ -41,9 +41,9 @@ abstract contract ImplementIsPublicWithHooks is IIntegrationImplementIsPublic, S
 
     function getVotingContract(uint256 identifier) virtual public view returns(address votingContract) {}
 
-    function _beforeStart(bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _beforeStart(bytes memory votingParams, bytes calldata callback) virtual internal {}
 
-    function _afterStart(uint256 identifier, bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 
@@ -56,7 +56,7 @@ abstract contract ImplementIsPublicWithHooks is IIntegrationImplementIsPublic, S
 
 abstract contract ImplementIsPublicMinimal is IIntegrationImplementIsPublic, IndexedVotingContracts, SecurityPrimitive {
 
-    function start(bytes memory votingParams, bytes memory callback) 
+    function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IIntegrationImplementIsPublic){
         _beforeStart(votingParams, callback);
@@ -77,14 +77,14 @@ abstract contract ImplementIsPublicMinimal is IIntegrationImplementIsPublic, Ind
     }
 
     /// @dev Can also be overridden with a coustom implement function
-    function implement(uint256 identifier, bytes memory callbackData)
+    function implement(uint256 identifier, bytes calldata callbackData)
     external 
     virtual 
     {
         IImplementResult(indexedVotingContracts[identifier]).implement(identifier, callbackData);
     }
 
-    function _beforeStart(bytes memory votingParams, bytes memory callback) virtual internal {}
+    function _beforeStart(bytes memory votingParams, bytes calldata callback) virtual internal {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 

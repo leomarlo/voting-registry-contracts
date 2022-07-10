@@ -56,7 +56,7 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
 
     /// @dev This function exposes the initiation of a new voting instance to an external caller.
     /// @param votingParams these are the bytes-encoded voting parameters that allow the inheriting contract to decide about the specifics of this vote.
-    function start(bytes memory votingParams, bytes memory callback)
+    function start(bytes memory votingParams, bytes calldata callback)
     public
     virtual
     override(IVotingContract) 
@@ -108,7 +108,7 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
 
     /// @dev This function is a hook for developers to include some customized functions.
     /// @param votingParams these are the bytes-encoded voting parameters that allow the inheriting contract to decide about the specifics of this vote.
-    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes memory callback) internal virtual {}
+    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) internal virtual {}
 
 
 

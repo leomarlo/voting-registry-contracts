@@ -10,7 +10,7 @@ abstract contract ImplementResultPrimitive {
     /// @param callbackData the calldata for the function call.
     /// @return _response a response flag that can be either successful (1) or failed (2).
     /// @return errorMessage error message.
-    function _implement(address _contract, bytes memory callbackData) 
+    function _implement(address _contract, bytes calldata callbackData) 
     internal 
     virtual
     returns(IImplementResult.Response, bytes memory)

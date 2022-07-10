@@ -2,5 +2,5 @@
 pragma solidity ^0.8.4;
 
 interface IGetCallbackData {
-    function getCallbackData(uint256 identifier) external view returns(bytes memory callbackData);
+    function getCallbackData(uint256 identifier) external view returns(bytes calldata callbackData);
 }

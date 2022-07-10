@@ -8,7 +8,7 @@ abstract contract CheckCalldataValidity is CallbackHashPrimitive {
     
     error InvalidCalldata();
     
-    function _isValidCalldata(uint256 identifier, bytes memory callbackData)
+    function _isValidCalldata(uint256 identifier, bytes calldata callbackData)
     internal 
     view
     returns(bool isValid)

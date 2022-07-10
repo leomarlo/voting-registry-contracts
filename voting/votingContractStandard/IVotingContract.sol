@@ -15,7 +15,7 @@ interface IVotingContract is IERC165{
 
     event VotingInstanceStarted(uint256 identifier, address caller);
 
-    function start(bytes memory votingParams, bytes memory callback) external returns(uint256 identifier); 
+    function start(bytes memory votingParams, bytes calldata callback) external returns(uint256 identifier); 
 
     function vote(uint256 identifier, bytes memory votingData) external returns(uint256 status);
 

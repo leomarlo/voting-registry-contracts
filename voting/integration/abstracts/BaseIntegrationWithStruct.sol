@@ -10,7 +10,7 @@ contract BaseIntegrationWithSimpleStruct is InstanceInfoPrimitive, VotingIntegra
     function _afterStart(
         uint256 identifier,
         bytes memory votingParams,
-        bytes memory callback) 
+        bytes calldata callback) 
     internal 
     override(VotingIntegrationPrimitive) 
     {
@@ -40,7 +40,7 @@ contract BaseIntegrationWithStatusStruct is InstanceInfoWithStatusPrimitive, Vot
     function _afterStart(
         uint256 identifier,
         bytes memory votingParams,
-        bytes memory callback) 
+        bytes calldata callback) 
     internal 
     override(VotingIntegrationPrimitive) 
     {
