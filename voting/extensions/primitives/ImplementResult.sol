@@ -6,12 +6,13 @@ import {IImplementingPermitted} from "../interfaces/IImplementingPermitted.sol";
 import {CallerPrimitive} from "./Caller.sol";
 import {CheckCalldataValidity} from "./CheckCalldataValidity.sol";
 import {ImplementingPermitted} from "./ImplementingPermitted.sol";
-import {ImplementResultPrimitive} from "./ImplementResultPrimitive.sol";
+import {ImplementResultPrimitive, HandleImplementationResponse} from "./ImplementResultPrimitive.sol";
 
 abstract contract ImplementResult is
 IImplementResult,
 CallerPrimitive,
 ImplementingPermitted,
+HandleImplementationResponse,
 ImplementResultPrimitive
 {
 
@@ -33,13 +34,13 @@ ImplementResultPrimitive
         _requireValidCallbackData(identifier, callbackData);
 
         // retrieve calling contract from the identifier.
-        address votingContract = CallerPrimitive._caller[identifier];
+        address callingContract = CallerPrimitive._caller[identifier];
         
         // implement the result
         (
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
-        ) = ImplementResultPrimitive._implement(votingContract, callbackData);
+        ) = ImplementResultPrimitive._implement(callingContract, callbackData);
         
         // check whether the response from the call was susccessful
         if (_responseStatus == IImplementResult.Response.successful) {
@@ -60,14 +61,6 @@ ImplementResultPrimitive
     } 
 
     function _requireValidCallbackData(uint256 identifier, bytes calldata callbackData) internal virtual view {}
-
-
-    /// @dev This is a hook for logic that handles failed implementations.
-    /// @dev This function should be overridden if a failed implementation should be recorded on-chain or wrapped in a try and except construction.
-    /// @param responseData the bytes response data
-    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal virtual returns(IImplementResult.Response responseStatus){}
-
-    function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) internal virtual returns(IImplementResult.Response responseStatus){}
 
         
 }

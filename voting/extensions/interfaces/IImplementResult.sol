@@ -8,6 +8,7 @@ interface IImplementResult {
     enum Response {precall, successful, failed}
 
     event Implemented(uint256 identifier);
+    
     event NotImplemented(uint256 identifier);
 
     /// @dev Checks whether the current voting instance permits voting. This is customizable.

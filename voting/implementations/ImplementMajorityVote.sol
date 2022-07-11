@@ -13,6 +13,7 @@ import {BaseVotingContract} from "../extensions/abstracts/BaseVotingContract.sol
 import {ImplementingPermitted} from "../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../extensions/interfaces/IImplementResult.sol";
 import {StatusGetter, StatusError} from "../extensions/primitives/Status.sol";
+import {ExpectReturnValue, HandleImplementationResponseWithErrorsAndEvents} from "./ImplementResultPrimitive.sol";
 import {ImplementResult} from "../extensions/primitives/ImplementResult.sol";
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
@@ -26,15 +27,13 @@ CastSimpleVote,
 Deadline,
 ImplementingPermitted,
 BaseVotingContract,
+ExpectReturnValue,
+HandleImplementationResponseWithErrorsAndEvents
 ImplementResult
 {
 
     // GLOBAL DURATION
     uint256 public constant VOTING_DURATION = 5 days;
-
-    // Expected Return
-    mapping(uint256 => bool) internal _expectReturnValue;
-    error ExpectedReturnError(uint256 identifier);
 
     /// @dev We must implement a start function. 
     // We choose the start function from VotingWithImplementing, which handles 
@@ -126,33 +125,38 @@ ImplementResult
         }
     }
 
-    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal override(ImplementResult) returns(IImplementResult.Response responseStatus){
-        if (responseData.length > 0) {
-            assembly {
-                revert(add(responseData,32),mload(responseData))
-            }
-        } else {
-            emit IImplementResult.NotImplemented(identifier);
-            return IImplementResult.Response.failed;
-        }
+    // function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal 
+    // override(HandleImplementationResponse) 
+    // returns(IImplementResult.Response responseStatus){
+    //     if (responseData.length > 0) {
+    //         assembly {
+    //             revert(add(responseData,32),mload(responseData))
+    //         }
+    //     } else {
+    //         emit IImplementResult.NotImplemented(identifier);
+    //         return IImplementResult.Response.failed;
+    //     }
         
-    }
+    // }
 
 
-    function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) internal override(ImplementResult) returns(IImplementResult.Response responseStatus){
-        // could still be non-successful
-        // calling a non-contract address by accident can result in a successful response, when it shouldn't.
-        // That's why the user is encouraged to implement a return value to the target function and pass to the 
-        // votingParams a flag that a return value should be expected.
-        if (_expectReturnValue[identifier] && responseData.length==0) {
-            // responseStatus = IImplementResult.Response.failed;
-            // emit IImplementResult.NotImplemented(identifier);
-            revert ExpectedReturnError(identifier);
-        } else {
-            responseStatus = IImplementResult.Response.successful;
-            emit IImplementResult.Implemented(identifier);
-        }
+    // function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) 
+    // internal 
+    // override(HandleImplementationResponse) 
+    // returns(IImplementResult.Response responseStatus){
+    //     // could still be non-successful
+    //     // calling a non-contract address by accident can result in a successful response, when it shouldn't.
+    //     // That's why the user is encouraged to implement a return value to the target function and pass to the 
+    //     // votingParams a flag that a return value should be expected.
+    //     if (_expectReturnValue[identifier] && responseData.length==0) {
+    //         // responseStatus = IImplementResult.Response.failed;
+    //         // emit IImplementResult.NotImplemented(identifier);
+    //         revert ExpectedReturnError(identifier);
+    //     } else {
+    //         responseStatus = IImplementResult.Response.successful;
+    //         emit IImplementResult.Implemented(identifier);
+    //     }
 
-    }
+    // }
 
 }

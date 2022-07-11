@@ -10,13 +10,21 @@ import {IndexedVotingContracts} from "../primitives/IndexedVotingContractsMappin
 
 
 
+
+
+
+
+
+
+
+
 abstract contract VoteWithCallbackWithHooks is IIntegrationVoteWithCallback, SecurityPrimitive {
 
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IIntegrationVoteWithCallback){
         _beforeStart(votingParams, callback);
-        bytes4 selector = bytes4(callback);
+        bytes4 selector = bytes4(callback[0:4]);
         if (!SecurityPrimitive._isVotableFunction(selector)){
             revert SecurityPrimitive.IsNotVotableFunction(selector);
         }

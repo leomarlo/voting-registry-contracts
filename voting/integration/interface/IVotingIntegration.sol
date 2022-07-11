@@ -2,27 +2,26 @@
 pragma solidity ^0.8.4;
 
 
-interface IIntegrationVoteWithCallback {
+interface IStart {
 
     function start(bytes memory votingParams, bytes calldata callback) external; 
 
-    function vote(uint256 identifier, bytes memory votingData, bytes calldata callback) external;
-
 }
 
-interface IIntegrationVoteWithoutCallback {
-   
+interface IStartAndVote {
+
     function start(bytes memory votingParams, bytes calldata callback) external; 
 
     function vote(uint256 identifier, bytes memory votingData) external;
 
 }
 
-interface IIntegrationImplementIsPublic {
+interface IStartVoteAndImplement {
    
     function start(bytes memory votingParams, bytes calldata callback) external; 
 
     function vote(uint256 identifier, bytes memory votingData) external;
 
     function implement(uint256 identifier, bytes calldata callbackData) external;
+
 }
