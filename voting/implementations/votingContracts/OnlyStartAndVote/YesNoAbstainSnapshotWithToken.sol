@@ -2,20 +2,23 @@
 pragma solidity ^0.8.13;
 
 
-import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {BaseVotingContract} from "../../extensions/abstracts/BaseVotingContract.sol";
-import {NoDoubleVoting} from "../../extensions/primitives/NoDoubleVoting.sol";
-import {Deadline} from "../../extensions/primitives/Deadline.sol";
-import {CastSimpleVote} from "../../extensions/primitives/CastSimpleVote.sol";
-import {StatusGetter, StatusError} from "../../extensions/primitives/Status.sol";
-import {CallerGetter} from "../../extensions/primitives/Caller.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVotingContract} from "../../../votingContractStandard/IVotingContract.sol";
+import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
+import {NoDoubleVoting} from "../../../extensions/primitives/NoDoubleVoting.sol";
+import {Deadline} from "../../../extensions/primitives/Deadline.sol";
+import {CastYesNoAbstainVote} from "../../../extensions/primitives/CastYesNoAbstainVote.sol";
+import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
+import {CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TokenPrimitive} from "../../../extensions/primitives/TokenPrimitive.sol";
 
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
-contract Snapshot is 
+contract YesNoAbstainSnapshotWithToken is 
 NoDoubleVoting,
-CastSimpleVote,
+CastYesNoAbstainVote,
 Deadline,
+TokenPrimitive,
 StatusGetter,
 CallerGetter,
 BaseVotingContract
@@ -34,6 +37,7 @@ BaseVotingContract
     internal
     override(BaseVotingContract) 
     {
+        _token[identifier] = abi.decode(votingParams, (address));
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
 
@@ -62,8 +66,11 @@ BaseVotingContract
         
         NoDoubleVoting._alreadyVoted[identifier][msg.sender] = true;
         
-        bool approve = abi.decode(votingData, (bool));
-        CastSimpleVote._castVote(identifier, approve ? int256(1) : int256(-1));
+        uint256 option = abi.decode(votingData, (uint256));
+        CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
+        
+        uint256 weight = IERC20(_token[identifier]).balanceOf(msg.sender);
+        CastYesNoAbstainVote._castVote(identifier, voteOption, 1);
 
         return _status[identifier]; 
                  
@@ -71,7 +78,7 @@ BaseVotingContract
 
     /// @dev We must implement a result function 
     function result(uint256 identifier) external view override(BaseVotingContract) returns(bytes memory resultData) {
-        return abi.encode(CastSimpleVote._getVotes(identifier));   
+        return abi.encode(CastYesNoAbstainVote._getVotes(identifier));   
     }
 
     function conclude(uint256 identifier) external {
@@ -86,9 +93,10 @@ BaseVotingContract
     }
 
     function _setStatus(uint256 identifier) internal {
-        _status[identifier] = (CastSimpleVote._getVotes(identifier)==0) ?
-                     uint256(IVotingContract.VotingStatus.failed) :
-                     uint256(IVotingContract.VotingStatus.completed); 
+        uint256[3] memory votes = CastYesNoAbstainVote._getVotes(identifier);
+        _status[identifier] = (votes[1]>votes[0]) ?
+            uint256(IVotingContract.VotingStatus.failed) :
+            uint256(IVotingContract.VotingStatus.completed); 
     }
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
