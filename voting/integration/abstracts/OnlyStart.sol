@@ -81,7 +81,7 @@ abstract contract StartHybridVotingMinml is IStart, AssignedContractPrimitive {
         if (callback.length<4){
             votingContract.start(votingParams, callback);
         } else {
-            bytes4 selector = bytes4(bytes(callback[0:4]));
+            bytes4 selector = bytes4(callback[0:4]);
             if (!AssignedContractPrimitive._isVotableFunction(selector)){
                 revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
