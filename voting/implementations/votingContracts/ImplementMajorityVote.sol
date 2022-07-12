@@ -141,7 +141,6 @@ ImplementResult
             emit HandleImplementationResponse.NotImplemented(identifier);
             return IImplementResult.Response.failed;
         }
-        
     }
 
 
