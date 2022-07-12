@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import {IStartAndVote} from "../interface/IVotingIntegration.sol";
 import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {SecurityPrimitive} from "../primitives/SecurityPrimitive.sol";
+import {AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
 import { Instance, InstanceInfoPrimitive } from "../primitives/InstanceInfoPrimitive.sol";
 
 

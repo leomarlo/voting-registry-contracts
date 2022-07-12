@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import {IStartAndVote} from "../interface/IVotingIntegration.sol";
 import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {SecurityPrimitive} from "../primitives/SecurityPrimitive.sol";
+import {AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
 import {
     InstanceWithCallback,
     InstanceInfoWithCallback
@@ -11,7 +11,8 @@ import {
 import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol";
 import {
     ImplementResultPrimitive,
-    HandleImplementationResponse
+    HandleImplementationResponse,
+    HandleFailedImplementationResponse
 } from "../../extensions/primitives/ImplementResultPrimitive.sol";
 import {ImplementingPermitted} from "../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementingPermitted} from "../../extensions/interfaces/IImplementingPermitted.sol";
@@ -22,13 +23,13 @@ abstract contract StartAndVoteHybridVotingImplCallerMinml is
 IStartAndVote, 
 IImplementingPermitted,
 InstanceInfoWithCallback, 
-SecurityPrimitive, 
-HandleImplementationResponse, 
+AssignedContractPrimitive, 
+HandleFailedImplementationResponse, 
 ImplementResultPrimitive,
 StatusPrimitive,
 ImplementingPermitted{
 
-    IVotingContract public votingContract;
+    address public votingContract;
 
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
@@ -39,8 +40,8 @@ ImplementingPermitted{
             _votingContract = votingContract;
         } else {
             bytes4 selector = bytes4(callback[0:4]);
-            if (!SecurityPrimitive._isVotableFunction(selector)){
-                revert SecurityPrimitive.IsNotVotableFunction(selector);
+            if (!AssignedContractPrimitive._isVotableFunction(selector)){
+                revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             _votingContract = assignedContract[selector];
         }
@@ -70,12 +71,11 @@ ImplementingPermitted{
                 
             // check whether the response from the call was not susccessful
             // check whether the response from the call was susccessful
-            if (_responseStatus == IImplementResult.Response.successful) {
-                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.complete);
-                _handleNotFailedImplementation(identifier, _responseData);
-            } else {
-                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
+            if (_responseStatus == IImplementResult.Response.failed) {
                 _handleFailedImplementation(identifier, _responseData);
+                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
+            } else {
+                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.completed);
             } 
             // IImplementResult(instances[identifier]).implement(identifier, callback);
         }
@@ -92,7 +92,7 @@ abstract contract StartAndVoteHybridVotingImplCallerHooks is
 IStartAndVote, 
 IImplementingPermitted,
 InstanceInfoWithCallback, 
-SecurityPrimitive, 
+AssignedContractPrimitive, 
 HandleImplementationResponse, 
 ImplementResultPrimitive,
 StatusPrimitive,
@@ -108,8 +108,8 @@ ImplementingPermitted
             _votingContract = _getSimpleVotingContract(callback);
         } else {
             bytes4 selector = bytes4(callback[0:4]);
-            if (!SecurityPrimitive._isVotableFunction(selector)){
-                revert SecurityPrimitive.IsNotVotableFunction(selector);
+            if (!AssignedContractPrimitive._isVotableFunction(selector)){
+                revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             _votingContract = assignedContract[selector];
         }
@@ -142,7 +142,7 @@ ImplementingPermitted
                 
             // check whether the response from the call was susccessful
             if (_responseStatus == IImplementResult.Response.successful) {
-                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.complete);
+                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.completed);
                 _handleNotFailedImplementation(identifier, _responseData);
             } else {
                 _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
@@ -170,8 +170,8 @@ abstract contract StartAndVoteOnlyCallbackImplCallerMinml is
 IStartAndVote, 
 IImplementingPermitted,
 InstanceInfoWithCallback, 
-SecurityPrimitive,
-HandleImplementationResponse,
+AssignedContractPrimitive,
+HandleFailedImplementationResponse,
 StatusPrimitive,
 ImplementingPermitted,
 ImplementResultPrimitive
@@ -182,8 +182,8 @@ ImplementResultPrimitive
     override(IStartAndVote){
         _beforeStart(votingParams);
         bytes4 selector = bytes4(callback[0:4]);
-        if (!SecurityPrimitive._isVotableFunction(selector)){
-            revert SecurityPrimitive.IsNotVotableFunction(selector);
+        if (!AssignedContractPrimitive._isVotableFunction(selector)){
+            revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         address votingContract = assignedContract[selector];
         uint256 identifier = IVotingContract(votingContract).start(votingParams, callback);
@@ -230,7 +230,7 @@ abstract contract StartAndVoteOnlyCallbackImplCallerHooks is
 IStartAndVote, 
 IImplementingPermitted,
 InstanceInfoWithCallback, 
-SecurityPrimitive,
+AssignedContractPrimitive,
 HandleImplementationResponse,
 StatusPrimitive,
 ImplementingPermitted,
@@ -239,10 +239,10 @@ ImplementResultPrimitive
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStartAndVote){
-        _beforeStart(votingParams);
+        _beforeStart(votingParams, callback);
         bytes4 selector = bytes4(callback[0:4]);
-        if (!SecurityPrimitive._isVotableFunction(selector)){
-            revert SecurityPrimitive.IsNotVotableFunction(selector);
+        if (!AssignedContractPrimitive._isVotableFunction(selector)){
+            revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         address votingContract = assignedContract[selector];
         uint256 identifier = IVotingContract(votingContract).start(votingParams, callback);
@@ -259,7 +259,7 @@ ImplementResultPrimitive
     function vote(uint256 identifier, bytes memory votingData) 
     external 
     override(IStartAndVote){
-        _beforeVote(identifier);
+        _beforeVote(identifier, votingData);
         uint256 remoteStatus = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
             votingData);
@@ -272,7 +272,7 @@ ImplementResultPrimitive
                 
             // check whether the response from the call was susccessful
             if (_responseStatus == IImplementResult.Response.successful) {
-                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.complete);
+                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.completed);
                 _handleNotFailedImplementation(identifier, _responseData);
             } else {
                 _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 
 interface IStart {
@@ -22,6 +22,6 @@ interface IStartVoteAndImplement {
 
     function vote(uint256 identifier, bytes memory votingData) external;
 
-    function implement(uint256 identifier, bytes calldata callbackData) external;
+    function implement(uint256 identifier, bytes calldata callback) external;
 
 }

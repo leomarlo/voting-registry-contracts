@@ -1,21 +1,21 @@
 //SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import {IStart} from "../interface/IVotingIntegration.sol";
 import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {SecurityPrimitive} from "../primitives/SecurityPrimitive.sol";
+import {AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
 // import {IndexedVotingContracts} from "../primitives/IndexedVotingContractsMapping.sol";
 
 
-abstract contract StartOnlyCallbackHooks is IStart, SecurityPrimitive {
+abstract contract StartOnlyCallbackHooks is IStart, AssignedContractPrimitive {
 
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStart){
         _beforeStart(votingParams, callback);
         bytes4 selector = bytes4(callback[0:4]);
-        if (!SecurityPrimitive._isVotableFunction(selector)){
-            revert SecurityPrimitive.IsNotVotableFunction(selector);
+        if (!AssignedContractPrimitive._isVotableFunction(selector)){
+            revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         uint256 identifier = IVotingContract(assignedContract[selector]).start(votingParams, callback);
         _afterStart(identifier, votingParams, callback);
@@ -27,14 +27,14 @@ abstract contract StartOnlyCallbackHooks is IStart, SecurityPrimitive {
 
 }
 
-abstract contract StartOnlyCallbackMinml is IStart, SecurityPrimitive {
+abstract contract StartOnlyCallbackMinml is IStart, AssignedContractPrimitive {
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStart){
         _beforeStart(votingParams);
         bytes4 selector = bytes4(callback[0:4]);
-        if (!SecurityPrimitive._isVotableFunction(selector)){
-            revert SecurityPrimitive.IsNotVotableFunction(selector);
+        if (!AssignedContractPrimitive._isVotableFunction(selector)){
+            revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         IVotingContract(assignedContract[selector]).start(votingParams, callback);
     }
@@ -44,7 +44,7 @@ abstract contract StartOnlyCallbackMinml is IStart, SecurityPrimitive {
 
 
 
-abstract contract StartHybridVotingHooks is IStart, SecurityPrimitive {
+abstract contract StartHybridVotingHooks is IStart, AssignedContractPrimitive {
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStart){
@@ -54,8 +54,8 @@ abstract contract StartHybridVotingHooks is IStart, SecurityPrimitive {
             identifier = IVotingContract(_getSimpleVotingContract(callback)).start(votingParams, callback);
         } else {
             bytes4 selector = bytes4(callback[0:4]);
-            if (!SecurityPrimitive._isVotableFunction(selector)){
-                revert SecurityPrimitive.IsNotVotableFunction(selector);
+            if (!AssignedContractPrimitive._isVotableFunction(selector)){
+                revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             identifier = IVotingContract(assignedContract[selector]).start(votingParams, callback);
         }
@@ -69,7 +69,7 @@ abstract contract StartHybridVotingHooks is IStart, SecurityPrimitive {
     function _getSimpleVotingContract(bytes calldata callback) virtual internal returns(address) {}
 }
 
-abstract contract StartHybridVotingMinml is IStart, SecurityPrimitive {
+abstract contract StartHybridVotingMinml is IStart, AssignedContractPrimitive {
 
     IVotingContract public votingContract;
 
@@ -81,9 +81,9 @@ abstract contract StartHybridVotingMinml is IStart, SecurityPrimitive {
         if (callback.length<4){
             votingContract.start(votingParams, callback);
         } else {
-            bytes4 selector = bytes4(callback[0:4]);
-            if (!SecurityPrimitive._isVotableFunction(selector)){
-                revert SecurityPrimitive.IsNotVotableFunction(selector);
+            bytes4 selector = bytes4(bytes(callback[0:4]));
+            if (!AssignedContractPrimitive._isVotableFunction(selector)){
+                revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             IVotingContract(assignedContract[selector]).start(votingParams, callback);
         }

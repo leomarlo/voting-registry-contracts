@@ -1,20 +1,25 @@
 // SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 
-import {IVotingContract} from "../votingContractStandard/IVotingContract.sol";
-import {NoDoubleVoting} from "../extensions/primitives/NoDoubleVoting.sol";
-import {Deadline} from "../extensions/primitives/Deadline.sol";
-import {CastSimpleVote} from "../extensions/primitives/CastSimpleVote.sol";
-import {CallbackHashPrimitive} from "../extensions/primitives/CallbackHash.sol";
-import {CheckCalldataValidity} from "../extensions/primitives/CheckCalldataValidity.sol";
-import {CallerPrimitive, CallerGetter} from "../extensions/primitives/Caller.sol";
-import {BaseVotingContract} from "../extensions/abstracts/BaseVotingContract.sol";
-import {ImplementingPermitted} from "../extensions/primitives/ImplementingPermitted.sol";
-import {IImplementResult} from "../extensions/interfaces/IImplementResult.sol";
-import {StatusGetter, StatusError} from "../extensions/primitives/Status.sol";
-import {ExpectReturnValue, HandleImplementationResponseWithErrorsAndEvents} from "./ImplementResultPrimitive.sol";
-import {ImplementResult} from "../extensions/primitives/ImplementResult.sol";
+import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
+import {NoDoubleVoting} from "../../extensions/primitives/NoDoubleVoting.sol";
+import {Deadline} from "../../extensions/primitives/Deadline.sol";
+import {CastSimpleVote} from "../../extensions/primitives/CastSimpleVote.sol";
+import {CallbackHashPrimitive} from "../../extensions/primitives/CallbackHash.sol";
+import {CheckCalldataValidity} from "../../extensions/primitives/CheckCalldataValidity.sol";
+import {CallerPrimitive, CallerGetter} from "../../extensions/primitives/Caller.sol";
+import {BaseVotingContract} from "../../extensions/abstracts/BaseVotingContract.sol";
+import {ImplementingPermitted} from "../../extensions/primitives/ImplementingPermitted.sol";
+import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol";
+import {StatusGetter, StatusError} from "../../extensions/primitives/Status.sol";
+import {
+    ExpectReturnValue,
+    HandleImplementationResponse
+} from "../../extensions/primitives/ImplementResultPrimitive.sol";
+import {ImplementResult} from "../../extensions/primitives/ImplementResult.sol";
+
+
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract ImplementMajorityVote is 
@@ -28,7 +33,7 @@ Deadline,
 ImplementingPermitted,
 BaseVotingContract,
 ExpectReturnValue,
-HandleImplementationResponseWithErrorsAndEvents
+HandleImplementationResponse,
 ImplementResult
 {
 
@@ -119,44 +124,42 @@ ImplementResult
         condition = Deadline._deadlineHasPassed(identifier);
     }
 
-    function _requireValidCallbackData(uint256 identifier, bytes calldata callbackData) internal view override(ImplementResult) {
-        if(!CheckCalldataValidity._isValidCalldata(identifier, callbackData)){
+    function _requireValidCallbackData(uint256 identifier, bytes calldata callback) internal view override(ImplementResult) {
+        if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
             revert CheckCalldataValidity.InvalidCalldata();
         }
     }
 
-    // function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal 
-    // override(HandleImplementationResponse) 
-    // returns(IImplementResult.Response responseStatus){
-    //     if (responseData.length > 0) {
-    //         assembly {
-    //             revert(add(responseData,32),mload(responseData))
-    //         }
-    //     } else {
-    //         emit IImplementResult.NotImplemented(identifier);
-    //         return IImplementResult.Response.failed;
-    //     }
+    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal 
+    override(HandleImplementationResponse) 
+    returns(IImplementResult.Response responseStatus){
+        if (responseData.length > 0) {
+            assembly {
+                revert(add(responseData,32),mload(responseData))
+            }
+        } else {
+            emit HandleImplementationResponse.NotImplemented(identifier);
+            return IImplementResult.Response.failed;
+        }
         
-    // }
+    }
 
 
-    // function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) 
-    // internal 
-    // override(HandleImplementationResponse) 
-    // returns(IImplementResult.Response responseStatus){
-    //     // could still be non-successful
-    //     // calling a non-contract address by accident can result in a successful response, when it shouldn't.
-    //     // That's why the user is encouraged to implement a return value to the target function and pass to the 
-    //     // votingParams a flag that a return value should be expected.
-    //     if (_expectReturnValue[identifier] && responseData.length==0) {
-    //         // responseStatus = IImplementResult.Response.failed;
-    //         // emit IImplementResult.NotImplemented(identifier);
-    //         revert ExpectedReturnError(identifier);
-    //     } else {
-    //         responseStatus = IImplementResult.Response.successful;
-    //         emit IImplementResult.Implemented(identifier);
-    //     }
+    function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) 
+    internal 
+    override(HandleImplementationResponse) 
+    returns(IImplementResult.Response responseStatus){
+        // could still be non-successful
+        // calling a non-contract address by accident can result in a successful response, when it shouldn't.
+        // That's why the user is encouraged to implement a return value to the target function and pass to the 
+        // votingParams a flag that a return value should be expected.
+        if (_expectReturnValue[identifier] && responseData.length==0) {
+            revert ExpectedReturnError(identifier);
+        } else {
+            responseStatus = IImplementResult.Response.successful;
+            emit HandleImplementationResponse.Implemented(identifier);
+        }
 
-    // }
+    }
 
 }

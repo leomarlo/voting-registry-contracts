@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import {IImplementResult} from "../interfaces/IImplementResult.sol";
 import {IImplementingPermitted} from "../interfaces/IImplementingPermitted.sol";
@@ -18,9 +18,9 @@ ImplementResultPrimitive
 
     /// @dev Checks whether the current voting instance permits voting. This is customizable.
     /// @param identifier the index for the voting instance in question
-    /// @param callbackData data that is passed along with the function call.
+    /// @param callback data that is passed along with the function call.
     /// @return response information on whether the call was successful or unsuccessful.
-    function implement(uint256 identifier, bytes calldata callbackData) 
+    function implement(uint256 identifier, bytes calldata callback) 
     external 
     override(IImplementResult)
     returns(IImplementResult.Response) {
@@ -31,7 +31,7 @@ ImplementResultPrimitive
         }
 
         // check wether this is the correct calldata for the voting instance
-        _requireValidCallbackData(identifier, callbackData);
+        _requireValidCallbackData(identifier, callback);
 
         // retrieve calling contract from the identifier.
         address callingContract = CallerPrimitive._caller[identifier];
@@ -40,7 +40,7 @@ ImplementResultPrimitive
         (
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
-        ) = ImplementResultPrimitive._implement(callingContract, callbackData);
+        ) = ImplementResultPrimitive._implement(callingContract, callback);
         
         // check whether the response from the call was susccessful
         if (_responseStatus == IImplementResult.Response.successful) {
@@ -60,7 +60,7 @@ ImplementResultPrimitive
         return _responseStatus;
     } 
 
-    function _requireValidCallbackData(uint256 identifier, bytes calldata callbackData) internal virtual view {}
+    function _requireValidCallbackData(uint256 identifier, bytes calldata callback) internal virtual view {}
 
         
 }

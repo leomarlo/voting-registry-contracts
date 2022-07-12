@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IVotingRegistry} from "../registry/IVotingRegistry.sol";

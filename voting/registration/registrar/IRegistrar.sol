@@ -1,7 +1,7 @@
 
 // SPDX-License-Identifier: GPL-2.0
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 interface IRegistrarPrimitive {
     function register(address votingContract, address resolver, address controller) external;

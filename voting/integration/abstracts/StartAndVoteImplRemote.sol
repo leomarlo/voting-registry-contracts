@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import {IStartAndVote} from "../interface/IVotingIntegration.sol";
 import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {SecurityPrimitive} from "../primitives/SecurityPrimitive.sol";
+import {AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
 import {
     InstanceWithCallback,
     InstanceInfoWithCallback
@@ -14,7 +14,7 @@ import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol
 abstract contract StartAndVoteHybridVotingImplRemoteMinml is 
 IStartAndVote, 
 InstanceInfoWithCallback, 
-SecurityPrimitive
+AssignedContractPrimitive
 {
 
     address public votingContract;
@@ -28,8 +28,8 @@ SecurityPrimitive
             _votingContract = votingContract;
         } else {
             bytes4 selector = bytes4(callback[0:4]);
-            if (!SecurityPrimitive._isVotableFunction(selector)){
-                revert SecurityPrimitive.IsNotVotableFunction(selector);
+            if (!AssignedContractPrimitive._isVotableFunction(selector)){
+                revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             _votingContract = assignedContract[selector];
         }
@@ -69,7 +69,7 @@ SecurityPrimitive
 abstract contract StartAndVoteHybridVotingImplRemoteHooks is 
 IStartAndVote, 
 InstanceInfoWithCallback, 
-SecurityPrimitive
+AssignedContractPrimitive
 {
  
     function start(bytes memory votingParams, bytes calldata callback) 
@@ -81,8 +81,8 @@ SecurityPrimitive
             _votingContract = _getSimpleVotingContract(callback);
         } else {
             bytes4 selector = bytes4(callback[0:4]);
-            if (!SecurityPrimitive._isVotableFunction(selector)){
-                revert SecurityPrimitive.IsNotVotableFunction(selector);
+            if (!AssignedContractPrimitive._isVotableFunction(selector)){
+                revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             _votingContract = assignedContract[selector];
         }
@@ -132,7 +132,7 @@ SecurityPrimitive
 abstract contract StartAndVoteOnlyCallbackImplRemoteMinml is 
 IStartAndVote, 
 InstanceInfoWithCallback, 
-SecurityPrimitive
+AssignedContractPrimitive
 {
 
     function start(bytes memory votingParams, bytes calldata callback) 
@@ -140,8 +140,8 @@ SecurityPrimitive
     override(IStartAndVote){
         _beforeStart(votingParams);
         bytes4 selector = bytes4(callback[0:4]);
-        if (!SecurityPrimitive._isVotableFunction(selector)){
-            revert SecurityPrimitive.IsNotVotableFunction(selector);
+        if (!AssignedContractPrimitive._isVotableFunction(selector)){
+            revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         address votingContract = assignedContract[selector];
         uint256 identifier = IVotingContract(votingContract).start(votingParams, callback);
@@ -177,15 +177,15 @@ SecurityPrimitive
 abstract contract StartAndVoteOnlyCallbackImplRemoteHooks is 
 IStartAndVote, 
 InstanceInfoWithCallback, 
-SecurityPrimitive
+AssignedContractPrimitive
 {
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStartAndVote){
         _beforeStart(votingParams, callback);
         bytes4 selector = bytes4(callback[0:4]);
-        if (!SecurityPrimitive._isVotableFunction(selector)){
-            revert SecurityPrimitive.IsNotVotableFunction(selector);
+        if (!AssignedContractPrimitive._isVotableFunction(selector)){
+            revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         address votingContract = assignedContract[selector];
         uint256 identifier = IVotingContract(votingContract).start(votingParams, callback);

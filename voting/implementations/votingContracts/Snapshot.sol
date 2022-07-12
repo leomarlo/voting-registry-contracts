@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 
-import {IVotingContract} from "../votingContractStandard/IVotingContract.sol";
-import {BaseVotingContract} from "../extensions/abstracts/BaseVotingContract.sol";
-import {NoDoubleVoting} from "../extensions/primitives/NoDoubleVoting.sol";
-import {Deadline} from "../extensions/primitives/Deadline.sol";
-import {CastSimpleVote} from "../extensions/primitives/CastSimpleVote.sol";
-import {StatusGetter, StatusError} from "../extensions/primitives/Status.sol";
-import {CallerGetter} from "../extensions/primitives/Caller.sol";
+import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
+import {BaseVotingContract} from "../../extensions/abstracts/BaseVotingContract.sol";
+import {NoDoubleVoting} from "../../extensions/primitives/NoDoubleVoting.sol";
+import {Deadline} from "../../extensions/primitives/Deadline.sol";
+import {CastSimpleVote} from "../../extensions/primitives/CastSimpleVote.sol";
+import {StatusGetter, StatusError} from "../../extensions/primitives/Status.sol";
+import {CallerGetter} from "../../extensions/primitives/Caller.sol";
 
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.

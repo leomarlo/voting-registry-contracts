@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 import {IImplementResult} from "../interfaces/IImplementResult.sol";
 
@@ -17,43 +17,80 @@ abstract contract ImplementResultPrimitive {
 
     /// @dev a generic internal helper function that calls a function with a given selector in a given contract with some calldata.
     /// @param _contract the address of the contract, whose function ought to be called.
-    /// @param callbackData the calldata for the function call.
+    /// @param callback the calldata for the function call.
     /// @return _response a response flag that can be either successful (1) or failed (2).
     /// @return errorMessage error message.
-    function _implement(address _contract, bytes calldata callbackData) 
+    function _implement(address _contract, bytes memory callback) 
     internal 
     virtual
     returns(IImplementResult.Response, bytes memory)
     {
-        (bool success, bytes memory errorMessage) = _contract.call(callbackData);
+        (bool success, bytes memory errorMessage) = _contract.call(callback);
         IImplementResult.Response response = success ? IImplementResult.Response.successful : IImplementResult.Response.failed; 
         return (response, errorMessage);
     }
 }
 
 
-abstract contract HandleImplementationResponse {
+    
+abstract contract HandleFailedImplementationResponse {
+    
+    event NotImplemented(uint256 identifier);
 
     /// @dev This is a hook for logic that handles failed implementations.
     /// @dev This function should be overridden if a failed implementation should be recorded on-chain or wrapped in a try and except construction.
     /// @param responseData the bytes response data
-    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal virtual returns(IImplementResult.Response responseStatus){}
-
-    function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) internal virtual returns(IImplementResult.Response responseStatus){}
+    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) 
+    virtual
+    internal
+    returns(IImplementResult.Response responseStatus)
+    {}
 
 }
 
-abstract contract HandleImplementationResponseWithErrorsAndEvents is ExpectReturnValue, HandleImplementationResponse {
+abstract contract HandleImplementationResponse {
 
-    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal 
+    event Implemented(uint256 identifier);
+    
+    event NotImplemented(uint256 identifier);
+
+    /// @dev This is a hook for logic that handles failed implementations.
+    /// @dev This function should be overridden if a failed implementation should be recorded on-chain or wrapped in a try and except construction.
+    /// @param responseData the bytes response data
+    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) 
+    virtual
+    internal 
+    returns(IImplementResult.Response responseStatus)
+    {}
+
+    function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData)
+    virtual
+    internal
+    returns(IImplementResult.Response responseStatus)
+    {}
+
+}
+
+
+
+
+abstract contract HandleImplementationResponseWithErrorsAndEvents is 
+ExpectReturnValue, 
+HandleImplementationResponse 
+{
+
+    function _handleFailedImplementation(uint256 identifier, bytes memory responseData) 
+    virtual
+    internal 
     override(HandleImplementationResponse) 
-    returns(IImplementResult.Response responseStatus){
+    returns(IImplementResult.Response responseStatus)
+    {
         if (responseData.length > 0) {
             assembly {
                 revert(add(responseData,32),mload(responseData))
             }
-        } else {
-            emit IImplementResult.NotImplemented(identifier);
+        } else { 
+            emit HandleImplementationResponse.NotImplemented(identifier);
             return IImplementResult.Response.failed;
         }
         
@@ -61,6 +98,7 @@ abstract contract HandleImplementationResponseWithErrorsAndEvents is ExpectRetur
 
 
     function _handleNotFailedImplementation(uint256 identifier, bytes memory responseData) 
+    virtual
     internal 
     override(HandleImplementationResponse) 
     returns(IImplementResult.Response responseStatus){
@@ -74,7 +112,7 @@ abstract contract HandleImplementationResponseWithErrorsAndEvents is ExpectRetur
             revert ExpectedReturnError(identifier);
         } else {
             responseStatus = IImplementResult.Response.successful;
-            emit IImplementResult.Implemented(identifier);
+            emit HandleImplementationResponse.Implemented(identifier);
         }
 
     }
@@ -83,7 +121,8 @@ abstract contract HandleImplementationResponseWithErrorsAndEvents is ExpectRetur
 
 
 
-abstract contract HandleImplementationResponseWithoutExpectingResponse is HandleImplementationResponse {
+abstract contract HandleImplementationResponseWithoutExpectingResponse is 
+HandleImplementationResponse {
 
     function _handleFailedImplementation(uint256 identifier, bytes memory responseData) internal 
     override(HandleImplementationResponse) 
@@ -93,7 +132,7 @@ abstract contract HandleImplementationResponseWithoutExpectingResponse is Handle
                 revert(add(responseData,32),mload(responseData))
             }
         } else {
-            emit IImplementResult.NotImplemented(identifier);
+            emit HandleImplementationResponse.NotImplemented(identifier);
             return IImplementResult.Response.failed;
         }
         
@@ -105,7 +144,7 @@ abstract contract HandleImplementationResponseWithoutExpectingResponse is Handle
     override(HandleImplementationResponse) 
     returns(IImplementResult.Response responseStatus){
         responseStatus = IImplementResult.Response.successful;
-        emit IImplementResult.Implemented(identifier);
+        emit HandleImplementationResponse.Implemented(identifier);
     }
 }
 

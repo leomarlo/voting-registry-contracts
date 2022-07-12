@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
 interface IImplementResult {
 
@@ -7,13 +7,9 @@ interface IImplementResult {
     
     enum Response {precall, successful, failed}
 
-    event Implemented(uint256 identifier);
-    
-    event NotImplemented(uint256 identifier);
-
     /// @dev Checks whether the current voting instance permits voting. This is customizable.
     /// @param identifier the index for the voting instance in question
-    /// @param callbackData data that is passed along with the function call.
+    /// @param callback data that is passed along with the function call.
     /// @return response information on whether the call was successful or unsuccessful.
-    function implement(uint256 identifier, bytes calldata callbackData) external returns(Response response); 
+    function implement(uint256 identifier, bytes calldata callback) external returns(Response response); 
 }
