@@ -107,22 +107,27 @@ It is `RECOMMENDED` to access the voting contracts through a proxy contract, the
 1. A security layer that (dis-)allows certain function selectors and voting contracts.
 2. An interface that connects to the voting contract
 
-### 1. Function Selectors and Voting Contracts
+### 1. Function Selectors and Imposter Voting Contracts
 
 One `SHOULD` add another layer of control and security by providing guards against undesired external calls and by specifying which functions may be acted upon through a vote in the first place, in particular from which voting contract. 
 
-To mitigate undesired calls the developer `SHOULD` implement a function that checks whether the alleged voting contract is allowed to call the function with selector `msg.sig`. In other words one needs to check whether the calling address `msg.sender` approved.
+To mitigate undesired calls the developer `SHOULD` implement a function that checks whether the alleged voting contract is allowed to call the function with selector `msg.sig`. In other words one needs to check whether the calling address `msg.sender` is approved.
 ```js
-function _isImplementer() virtual internal returns(bool);
+function _isImplementer() internal returns(bool);
 ```
-This could then also be wrapped by a customized `modifier`, that might revert when the call is not originating from an approved address or has some other customized rights that allows a call.
+This could then also be wrapped into a customized `modifier` that reverts the call when it is not originating from an approved address or has some other customized rights that allows a call. 
 
 It is `RECOMMENDED` to create a mapping from the `bytes4` function selector to the `address` of the assigned voting contract. Approval would need to be handled through the implementing contract's internal logic. The mapping could be called:
 
 ```js
 mapping(bytes4=>address) assignedContract; 
 ```
-
+When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback[0:4])]`. This mapping could then also be used to define
+```js
+function _isImplementer() internal view returns(bool) {
+    return assignedContract[msg.sig]==msg.sender;
+}
+``` 
 To prevent votes to affect sensitive external functions one can check whether the function selector of the callback data has an assigned voting contract:
 
 ```js
@@ -130,8 +135,9 @@ function _isVotableFunction(bytes4 selector) internal view returns(bool votable)
         return assignedContract[selector]!=address(0);
     }
 ```
+Typically before starting a new instance one shoud check whether the first four bytes of the callback point to a votable function. If that is not the case a revert message `CAN` be implemented. 
 
-When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback[0:4])]`. If it is not one `CAN` implement a custom revert message. This gives a high degree of control. In a hypothetical scenario one could use for example a `simple token-weighted majority` for a function `foo` that decides how to allocate funds and for example an `m-out-of-n` for a function `bar` that changes a contract-specific role.
+In general the `assignedContract`-mapping gives a high degree of control. In a hypothetical scenario one could use for example a `simple token-weighted majority` for a function `foo` that decides how to allocate funds and for example an `m-out-of-n` for a function `bar` that changes a contract-specific role.
 
 ### 2. Interface for the Voting Contract 
 
@@ -163,7 +169,7 @@ If the calling contract is the place where votes are cast and potentially implem
 function vote(uint256 identifier, bytes memory votingData) external;
 ```
 
-We maintain five integration patterns that use the vote interface. The first one is intended for a snapshot-like scenario, where a globally stored voting contract is used (one to rule them all) and the identifier coincides with that instance's identifier on that voting contract. A second and third one do not only call the vote function, but also implement the outcome depending on its returned status flag. In one case its implemented in the caller, in the other it calls the implement function of the voting contract. The fourth and fifth ones only calls vote function and instead of implementing the outcome directly, they have separate `implement` functions that respectively implement in the caller or call the voting contract's implement function:
+We maintain five integration patterns that use the vote interface. The first one is intended for a snapshot-like scenario, where a globally stored voting contract is used (one to rule them all) and the identifier coincides with that instance's identifier on that voting contract. A second and third one call the vote function, but also implement the outcome depending on its returned status flag. In one case it's implemented in the caller, in the other it calls the implement function of the voting contract. The fourth and fifth ones only calls vote function and instead of implementing the outcome directly, they have separate `implement` functions that respectively implement in the caller or call the voting contract's implement function:
 
 ```js
 function implement(uint256 identifier, bytes calldata callback) external;
