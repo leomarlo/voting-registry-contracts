@@ -19,6 +19,8 @@ import {ImplementingPermitted} from "../../extensions/primitives/ImplementingPer
 import {IImplementingPermitted} from "../../extensions/interfaces/IImplementingPermitted.sol";
 import {StatusPrimitive} from "../../extensions/primitives/Status.sol";
 
+import {CallbackHashPrimitive} from "../../extensions/primitives/CallbackHash.sol";
+import {CheckCalldataValidity} from "../../extensions/primitives/CheckCalldataValidity.sol";
 
 
 abstract contract StartVoteAndImplementOnlyCallbackImplCallerMinml is
@@ -26,6 +28,8 @@ IStartVoteAndImplement,
 IImplementingPermitted,
 InstanceInfoPrimitive, 
 AssignedContractPrimitive,
+CallbackHashPrimitive,
+CheckCalldataValidity,
 HandleFailedImplementationResponse,
 StatusPrimitive,
 ImplementingPermitted,
@@ -36,12 +40,14 @@ ImplementResultPrimitive
     external 
     override(IStartVoteAndImplement){
         _beforeStart(votingParams);
+        
         bytes4 selector = bytes4(callback[0:4]);
         if (!AssignedContractPrimitive._isVotableFunction(selector)){
             revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         address votingContract = assignedContract[selector];
         uint256 identifier = IVotingContract(votingContract).start(votingParams, callback);
+        _callbackHash[instances.length] = keccak256(callback);
         instances.push(Instance({
             identifier: identifier,
             votingContract: votingContract
@@ -63,7 +69,12 @@ ImplementResultPrimitive
     external 
     override(IStartVoteAndImplement) 
     {
+        if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
+            revert CheckCalldataValidity.InvalidCalldata();
+        }
+
         _beforeImplement(identifier);
+        
         (
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
@@ -88,6 +99,8 @@ IStartVoteAndImplement,
 IImplementingPermitted,
 InstanceInfoPrimitive, 
 AssignedContractPrimitive,
+CallbackHashPrimitive,
+CheckCalldataValidity,
 HandleImplementationResponse,
 StatusPrimitive,
 ImplementingPermitted,
@@ -104,6 +117,7 @@ ImplementResultPrimitive
         }
         address votingContract = assignedContract[selector];
         uint256 identifier = IVotingContract(votingContract).start(votingParams, callback);
+        _callbackHash[instances.length] = keccak256(callback);
         instances.push(Instance({
             identifier: identifier,
             votingContract: votingContract
@@ -128,7 +142,12 @@ ImplementResultPrimitive
     external 
     override(IStartVoteAndImplement) 
     {
+        if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
+            revert CheckCalldataValidity.InvalidCalldata();
+        }
+
         _beforeImplement(identifier);
+        
         (
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
@@ -162,6 +181,8 @@ IStartVoteAndImplement,
 IImplementingPermitted,
 InstanceInfoPrimitive, 
 AssignedContractPrimitive, 
+CallbackHashPrimitive,
+CheckCalldataValidity,
 HandleFailedImplementationResponse, 
 ImplementResultPrimitive,
 StatusPrimitive,
@@ -185,6 +206,7 @@ ImplementingPermitted
             _votingContract = assignedContract[selector];
         }
         uint256 identifier = IVotingContract(_votingContract).start(votingParams, callback);
+        _callbackHash[instances.length] = keccak256(callback);
         instances.push(Instance({
             identifier: identifier,
             votingContract: _votingContract
@@ -205,6 +227,10 @@ ImplementingPermitted
     external 
     override(IStartVoteAndImplement) 
     {
+        if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
+            revert CheckCalldataValidity.InvalidCalldata();
+        }
+
         _beforeImplement(identifier);
 
         (
@@ -227,12 +253,16 @@ ImplementingPermitted
 
 }
 
+    
+
 
 abstract contract StartVoteAndImplementHybridVotingImplCallerHooks is 
 IStartVoteAndImplement, 
 IImplementingPermitted,
 InstanceInfoPrimitive, 
 AssignedContractPrimitive, 
+CallbackHashPrimitive,
+CheckCalldataValidity,
 HandleImplementationResponse, 
 ImplementResultPrimitive,
 StatusPrimitive,
@@ -254,6 +284,7 @@ ImplementingPermitted
             _votingContract = assignedContract[selector];
         }
         uint256 identifier = IVotingContract(_votingContract).start(votingParams, callback);
+        _callbackHash[instances.length] = keccak256(callback);
         instances.push(Instance({
             identifier: identifier,
             votingContract: _votingContract
@@ -261,10 +292,10 @@ ImplementingPermitted
         _afterStart(identifier, votingParams, callback);
     }
 
-     function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes memory votingData) 
     external 
     override(IStartVoteAndImplement){
-        _beforeVote(identifier);
+        _beforeVote(identifier, votingData);
         uint256 remoteStatus = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
             votingData);
@@ -276,7 +307,12 @@ ImplementingPermitted
     external 
     override(IStartVoteAndImplement) 
     {
+        if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
+            revert CheckCalldataValidity.InvalidCalldata();
+        }
+
         _beforeImplement(identifier);
+        
         (
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
@@ -297,7 +333,7 @@ ImplementingPermitted
 
     function _getSimpleVotingContract(bytes calldata callback) virtual internal returns(address) {}
 
-    function _beforeVote(uint256 identifier) virtual internal {}
+    function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 
     function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
 
