@@ -109,13 +109,21 @@ It is `RECOMMENDED` to access the voting contracts through a proxy contract, the
 
 ### 1. Function Selectors and Voting Contracts
 
-One `SHOULD` add another layer of control and security by specifying those functions that can be acted upon through a vote. Moreover one could specify which voting contract should be responsible for voting on a given function. A mapping from the `bytes4` function selector to the `address` of the voting contract would achieve this:
+One `SHOULD` add another layer of control and security by providing guards against undesired external calls and by specifying which functions may be acted upon through a vote in the first place, in particular from which voting contract. 
+
+To mitigate undesired calls the developer `SHOULD` implement a function that checks whether the alleged voting contract is allowed to call the function with selector `msg.sig`. In other words one needs to check whether the calling address `msg.sender` approved.
+```js
+function _isImplementer() virtual internal returns(bool);
+```
+This could then also be wrapped by a customized `modifier`, that might revert when the call is not originating from an approved address or has some other customized rights that allows a call.
+
+It is `RECOMMENDED` to create a mapping from the `bytes4` function selector to the `address` of the assigned voting contract. Approval would need to be handled through the implementing contract's internal logic. The mapping could be called:
 
 ```js
 mapping(bytes4=>address) assignedContract; 
 ```
 
-To prevent votes to ever be made that affect sensitive external functions one can check whether the function selector of the callback data has an assigned voting contract:
+To prevent votes to affect sensitive external functions one can check whether the function selector of the callback data has an assigned voting contract:
 
 ```js
 function _isVotableFunction(bytes4 selector) internal view returns(bool votable){
@@ -123,7 +131,7 @@ function _isVotableFunction(bytes4 selector) internal view returns(bool votable)
     }
 ```
 
-When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback[0:4])]`. This gives a high degree of control. In a hypothetical scenario one could use for example a `simple token-weighted majority` for a function `foo` that decides how to allocate funds and for example an `m-out-of-n` for a function `bar` that changes a contract-specific role.
+When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback[0:4])]`. If it is not one `CAN` implement a custom revert message. This gives a high degree of control. In a hypothetical scenario one could use for example a `simple token-weighted majority` for a function `foo` that decides how to allocate funds and for example an `m-out-of-n` for a function `bar` that changes a contract-specific role.
 
 ### 2. Interface for the Voting Contract 
 

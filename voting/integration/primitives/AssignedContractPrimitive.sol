@@ -16,7 +16,7 @@ abstract contract SecurityPrimitive {
     
     error IsNotImplementer(address imposter);
 
-    function _isImplementer(address implementer) virtual internal returns(bool){}
+    function _isImplementer() virtual internal returns(bool){}
 
 }
 
@@ -25,12 +25,12 @@ AssignedContractPrimitive,
 SecurityPrimitive 
 {
 
-    function _isImplementer(address implementer)
+    function _isImplementer()
     virtual 
     internal 
     override(SecurityPrimitive)
     returns(bool){
-        return assignedContract[msg.sig]==implementer;
+        return assignedContract[msg.sig]==msg.sender;
     }
 
 }
