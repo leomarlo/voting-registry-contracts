@@ -66,12 +66,12 @@ abstract contract StartHybridVotingHooks is IStart, AssignedContractPrimitive {
 
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
 
-    function _getSimpleVotingContract(bytes calldata callback) virtual internal returns(address) {}
+    function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 }
 
 abstract contract StartHybridVotingMinml is IStart, AssignedContractPrimitive {
 
-    IVotingContract public votingContract;
+    address public votingContract;
 
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
@@ -79,7 +79,7 @@ abstract contract StartHybridVotingMinml is IStart, AssignedContractPrimitive {
         
         _beforeStart(votingParams);
         if (callback.length<4){
-            votingContract.start(votingParams, callback);
+            IVotingContract(votingContract).start(votingParams, callback);
         } else {
             bytes4 selector = bytes4(callback[0:4]);
             if (!AssignedContractPrimitive._isVotableFunction(selector)){
@@ -108,19 +108,19 @@ abstract contract StartSimpleVotingHooks is IStart {
 
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
 
-    function _getSimpleVotingContract(bytes calldata callback) virtual internal returns(address) {}
+    function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 }
 
 
 abstract contract StartSimpleVotingMinml is IStart {
 
-    IVotingContract public votingContract;
+    address public votingContract;
 
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStart){
         _beforeStart(votingParams);
-        votingContract.start(votingParams, callback);
+        IVotingContract(votingContract).start(votingParams, callback);
     }
 
     function _beforeStart(bytes memory votingParams) virtual internal {}

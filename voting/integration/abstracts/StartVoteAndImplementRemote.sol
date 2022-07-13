@@ -226,7 +226,7 @@ InstanceInfoPrimitive
 
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
     
-    function _getSimpleVotingContract(bytes calldata callback) virtual internal returns(address) {}
+    function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 
