@@ -2,27 +2,27 @@
 pragma solidity ^0.8.13;
 
 
-import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {NoDoubleVoting} from "../../extensions/primitives/NoDoubleVoting.sol";
-import {Deadline} from "../../extensions/primitives/Deadline.sol";
-import {CastSimpleVote} from "../../extensions/primitives/CastSimpleVote.sol";
-import {CallbackHashPrimitive} from "../../extensions/primitives/CallbackHash.sol";
-import {CheckCalldataValidity} from "../../extensions/primitives/CheckCalldataValidity.sol";
-import {CallerPrimitive, CallerGetter} from "../../extensions/primitives/Caller.sol";
-import {BaseVotingContract} from "../../extensions/abstracts/BaseVotingContract.sol";
-import {ImplementingPermitted} from "../../extensions/primitives/ImplementingPermitted.sol";
-import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol";
-import {StatusGetter, StatusError} from "../../extensions/primitives/Status.sol";
+import {IVotingContract} from "../../../votingContractStandard/IVotingContract.sol";
+import {NoDoubleVoting} from "../../../extensions/primitives/NoDoubleVoting.sol";
+import {Deadline} from "../../../extensions/primitives/Deadline.sol";
+import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
+import {CallbackHashPrimitive} from "../../../extensions/primitives/CallbackHash.sol";
+import {CheckCalldataValidity} from "../../../extensions/primitives/CheckCalldataValidity.sol";
+import {CallerPrimitive, CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
+import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
+import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
+import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
 import {
     ExpectReturnValue,
     HandleImplementationResponse
-} from "../../extensions/primitives/ImplementResultPrimitive.sol";
-import {ImplementResult} from "../../extensions/primitives/ImplementResult.sol";
+} from "../../../extensions/primitives/ImplementResultPrimitive.sol";
+import {ImplementResult} from "../../../extensions/primitives/ImplementResult.sol";
 
-
+// WARNING: THIS IS AN EXAMPLE IMPLEMENTATION. It should not be used for production. This voting contract allows the user to choose and vote on any desired target contract. This could cause problems if that target contract is known to integrate with this voting contract. Otherwise it is a convenient way to trigger a function by popular vote.
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
-contract ImplementMajorityVote is 
+contract PlainMajorityVote is 
 CallbackHashPrimitive,
 CallerGetter,
 StatusGetter,
@@ -52,12 +52,12 @@ ImplementResult
     internal
     override(BaseVotingContract) 
     {
+        (_caller[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
 
     function _beforeStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) internal override(BaseVotingContract){
         _callbackHash[identifier] = keccak256(callback);
-        (_caller[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.

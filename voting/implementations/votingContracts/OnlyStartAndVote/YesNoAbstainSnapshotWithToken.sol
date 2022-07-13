@@ -5,7 +5,10 @@ pragma solidity ^0.8.13;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotingContract} from "../../../votingContractStandard/IVotingContract.sol";
 import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
-import {NoDoubleVoting} from "../../../extensions/primitives/NoDoubleVoting.sol";
+import {
+    NoDoubleVoting,
+    HandleDoubleVotingGuard
+} from "../../../extensions/primitives/NoDoubleVoting.sol";
 import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastYesNoAbstainVote} from "../../../extensions/primitives/CastYesNoAbstainVote.sol";
 import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
@@ -16,6 +19,7 @@ import {TokenPrimitive} from "../../../extensions/primitives/TokenPrimitive.sol"
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract YesNoAbstainSnapshotWithToken is 
 NoDoubleVoting,
+HandleDoubleVotingGuard,
 CastYesNoAbstainVote,
 Deadline,
 TokenPrimitive,
@@ -37,7 +41,7 @@ BaseVotingContract
     internal
     override(BaseVotingContract) 
     {
-        _token[identifier] = abi.decode(votingParams, (address));
+        (_token[identifier], _handleDoubleVotingGuard[identifier]) = decodeParameters(votingParams);
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
 
@@ -63,14 +67,15 @@ BaseVotingContract
         if(NoDoubleVoting._alreadyVoted[identifier][msg.sender]){
             revert NoDoubleVoting.AlreadyVoted(identifier, msg.sender);
         }
+        if (_handleDoubleVotingGuard[identifier]){
+            NoDoubleVoting._alreadyVoted[identifier][msg.sender] = true;
+        }
         
-        NoDoubleVoting._alreadyVoted[identifier][msg.sender] = true;
         
         uint256 option = abi.decode(votingData, (uint256));
-        CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
-        
         uint256 weight = IERC20(_token[identifier]).balanceOf(msg.sender);
-        CastYesNoAbstainVote._castVote(identifier, voteOption, 1);
+        CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
+        CastYesNoAbstainVote._castVote(identifier, voteOption, weight);
 
         return _status[identifier]; 
                  
@@ -92,11 +97,28 @@ BaseVotingContract
         _setStatus(identifier);
     }
 
+    /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
+    function decodeParameters(bytes memory votingParams) 
+    public
+    pure 
+    returns(address token, bool handleDoubleVotingGuard) {
+        (token, handleDoubleVotingGuard) = abi.decode(votingParams, (address, bool));
+    }
+
+    /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
+    function encodeParameters(address token, bool handleDoubleVotingGuard) 
+    public 
+    pure 
+    returns(bytes memory votingParams) 
+    {
+        votingParams = abi.encode(token, handleDoubleVotingGuard); 
+    }
+
     function _setStatus(uint256 identifier) internal {
         uint256[3] memory votes = CastYesNoAbstainVote._getVotes(identifier);
         _status[identifier] = (votes[1]>votes[0]) ?
-            uint256(IVotingContract.VotingStatus.failed) :
-            uint256(IVotingContract.VotingStatus.completed); 
+            uint256(IVotingContract.VotingStatus.completed) :
+            uint256(IVotingContract.VotingStatus.failed); 
     }
 
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
