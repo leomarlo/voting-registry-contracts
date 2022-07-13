@@ -4,16 +4,16 @@ import { ContractReceipt, BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../scripts/interfaceIds";
-
+import { getEventArgs } from "../../scripts/getEventArgs";
 import {
-    ImplementMajorityVote,
+    PlainMajorityVote,
     Counter
 } from "../../typechain"
 
 import { CounterInterface } from "../../typechain/Counter";
 
 interface Contracts {
-    majority: ImplementMajorityVote
+    majority: PlainMajorityVote
     counter: Counter
 }
 
@@ -32,13 +32,6 @@ let VotingStatus = {
 let APPROVE = abi.encode(["bool"],[true])
 let DISAPPROVE = abi.encode(["bool"],[false])
 
-function getEventArgs(receipt: ContractReceipt): Result {
-    if (receipt.events !== undefined) {
-        if (receipt.events[0].args !==undefined) {return receipt.events[0].args}
-        throw("Args are undefined!")
-    }
-    throw("Events are undefined!")
-}
 
 async function startVotingInstance(
     contracts: Contracts,
@@ -66,7 +59,7 @@ async function startVotingInstance(
 }
 
 
-describe("Implement Majority Vote", function(){
+describe("Implement a plain Majority Vote", function(){
 
     let contracts: Contracts;
     let Alice: SignerWithAddress;
@@ -79,8 +72,8 @@ describe("Implement Majority Vote", function(){
     beforeEach(async function() {
         [Alice, Bob] = await ethers.getSigners()  
          
-        let MajorityFactory = await ethers.getContractFactory("ImplementMajorityVote")
-        let majority: ImplementMajorityVote = await MajorityFactory.connect(Alice).deploy()
+        let MajorityFactory = await ethers.getContractFactory("PlainMajorityVote")
+        let majority: PlainMajorityVote = await MajorityFactory.connect(Alice).deploy()
         await majority.deployed()
         let CounterFactory = await ethers.getContractFactory("Counter")
         let counter: Counter = await CounterFactory.connect(Alice).deploy()

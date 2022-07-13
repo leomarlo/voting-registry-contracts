@@ -4,14 +4,15 @@ import { ContractReceipt, BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../scripts/interfaceIds";
+import { getEventArgs } from "../../scripts/getEventArgs";
 
 import {
-    Snapshot
+    SimpleSnapshotWithoutToken
 } from "../../typechain"
 
 
 interface Contracts {
-    snapshot: Snapshot
+    snapshot: SimpleSnapshotWithoutToken
 }
 
 interface IdentifierAndTimestamp {
@@ -35,15 +36,8 @@ let VotingStatus = {
 let APPROVE = abi.encode(["bool"],[true])
 let DISAPPROVE = abi.encode(["bool"],[false])
 
-function getEventArgs(receipt: ContractReceipt): Result {
-    if (receipt.events !== undefined) {
-        if (receipt.events[0].args !==undefined) {return receipt.events[0].args}
-        throw("Args are undefined!")
-    }
-    throw("Events are undefined!")
-}
 
-async function startVotingInstance(snapshot: Snapshot): Promise<IdentifierAndTimestamp> {
+async function startVotingInstance(snapshot: SimpleSnapshotWithoutToken): Promise<IdentifierAndTimestamp> {
     let tx = await snapshot.start("0x", "0x");
     let identifier: number = getEventArgs(await tx.wait())[0].toNumber()
     let timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
@@ -52,15 +46,15 @@ async function startVotingInstance(snapshot: Snapshot): Promise<IdentifierAndTim
 
 
 
-describe("Snapshot", function(){
+describe("Simple Snapshot without Token-Weights", function(){
 
     let contracts: Contracts;
     let Alice: SignerWithAddress;
     let Bob: SignerWithAddress;
     beforeEach(async function() {
         [Alice, Bob] = await ethers.getSigners()   
-        let SnapshotFactory = await ethers.getContractFactory("Snapshot")
-        let snapshot: Snapshot = await SnapshotFactory.connect(Alice).deploy()
+        let SnapshotFactory = await ethers.getContractFactory("SimpleSnapshotWithoutToken")
+        let snapshot: SimpleSnapshotWithoutToken = await SnapshotFactory.connect(Alice).deploy()
         await snapshot.deployed()
         contracts = {snapshot}
     });
