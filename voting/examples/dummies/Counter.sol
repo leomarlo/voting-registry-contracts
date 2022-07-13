@@ -3,26 +3,32 @@ pragma solidity ^0.8.13;
 
 error CounterError();
 
-contract Counter {
+
+abstract contract CounterPrimitive {
+
     uint256 public i;
 
-    function increment() external {
+    function increment() virtual external {
         i = i + 1;
     }
 
-    function incrementBy(uint256 a) external returns(bool){
+}
+
+
+contract Counter is CounterPrimitive {
+    
+    function incrementBy(uint256 a) virtual external returns(bool){
         i = i + a;
     }
 
-    function incrementWithReturn() external returns(bool) {
+    function incrementWithReturn() virtual external returns(bool) {
         i = i + 1;
     }
 
-    function fail() external {
+    function fail() virtual external {
         if(i==0) revert CounterError();
 
         i = i + 1;
     }
 
 }
-
