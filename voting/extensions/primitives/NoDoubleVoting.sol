@@ -11,16 +11,14 @@ abstract contract NoDoubleVoting  {
     
     mapping(uint256=>mapping(address=>bool)) internal _alreadyVoted;
 
+}
 
-    modifier doubleVotingGuard(uint256 identifier, address voter) {
-        if(_alreadyVoted[identifier][voter]){
-            revert AlreadyVoted(identifier, voter);
-        }
-        _;
-        _alreadyVoted[identifier][voter] = true;
-    } 
+abstract contract HandleDoubleVotingGuard {
+
+    mapping(uint256=>bool) internal _handleDoubleVotingGuard;
 
 }
+
 
 
 abstract contract NoDoubleVotingPublic is 
