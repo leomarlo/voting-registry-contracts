@@ -1,5 +1,6 @@
 let IVOTINGCONTRACT_ID = "0x9452d78d"
 let IERC165_ID = "0x01ffc9a7"
+
 export {
     IVOTINGCONTRACT_ID,
     IERC165_ID,
