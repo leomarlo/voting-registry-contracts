@@ -12,6 +12,7 @@ import {
 } from "../../integration/abstracts/OnlyStart.sol";
 import {CounterPrimitive} from "../dummies/Counter.sol";
 
+error OnlyVoteImplementer(address implementer);
 
 contract StartHybridVotingMinmlExample is 
 CounterPrimitive,
@@ -28,8 +29,8 @@ StartHybridVotingMinml
         // assign deployer
         deployer = msg.sender;
         // assign the votingContract the increment function.
-        AssignedContractPrimitive.assignedContract[bytes4(keccak256("increment()"))] = _votingContractTwo;
-        AssignedContractPrimitive.assignedContract[bytes4(keccak256("reset(uint256)"))] = _votingContractTwo;
+        assignedContract[bytes4(keccak256("increment()"))] = _votingContractTwo;
+        assignedContract[bytes4(keccak256("reset(uint256)"))] = _votingContractTwo;
     }
 
 
@@ -59,12 +60,14 @@ StartHybridVotingMinml
 
 
     modifier OnlyByVote {
-        require(SecurityThroughAssignmentPrimitive._isImplementer(), "Only by vote");
+        if(!_isImplementer()){
+            revert OnlyVoteImplementer(msg.sender);
+        }
         _;
     }
 
     modifier OnlyDeployerOrByVote {
-        require(deployer==msg.sender || SecurityThroughAssignmentPrimitive._isImplementer(), "Only deployer or by vote");
+        require(deployer==msg.sender || _isImplementer(), "Only deployer or by vote");
         _;
     }
 }
@@ -134,9 +137,9 @@ StartHybridVotingHooks
 
 
     modifier OnlyByVote {
-        require(
-            SecurityThroughAssignmentPrimitive._isImplementer(),
-            "Only by vote");
+        if(!_isImplementer()){
+            revert OnlyVoteImplementer(msg.sender);
+        }
         _;
     }
 
