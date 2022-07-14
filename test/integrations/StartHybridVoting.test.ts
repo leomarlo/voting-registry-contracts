@@ -97,8 +97,8 @@ describe("Integration Through Starting a Hybrid Voting Instance", function() {
     });
     describe("Counter Increment", function() {
         it("Should revert when trying to increment the counter", async function(){
-            await expect(contracts.integrationMinml.increment()).to.be.revertedWith('Only by vote');
-            await expect(contracts.integrationHooks.increment()).to.be.revertedWith('Only by vote');
+            await expect(contracts.integrationMinml.connect(Alice).increment()).to.be.revertedWith(`'OnlyVoteImplementer("${Alice.address}")'`);
+            await expect(contracts.integrationHooks.connect(Alice).increment()).to.be.revertedWith(`'OnlyVoteImplementer("${Alice.address}")'`);
         })
         it("Should revert when trying to reset the counter unless the deployer does it.", async function(){
             // for the minimal integration
