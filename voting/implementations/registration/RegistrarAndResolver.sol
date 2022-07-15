@@ -54,21 +54,24 @@ StartOnlyCallbackMinml {
     function setInformation(bytes32 key, address votingContract, uint256 amount)
     external 
     OnlyByVote
+    returns(bool)
     {
         RESOLVER.setInformation(key, votingContract, amount);
     }
     
-
+    // event Test(address sender, address assignedContract, bool isImplementer);
     function changeRegistrarControlledKeys(bytes32 key, bool onlyRegistrar) 
     external
     OnlyByVote
+    returns(bool)
     {
+        // emit Test(msg.sender, assignedContract[msg.sig], _isImplementer());
         RESOLVER.changeRegistrarControlledKeys(key, onlyRegistrar);
     }
 
 
     modifier OnlyByVote {
-        if(_isImplementer()){
+        if(!_isImplementer()){
             revert OnlyVoteImplementer(msg.sender);
         }
         _;
