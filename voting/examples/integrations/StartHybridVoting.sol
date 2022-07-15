@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol";
 import {
+    OnlyVoteImplementer,
     AssignedContractPrimitive,
     SecurityThroughAssignmentPrimitive
 } from "../../integration/primitives/AssignedContractPrimitive.sol";
@@ -12,7 +13,6 @@ import {
 } from "../../integration/abstracts/OnlyStart.sol";
 import {CounterPrimitive} from "../dummies/Counter.sol";
 
-error OnlyVoteImplementer(address implementer);
 
 contract StartHybridVotingMinmlExample is 
 CounterPrimitive,

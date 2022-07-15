@@ -7,108 +7,101 @@ import {
     AssignedContractPrimitive,
     SecurityThroughAssignmentPrimitive
 } from "../../integration/primitives/AssignedContractPrimitive.sol";
-
-
 import {
-    StartOnlyCallbackMinml,
-    StartOnlyCallbackHooks
+    StartSimpleVotingMinml,
+    StartSimpleVotingHooks
 } from "../../integration/abstracts/OnlyStart.sol";
+import {CounterPrimitive} from "../dummies/Counter.sol";
 
 
-
-contract StartOnlyCallbackMinmlExample is 
-AssignedContractPrimitive,
-SecurityThroughAssignmentPrimitive,
-StartOnlyCallbackMinml
+contract StartSimpleVotingMinmlExample is 
+CounterPrimitive,
+StartSimpleVotingMinml
 {
 
     address public deployer;
-    uint256 public i;
     
-    constructor(address _votingContractOne, address _votingContractTwo) {
+    constructor(address _votingContract) {
+        // set the voting contract
+        votingContract = _votingContract;
         // assign deployer
         deployer = msg.sender;
-        // assign the votingContract the increment function.
-        AssignedContractPrimitive.assignedContract[bytes4(keccak256("increment()"))] = _votingContractOne;
-        AssignedContractPrimitive.assignedContract[bytes4(keccak256("reset(uint256)"))] = _votingContractTwo;
     }
 
 
     function increment() 
+    virtual
     external 
-    OnlyByVote
+    override(CounterPrimitive)
     {
         i = i + 1;
     }
 
+
     function reset(uint256 _i)
+    virtual
     external
-    OnlyDeployerOrByVote
+    OnlyDeployer
     {
         i = _i;
     }
 
+
     function _beforeStart(bytes memory votingParams) internal view
-    override(StartOnlyCallbackMinml) 
+    override(StartSimpleVotingMinml) 
     {
         // Let's say only the deployer can start a voting instance.
         require(msg.sender==deployer, "Only deployer");
     }
 
-
-    modifier OnlyByVote {
-        if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
-        }
+    
+    modifier OnlyDeployer {
+        require(
+            deployer==msg.sender, 
+            "Only deployer");
         _;
     }
 
-    modifier OnlyDeployerOrByVote {
-        require(deployer==msg.sender || SecurityThroughAssignmentPrimitive._isImplementer(), "Only deployer or by vote");
-        _;
-    }
 }
 
 
 
 
-contract StartOnlyCallbackHooksExample is 
-AssignedContractPrimitive,
-SecurityThroughAssignmentPrimitive,
-StartOnlyCallbackHooks
+contract StartSimpleVotingHooksExample is 
+CounterPrimitive,
+StartSimpleVotingHooks
 {
 
     address public deployer;
-    uint256 public i;
     uint256 public numberOfInstances;
     mapping(uint24=>address) internal simpleVotingContract;
     
     constructor(address _votingContractOne, address _votingContractTwo) {
         // assign deployer
         deployer = msg.sender;
-        // assign the voting contract the increment function.
-        AssignedContractPrimitive.assignedContract[bytes4(keccak256("increment()"))] = _votingContractOne;
-        AssignedContractPrimitive.assignedContract[bytes4(keccak256("reset(uint256)"))] = _votingContractTwo;
+        // set the simple voting contracts
+        simpleVotingContract[uint24(1)] = _votingContractOne;
+        simpleVotingContract[uint24(2)] = _votingContractTwo;
     }
 
 
     function increment() 
     external 
-    OnlyByVote
+    override(CounterPrimitive)
     {
         i = i + 1;
     }
 
     function reset(uint256 _i)
     external
-    OnlyDeployerOrByVote
+    OnlyDeployer
     {
         i = _i;
     }
 
     
     function _beforeStart(bytes memory votingParams, bytes calldata callback) internal view
-    override(StartOnlyCallbackHooks) 
+    override(StartSimpleVotingHooks) 
     {
         // Let's say only the deployer can start a voting instance.
         require(msg.sender==deployer, "Only deployer");
@@ -116,24 +109,24 @@ StartOnlyCallbackHooks
 
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) 
     internal
-    override(StartOnlyCallbackHooks) 
+    override(StartSimpleVotingHooks) 
     {
         numberOfInstances += 1;
     }
 
-
-    modifier OnlyByVote {
-        if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
-        }
-        _;
+    function _getSimpleVotingContract(bytes calldata callback) 
+    internal 
+    view
+    override(StartSimpleVotingHooks) 
+    returns(address votingContract) {
+        votingContract = simpleVotingContract[uint24(bytes3(callback[0:3]))];
     }
 
-    modifier OnlyDeployerOrByVote {
+    modifier OnlyDeployer {
         require(
-            _isImplementer() ||
             deployer==msg.sender, 
-            "Only deployer or by vote");
+            "Only deployer");
         _;
     }
+
 }

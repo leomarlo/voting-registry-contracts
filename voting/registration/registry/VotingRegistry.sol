@@ -40,9 +40,11 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IVotingRegistry} from "./IVotingRegistry.sol";
 
 
+
+
 /// @title Voting Registry
 /// @notice This abstract contract handles just the registration and needs to be inherited by the registry
-abstract contract VotingRegistry is IVotingRegistry{
+contract VotingRegistry is IVotingRegistry{
 
     //////////////////////////////////////////////////
     // TYPE, ERROR AND EVENT DECLARATIONS           //
@@ -58,14 +60,21 @@ abstract contract VotingRegistry is IVotingRegistry{
     event Registered(address contractAddress, address registrar, address resolver);
     event ResolverUpdated(address newResolver);
 
+    // errors
+    error AlreadyRegistered(address contractAddress, address registrar);
+    error DoesNotSatisfyInterface(address contractAddress);
+    error OnlyRegistrar(address sender, address registrar);
 
     //////////////////////////////////////////////////
     // STATE VARIABLES                              //
     //////////////////////////////////////////////////
 
     mapping(address=>Record) private records;
-    bytes4 constant private VOTING_CONTRACT_STANDARD_INTERFACE = 0x12345678;
+    bytes4 immutable private VOTING_CONTRACT_STANDARD_ID;
     
+    constructor(bytes4 _VOTING_CONTRACT_STANDARD_ID){
+        VOTING_CONTRACT_STANDARD_ID = _VOTING_CONTRACT_STANDARD_ID;
+    }
 
     //////////////////////////////////////////////////
     // WRITE FUNCTIONS                              //
@@ -77,8 +86,12 @@ abstract contract VotingRegistry is IVotingRegistry{
     external
     override(IVotingRegistry)
     {
-        require(records[contractAddress].registrar == address(0));
-        require(checkInterface(contractAddress));
+        if (records[contractAddress].registrar!=address(0)){
+            revert AlreadyRegistered(contractAddress, records[contractAddress].registrar);
+        }
+        if (! checkInterface(contractAddress)){
+            revert DoesNotSatisfyInterface(contractAddress);
+        }
         records[contractAddress] = Record({
             registrar: msg.sender,
             resolver: resolver
@@ -86,14 +99,15 @@ abstract contract VotingRegistry is IVotingRegistry{
         emit Registered(contractAddress, msg.sender, resolver);
     }
 
-
     function changeResolver(
         address contractAddress,
         address resolver)
     external
     override(IVotingRegistry)
     {
-        require(msg.sender==records[contractAddress].registrar);
+        if (msg.sender!=records[contractAddress].registrar){
+            revert OnlyRegistrar(msg.sender, records[contractAddress].registrar);
+        }
         records[contractAddress].resolver = resolver;
         emit ResolverUpdated(resolver);
     }
@@ -133,7 +147,7 @@ abstract contract VotingRegistry is IVotingRegistry{
 
 
     function checkInterface(address contractAddress) internal view returns(bool) {
-        return IERC165(contractAddress).supportsInterface(VOTING_CONTRACT_STANDARD_INTERFACE);
+        return IERC165(contractAddress).supportsInterface(VOTING_CONTRACT_STANDARD_ID);
     }
     
 

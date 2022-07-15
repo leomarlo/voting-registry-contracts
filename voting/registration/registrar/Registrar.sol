@@ -5,9 +5,17 @@ pragma solidity ^0.8.13;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IVotingRegistry} from "../registry/IVotingRegistry.sol";
 
+error OnlyController(address caller, address votingContract);
+
+
 abstract contract RegistrarPrimitive is ERC721 {
 
-    address constant internal REGISTRY = 0x0123456789012345678901234567890123456789;
+    address immutable internal REGISTRY;
+
+    constructor(address _registry, string memory name_, string memory symbol_)
+    ERC721(name_, symbol_) {
+        REGISTRY = _registry;
+    }
 
     function _register(address votingContract, address resolver) internal {
         IVotingRegistry(REGISTRY).register(votingContract, resolver);
@@ -15,24 +23,28 @@ abstract contract RegistrarPrimitive is ERC721 {
 
     function _setController(address votingContract, address controller) internal {
         uint256 tokenId = uint256(uint160(votingContract));
-        ERC721._mint(controller, tokenId);
+        _mint(controller, tokenId);
     }
 
     function getController(address votingContract) public view returns(address controller) {
         uint256 tokenId = uint256(uint160(votingContract));
-        controller = ERC721.ownerOf(tokenId);
+        controller = ownerOf(tokenId);
     }
 
-    function register(address votingContract, address resolver, address controller) external {
+    function register(address votingContract, address resolver, address controller) virtual external {
         _register(votingContract, resolver);
         _setController(votingContract, controller);
     }
 }
 
-abstract contract Registrar is RegistrarPrimitive {
+abstract contract ChangeResolver is RegistrarPrimitive {
+
 
     function changeResolver(address votingContract, address newResolver) external {
-        require(msg.sender==RegistrarPrimitive.getController(votingContract));
+        if(msg.sender!=RegistrarPrimitive.getController(votingContract)) {
+            revert OnlyController(msg.sender, votingContract);
+        }
+
         IVotingRegistry(REGISTRY).changeResolver(votingContract, newResolver);
     }
 }
