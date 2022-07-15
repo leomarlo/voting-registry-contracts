@@ -331,10 +331,17 @@ Certain information ought to stay unaltered and others could be changed only by 
 
 ## For Developers
 
+### Integration
+
+If you would like to integrate with the voting contract or the registry please import the package `@leomarlo/voting-registry-contracts` via your preferred package manager.
+
+### Testing
+
 Developers may consult the extensive documentation inside the solidity files. Compilation of the contracts is done via the [`solc` package](https://www.npmjs.com/package/solc-js). The following command bundles the compilation up and copies the output into the `compiler-output` folder, which is created if it doesn't exist:
 ```
 npm run compile
 ``` 
+
 
 ## Contact
 

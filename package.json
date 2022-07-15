@@ -1,13 +1,11 @@
 {
   "name": "@leomarlo/voting-registry-contracts",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "This package contains solidity contracts, abstract contracts and interfaces for a voting-registry and its inheritable template integrations.",
   "main": "index.js",
   "scripts": {
     "test": "npm run compile",
-    "compile-abi": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis votingContract/* extensions/*/* implementations/* registration/resolver/*/* registration/registry/* registration/registrar/*",
-    "compile-bin": "solcjs --bin --include-path node_modules/ --base-path . -o compiler-output/bins votingContract/* extensions/*/* implementations/* registration/resolver/*/* registration/registry/* registration/registrar/*",
-    "compile": "npm run compile-abi"
+    "compile": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis voting/votingContractStandard/* voting/extensions/*/* voting/implementations/registration/* voting/implementations/votingContracts/*/* voting/registration/*/* voting/integration/*/* voting/examples/*/*"
   },
   "repository": {
     "type": "git",
