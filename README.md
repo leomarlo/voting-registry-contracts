@@ -339,9 +339,13 @@ If you would like to integrate with the voting contract or the registry please i
 
 Developers may consult the extensive documentation inside the solidity files. Compilation of the contracts is done via the [`solc` package](https://www.npmjs.com/package/solc-js). The following command bundles the compilation up and copies the output into the `compiler-output` folder, which is created if it doesn't exist:
 ```
-npm run compile
+yarn run compile
 ``` 
 
+Also you can run the hardhat test for the contracts, which also compiles the contracts through a compiler that is downloaded by hardhat if needed:
+```
+yarn hardhat test
+```
 
 ## Contact
 
