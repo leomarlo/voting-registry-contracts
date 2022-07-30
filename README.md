@@ -51,7 +51,7 @@ that enforces them.
 
 There must be a method that can query the result of a voting instance. 
 ```js
-function result(uint256 identifier) external view returns(bytes memory resultData);
+function result(uint256 identifier) public view returns(bytes memory resultData);
 ```
 
 The function should be a `view` function whose single argument is the `uint256 identifier` of the voting instance. The output `bytes memory resultData` could be the current status of the vote. Apart from the status one could add some information about the aggregated votes, such as the number of approvals, disapprovals and abstentions.

@@ -118,7 +118,7 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
 
     /// @dev This function needs to be implemented so that the contract that calls this voting instance can also query its result. One may of course also allow anyone to query the result. It is up to the creator of the inheriting contract to choose.
     /// @param identifier the index for the voting instance in question
-    function result(uint256 identifier) external view virtual override(IVotingContract) returns(bytes memory resultData);
+    function result(uint256 identifier) public view virtual override(IVotingContract) returns(bytes memory resultData);
 
 
     function getCurrentIndex() external view returns(uint256 currentIndex) {

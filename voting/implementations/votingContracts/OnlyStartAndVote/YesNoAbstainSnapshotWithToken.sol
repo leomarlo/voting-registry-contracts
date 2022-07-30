@@ -82,7 +82,7 @@ BaseVotingContract
     }
 
     /// @dev We must implement a result function 
-    function result(uint256 identifier) external view override(BaseVotingContract) returns(bytes memory resultData) {
+    function result(uint256 identifier) public view override(BaseVotingContract) returns(bytes memory resultData) {
         return abi.encode(CastYesNoAbstainVote._getVotes(identifier));   
     }
 
