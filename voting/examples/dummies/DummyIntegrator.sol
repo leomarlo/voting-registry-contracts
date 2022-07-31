@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import {CounterPrimitive, Counter} from "./Counter.sol";
 import {StartHybridVotingMinmlExample} from "../integrations/StartHybridVoting.sol";
+import {OnlyVoteImplementer} from "../../integration/primitives/AssignedContractPrimitive.sol";
+
 
 error CounterError();
 

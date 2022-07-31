@@ -65,11 +65,11 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
         // This hook may be used to store the calldata or its hash
         _beforeStart(_currentIndex, votingParams, callback);
 
+         // Store the status in storage.
+        _status[_currentIndex] = uint256(IVotingContract.VotingStatus.active);
+        
         // Start the voting Instance
         _start(_currentIndex, votingParams);
-
-        // Store the status in storage.
-        _status[_currentIndex] = uint256(IVotingContract.VotingStatus.active);
 
         // emit event
         emit VotingInstanceStarted(_currentIndex, msg.sender);
