@@ -198,32 +198,78 @@ describe("Integration Through Starting a Hybrid Voting Instance", function() {
     })
     describe("Start a voting instance", function() {
         it("Should revert when non-deployer attempts to start the instance", async function(){
+            await expect(contracts.integrationSimpleMinml.connect(Bob).start("0x", "0x")).to.be.revertedWith('Only deployer')
+            await expect(contracts.integrationSimpleHooks.connect(Bob).start("0x", "0x")).to.be.revertedWith('Only deployer')
             await expect(contracts.integrationHybridMinml.connect(Bob).start("0x", "0x")).to.be.revertedWith('Only deployer')
             await expect(contracts.integrationHybridHooks.connect(Bob).start("0x", "0x")).to.be.revertedWith('Only deployer')
+            await expect(contracts.integrationCallbackMinml.connect(Bob).start("0x", "0x")).to.be.revertedWith('Only deployer')
+            await expect(contracts.integrationCallbackHooks.connect(Bob).start("0x", "0x")).to.be.revertedWith('Only deployer')
         });
-        it("Should create a new voting instance without reference to a target function", async function(){
-            // check whether the number of instances has increased
+        it("Should create a new simple (no target) voting instance for simple voting integrations", async function() {
+            // The majority voting contract attached to the simple voting integration takes voting Params
+            let majorityVotingParams = abi.encode(["address", "bool"], [ethers.constants.AddressZero, false])
+            await contracts.integrationSimpleMinml.connect(Alice).start(majorityVotingParams, "0x")
+            expect(await contracts.majority.getCurrentIndex()).to.equal(1)
+            // the snapshot attached to the key '0x000001' does not take any votingParams.
+            await contracts.integrationSimpleHooks.connect(Alice).start("0x", '0x000001')
+            expect(await contracts.snapshot.getCurrentIndex()).to.equal(1)
+            expect(await contracts.integrationSimpleHooks.numberOfInstances()).to.equal(1)
+            // the majority voting contract attached to the key '0x000002' of the advanced (with hooks) simple voting integration takes votingParams
+            await contracts.integrationSimpleHooks.connect(Alice).start(majorityVotingParams, '0x000002')
+            expect(await contracts.majority.getCurrentIndex()).to.equal(2)
+            expect(await contracts.integrationSimpleHooks.numberOfInstances()).to.equal(2)
+          
+        })
+        it("Should create a new simple (no target) voting instance for hybrid voting instances", async function(){
             await contracts.integrationHybridMinml.connect(Alice).start("0x", "0x")
             expect(await contracts.snapshot.getCurrentIndex()).to.equal(1)
+            // The more advanced integration (with hooks) can launch multiple simple (with no target) voting instances
             await contracts.integrationHybridHooks.connect(Alice).start("0x", '0x000001')
             expect(await contracts.integrationHybridHooks.numberOfInstances()).to.equal(1)
             expect(await contracts.snapshot.getCurrentIndex()).to.equal(2)
-        });
-        it("Should create a new voting instance for increment and reset", async function(){
-            // check whether the number of instances has increased
-            let expectReturnFlag : boolean = true;
-            let votingParamsForMinml : string = abi.encode(["address", "bool"], [contracts.integrationHybridMinml.address, expectReturnFlag])
-            let votingParamsForHooks : string = abi.encode(["address", "bool"], [contracts.integrationHybridHooks.address, expectReturnFlag])
-            await contracts.integrationHybridMinml.connect(Alice).start(votingParamsForMinml, incrementCalldata)
+        })
+        it("Should create a new function-targeted voting instance for the hybrid voting instances.", async function(){
+            let majorityVotingParams = abi.encode(["address", "bool"], [ethers.constants.AddressZero, false])
+            await contracts.integrationHybridMinml.connect(Alice).start(majorityVotingParams, incrementCalldata)
             expect(await contracts.majority.getCurrentIndex()).to.equal(1)
-            await contracts.integrationHybridMinml.connect(Alice).start(votingParamsForHooks, incrementCalldata)
+            await contracts.integrationHybridMinml.connect(Alice).start(majorityVotingParams, resetCalldata)
             expect(await contracts.majority.getCurrentIndex()).to.equal(2)
-            await contracts.integrationHybridMinml.connect(Alice).start(votingParamsForMinml, resetCalldata)
+            // The more advanced integration (with hooks) can launch multiple simple (with no target) voting instances
+            await contracts.integrationHybridHooks.connect(Alice).start(majorityVotingParams, incrementCalldata)
+            expect(await contracts.integrationHybridHooks.numberOfInstances()).to.equal(1)
             expect(await contracts.majority.getCurrentIndex()).to.equal(3)
-            await contracts.integrationHybridMinml.connect(Alice).start(votingParamsForHooks, resetCalldata)
+            await contracts.integrationHybridHooks.connect(Alice).start(majorityVotingParams, resetCalldata)
+            expect(await contracts.integrationHybridHooks.numberOfInstances()).to.equal(2)
             expect(await contracts.majority.getCurrentIndex()).to.equal(4)
-        });
-        it("Should revert when the the voting params bytes are too short or in unfitting format", async function(){
+        })
+        it("Should create a new function targeted voting instance for the purely function-targeted (only callback) voting instances.", async function(){
+            let majorityVotingParams = abi.encode(["address", "bool"], [ethers.constants.AddressZero, false])
+            let tokenWeightedMajorityvotingParams : string = abi.encode(
+                ["address", "uint256", "uint256", "bool", "bool"], [ethers.constants.AddressZero, 0, 0, false, false])            
+            // The minimal version like the advanced one only knows how to handle calldata that points to a function
+            await contracts.integrationCallbackMinml.connect(Alice).start(majorityVotingParams, incrementCalldata)
+            expect(await contracts.majority.getCurrentIndex()).to.equal(1)
+            await contracts.integrationCallbackMinml.connect(Alice).start(tokenWeightedMajorityvotingParams, resetCalldata)
+            expect(await contracts.majorityWithToken.getCurrentIndex()).to.equal(1)
+            
+            await contracts.integrationCallbackHooks.connect(Alice).start(majorityVotingParams, incrementCalldata)
+            expect(await contracts.integrationCallbackHooks.numberOfInstances()).to.equal(1)
+            expect(await contracts.majority.getCurrentIndex()).to.equal(2)
+            await contracts.integrationCallbackHooks.connect(Alice).start(tokenWeightedMajorityvotingParams, resetCalldata)
+            expect(await contracts.integrationCallbackHooks.numberOfInstances()).to.equal(2)
+            expect(await contracts.majority.getCurrentIndex()).to.equal(2)
+                    
+        })
+        
+        it("Should revert when the the voting params bytes are too short or in unfitting format (simple)", async function(){
+            let badParams1 : string = "0x"
+            let badParams2 : string = ethers.constants.HashZero
+            let badParams3 : string = abi.encode(["address", "uint256"], [contracts.integrationHybridMinml.address, 2])
+            await expect(contracts.integrationSimpleHooks.connect(Alice).start(badParams1, '0x000002')).to.be.reverted
+            await expect(contracts.integrationSimpleHooks.connect(Alice).start(badParams2, '0x000002')).to.be.reverted
+            await expect(contracts.integrationSimpleHooks.connect(Alice).start(badParams3, '0x000002')).to.be.reverted
+        })
+        it("Should revert when the the voting params bytes are too short or in unfitting format (hybrid)", async function(){
             // check whether the number of instances has increased
             let badParams1 : string = "0x"
             let badParams2 : string = ethers.constants.HashZero
@@ -235,7 +281,19 @@ describe("Integration Through Starting a Hybrid Voting Instance", function() {
             await expect(contracts.integrationHybridHooks.connect(Alice).start(badParams2, incrementCalldata)).to.be.reverted
             await expect(contracts.integrationHybridHooks.connect(Alice).start(badParams3, incrementCalldata)).to.be.reverted
             });
-        it("Should not revert when the voting params overflow but fit on the first required slots.", async function(){
+        it("Should revert when the the voting params bytes are too short or in unfitting format (only callback)", async function(){
+            // check whether the number of instances has increased
+            let badParams1 : string = "0x"
+            let badParams2 : string = ethers.constants.HashZero
+            let badParams3 : string = abi.encode(["address", "uint256"], [contracts.integrationHybridMinml.address, 2])
+            await expect(contracts.integrationCallbackMinml.connect(Alice).start(badParams1, incrementCalldata)).to.be.reverted
+            await expect(contracts.integrationCallbackMinml.connect(Alice).start(badParams2, incrementCalldata)).to.be.reverted
+            await expect(contracts.integrationCallbackMinml.connect(Alice).start(badParams3, incrementCalldata)).to.be.reverted
+            await expect(contracts.integrationCallbackHooks.connect(Alice).start(badParams1, incrementCalldata)).to.be.reverted
+            await expect(contracts.integrationCallbackHooks.connect(Alice).start(badParams2, incrementCalldata)).to.be.reverted
+            await expect(contracts.integrationCallbackHooks.connect(Alice).start(badParams3, incrementCalldata)).to.be.reverted
+            });
+        it("Should not revert when the voting params overflow but fit on the first required slots (hybrid).", async function(){
             // check whether the number of instances has increased
             let badParams4 : string = abi.encode(["address", "bool", "uint256"], [contracts.integrationHybridMinml.address, true, 100])
             await contracts.integrationHybridMinml.connect(Alice).start(badParams4, incrementCalldata)
@@ -243,25 +301,109 @@ describe("Integration Through Starting a Hybrid Voting Instance", function() {
             await contracts.integrationHybridHooks.connect(Alice).start(badParams4, incrementCalldata)
             expect(await contracts.majority.getCurrentIndex()).to.equal(2)
         });
-    });
-    describe("Voting Outcome", function(){
-        
-        beforeEach(async function(){
-            let expectReturnFlag : boolean = false;
-            let votingParamsForMinml : string = abi.encode(["address", "bool"], [contracts.integrationHybridMinml.address, expectReturnFlag])
-            let votingParamsForHooks : string = abi.encode(["address", "bool"], [contracts.integrationHybridHooks.address, expectReturnFlag])
-            await contracts.integrationHybridMinml.connect(Alice).start(votingParamsForMinml, incrementCalldata)
-            await contracts.integrationHybridHooks.connect(Alice).start(votingParamsForHooks, incrementCalldata)
-            let timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
-            await contracts.majority.connect(Alice).vote(0,APPROVE)
-            await contracts.majority.connect(Alice).vote(1,APPROVE)
-            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp + votingDurationMajority + 1]); 
+        it("Should revert when the calldata does not point to a votable function.", async function(){
+            let badSelector = "0x12345678"
+            let majorityVotingParams = abi.encode(["address", "bool"], [ethers.constants.AddressZero, false])
+            let tokenWeightedMajorityvotingParams : string = abi.encode(
+                ["address", "uint256", "uint256", "bool", "bool"], [ethers.constants.AddressZero, 0, 0, false, false])            
+            await expect(contracts.integrationHybridMinml.connect(Alice).start(majorityVotingParams, badSelector))
+                .to.be.revertedWith(`IsNotVotableFunction("${badSelector}")`)
+            await expect(contracts.integrationHybridHooks.connect(Alice).start(majorityVotingParams, badSelector))
+                .to.be.revertedWith(`IsNotVotableFunction("${badSelector}")`)
+            await expect(contracts.integrationCallbackMinml.connect(Alice).start(tokenWeightedMajorityvotingParams, badSelector))
+                .to.be.revertedWith(`IsNotVotableFunction("${badSelector}")`)
+            await expect(contracts.integrationCallbackHooks.connect(Alice).start(tokenWeightedMajorityvotingParams, badSelector))
+                .to.be.revertedWith(`IsNotVotableFunction("${badSelector}")`)
         })
-        it("Should increment the counter after a successful vote", async function(){
-            await contracts.majority.connect(Alice).implement(0, incrementCalldata)
+    });
+    describe("Implement", function(){
+        let expectReturnFlag : boolean = false
+        it("Should increment and reset the counter after a successful vote for hybrid voting.", async function(){
+            let votingParamsForHybridMinml : string = abi.encode(["address", "bool"], [contracts.integrationHybridMinml.address, expectReturnFlag])
+            let votingParamsForHybridHooks : string = abi.encode(["address", "bool"], [contracts.integrationHybridHooks.address, expectReturnFlag])
+            // for the hybrid voting integration the majority contract is targeting the increment and reset functions
+            
+            expect(await contracts.integrationHybridMinml.i()).to.equal(0)
+            expect(await contracts.integrationHybridHooks.i()).to.equal(0)
+
+            let idMinmlIncrement = (await contracts.majority.getCurrentIndex()).toNumber()
+            await contracts.integrationHybridMinml.connect(Alice).start(votingParamsForHybridMinml, incrementCalldata)
+            await contracts.majority.connect(Alice).vote(idMinmlIncrement, APPROVE)
+            
+            let idHooksIncrement = (await contracts.majority.getCurrentIndex()).toNumber()
+            await contracts.integrationHybridHooks.connect(Alice).start(votingParamsForHybridHooks, incrementCalldata)
+            await contracts.majority.connect(Alice).vote(idHooksIncrement, APPROVE)
+
+            let timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp + votingDurationMajority + 1]); 
+
+            await contracts.majority.connect(Alice).implement(idMinmlIncrement, incrementCalldata)
             expect(await contracts.integrationHybridMinml.i()).to.equal(1)
-            await contracts.majority.connect(Alice).implement(1, incrementCalldata)
+
+            await contracts.majority.connect(Alice).implement(idHooksIncrement, incrementCalldata)
             expect(await contracts.integrationHybridHooks.i()).to.equal(1)
+            
+            let idMinmlReset = (await contracts.majority.getCurrentIndex()).toNumber()
+            await contracts.integrationHybridMinml.connect(Alice).start(votingParamsForHybridMinml, resetCalldata)
+            await contracts.majority.connect(Alice).vote(idMinmlReset, APPROVE)
+
+            let idHooksReset = (await contracts.majority.getCurrentIndex()).toNumber()
+            await contracts.integrationHybridHooks.connect(Alice).start(votingParamsForHybridHooks, resetCalldata)
+            await contracts.majority.connect(Alice).vote(idHooksReset, APPROVE)
+
+            timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp + votingDurationMajority + 1]); 
+
+            await contracts.majority.connect(Alice).implement(idMinmlReset, resetCalldata)
+            expect(await contracts.integrationHybridMinml.i()).to.equal(0)
+
+            await contracts.majority.connect(Alice).implement(idHooksReset, resetCalldata)
+            expect(await contracts.integrationHybridHooks.i()).to.equal(0)
+
+        })
+        it("Should increment and reset the counter after a successful vote for pure callback voting.", async function(){
+            await contracts.token.connect(Bob).mint(ONEETH.mul(100));
+            let votingParamsForCallbackMinml : string = abi.encode(["address", "bool"], [contracts.integrationCallbackMinml .address, expectReturnFlag])
+            let votingParamsForCallbackHooks : string = abi.encode(["address", "bool"], [contracts.integrationCallbackHooks .address, expectReturnFlag])
+            let tokenWeightedMajorityvotingParams : string = abi.encode(
+                ["address", "uint256", "uint256", "bool", "bool"], [contracts.token.address, votingDurationMajorityWithToken, 1, false, true])            
+            expect(await contracts.integrationCallbackMinml.i()).to.equal(0)
+            expect(await contracts.integrationCallbackHooks.i()).to.equal(0)
+
+            let idMinmlIncrement = (await contracts.majority.getCurrentIndex()).toNumber()
+            await contracts.integrationCallbackMinml.connect(Alice).start(votingParamsForCallbackMinml, incrementCalldata)
+            await contracts.majority.connect(Alice).vote(idMinmlIncrement, APPROVE)
+
+            let idHooksIncrement = (await contracts.majority.getCurrentIndex()).toNumber()
+            await contracts.integrationCallbackHooks.connect(Alice).start(votingParamsForCallbackHooks, incrementCalldata)
+            await contracts.majority.connect(Alice).vote(idHooksIncrement, APPROVE)
+
+            let timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp + votingDurationMajority + 1]); 
+
+            await contracts.majority.connect(Alice).implement(idMinmlIncrement, incrementCalldata)
+            expect(await contracts.integrationCallbackMinml.i()).to.equal(1)
+
+            await contracts.majority.connect(Alice).implement(idHooksIncrement, incrementCalldata)
+            expect(await contracts.integrationCallbackHooks.i()).to.equal(1)
+            
+            let idMinmlReset = (await contracts.majorityWithToken.getCurrentIndex()).toNumber()
+            await contracts.integrationCallbackMinml.connect(Alice).start(tokenWeightedMajorityvotingParams, resetCalldata)
+            await contracts.majorityWithToken.connect(Bob).vote(idMinmlReset, APPROVE)
+
+            let idHooksReset = (await contracts.majorityWithToken.getCurrentIndex()).toNumber()
+            await contracts.integrationCallbackHooks.connect(Alice).start(tokenWeightedMajorityvotingParams, resetCalldata)
+            await contracts.majorityWithToken.connect(Bob).vote(idHooksReset, APPROVE)
+
+            timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp + votingDurationMajorityWithToken + 1]);
+
+            await contracts.majorityWithToken.connect(Alice).implement(idMinmlReset, resetCalldata)
+            expect(await contracts.integrationCallbackMinml.i()).to.equal(0)
+
+            await contracts.majorityWithToken.connect(Alice).implement(idHooksReset, resetCalldata)
+            expect(await contracts.integrationCallbackHooks.i()).to.equal(0)
+
         })
     })
 })
