@@ -141,6 +141,15 @@ describe("Implement a Tournament Vote", function(){
             await expect(contracts.integrator.connect(Alice).start(votingParamsTwo, proposeImperatorCalldata))
                 .to.be.revertedWith(`'TooManyRounds(${0}, ${2}, ${2})'`);
         })
+        it("Should revert when the callback is too short for bytesInsertion.", async function(){
+            let insertAtByte = 1;
+            let votingParamsTwo: string = abi.encode(
+                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                [insertAtByte, VOTING_DURATION, 1, contracts.token.address, contesters])
+            await expect(contracts.integrator.connect(Alice).start(votingParamsTwo, proposeImperatorCalldata))
+                .to.be.revertedWith(`'CallbackTooShortForBytes32Insertion(${insertAtByte}, "${proposeImperatorCalldata}")'`);
+        
+        })
         it("Should set the integrator contract as the caller.", async function(){
             await contracts.integrator.connect(Alice).start(votingParamsOne, proposeImperatorCalldata)
             expect(await contracts.tournament.getCaller(0)).to.equal(contracts.integrator.address);

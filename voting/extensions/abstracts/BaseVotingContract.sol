@@ -62,14 +62,8 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
     override(IVotingContract) 
     returns(uint256 identifier) {
         
-        // This hook may be used to store the calldata or its hash
-        _beforeStart(_currentIndex, votingParams, callback);
-
-         // Store the status in storage.
-        _status[_currentIndex] = uint256(IVotingContract.VotingStatus.active);
-        
         // Start the voting Instance
-        _start(_currentIndex, votingParams);
+        _start(_currentIndex, votingParams, callback);
 
         // emit event
         emit VotingInstanceStarted(_currentIndex, msg.sender);
@@ -99,17 +93,12 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
     /// @dev A helper function that handles the initiation of a new voting instance. It needs to be implemented by the creator of the inheriting contract.
     /// @param identifier the index for the voting instance in question
     /// @param votingParams these are the bytes-encoded voting parameters that allow the inheriting contract to decide about the specifics of this vote.
-    function _start(uint256 identifier, bytes memory votingParams) virtual internal;
+    function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal;
 
 
     /// @dev This function checks whether the conditions are met for the vote instance transition out of the active status. It still needs to be checked then whether it will fail or be complete
     /// @param identifier the index for the voting instance in question
     function _checkCondition(uint256 identifier) internal view virtual returns(bool condition) {}
-
-    /// @dev This function is a hook for developers to include some customized functions.
-    /// @param votingParams these are the bytes-encoded voting parameters that allow the inheriting contract to decide about the specifics of this vote.
-    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) internal virtual {}
-
 
 
     //////////////////////////////////////////////////

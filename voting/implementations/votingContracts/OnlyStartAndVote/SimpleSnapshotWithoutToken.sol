@@ -29,11 +29,15 @@ BaseVotingContract
     // the iteration and identification of instances via a progressing index. 
     // The VotingContract demands an implementation of an internal _start function.
     // We implement a trivial _start function for the snapshot vote.
-    function _start(uint256 identifier, bytes memory votingParams)
+    function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback)
     virtual
     internal
     override(BaseVotingContract) 
     {
+        // Store the status in storage.
+        _status[identifier] = uint256(IVotingContract.VotingStatus.active);
+        
+        // store deadline
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
 

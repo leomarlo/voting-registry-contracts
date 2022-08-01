@@ -47,10 +47,14 @@ ImplementResult
 {
 
     /// @dev We must implement a start function. 
-    function _start(uint256 identifier, bytes memory votingParams)
+    function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback)
+    virtual
     internal
     override(BaseVotingContract) 
     {
+        // Store the status in storage.
+        _status[identifier] = uint256(IVotingContract.VotingStatus.active);
+        
         address tokenAddress;
         uint256 duration;
         uint256 quorumInHolders;
@@ -72,9 +76,7 @@ ImplementResult
 
         Deadline._setDeadline(identifier, duration);
 
-    }
-
-    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) internal override(BaseVotingContract){
+        // hash the callback
         _callbackHash[identifier] = keccak256(callback);
     }
 

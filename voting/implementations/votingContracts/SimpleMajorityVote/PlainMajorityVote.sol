@@ -48,17 +48,21 @@ ImplementResult
     // The VotingContract demands an implementation of an internal _start function.
     // The Implementation demands an implementation of the internal _retrieveCaller function. 
     // We implement a trivial _start function for the snapshot vote.
-    function _start(uint256 identifier, bytes memory votingParams)
+    function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback)
+    virtual
     internal
     override(BaseVotingContract) 
     {
+        // Store the status in storage.
+        _status[identifier] = uint256(IVotingContract.VotingStatus.active);
+        
         (_caller[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
         Deadline._setDeadline(identifier, VOTING_DURATION);
-    }
 
-    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) internal override(BaseVotingContract){
+        // hash the callback
         _callbackHash[identifier] = keccak256(callback);
     }
+
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
     function decodeParameters(bytes memory votingParams) public pure returns(address caller, bool expectReturnValue) {

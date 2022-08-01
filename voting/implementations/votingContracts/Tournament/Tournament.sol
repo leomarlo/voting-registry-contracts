@@ -59,13 +59,15 @@ ImplementResultWithInsertion
     
     event WinnersOfThisRound(uint256 identifier, uint8 round, bytes32[] winners);
     event WinnersOfTheFinal(uint256 identifier, bytes32 winner);
-    
+
+    error CallbackTooShortForBytes32Insertion(uint48 insertAtByte, bytes callback);
     error OnlyDistinctOptions(uint256 identifier, bytes32 label);
     error TooManyRounds(uint256 identifier, uint8 rounds, uint256 options);
     error AtLeastOneRound(uint256 identifier);
     error AlreadyVoted(uint256 identifier, uint16 group, bytes32 label, address voter);
 
-    function _start(uint256 identifier, bytes memory votingParams)
+    function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback)
+    virtual
     internal
     override(BaseVotingContract) 
     {
@@ -87,6 +89,10 @@ ImplementResultWithInsertion
                 bytes32[])
             ); 
 
+        // check that insertAtByte is legit:
+        if (uint256(insertAtByte) + 36 > callback.length) {
+            revert CallbackTooShortForBytes32Insertion(insertAtByte, callback);
+        }
         _insertAtByte[identifier] = insertAtByte;
         _token[identifier] = token;
         
@@ -111,36 +117,33 @@ ImplementResultWithInsertion
             uint224(block.timestamp + duration), uint32(duration)));
 
         // set states (TODO: permutations should be able to have values in bytes32 or something)
-        uint248 c = 1;
+        
         _groupLeaders[identifier] = new bytes32[](groups);
         for (uint16 i=0; i<permutation.length; i++ ) {
             // allocate group
-            bytes32 label = permutation[i];
-            if (_state[identifier][label]!=bytes32(0)){
-                revert OnlyDistinctOptions(identifier, label);
+            if (_state[identifier][permutation[i]]!=bytes32(0)){
+                revert OnlyDistinctOptions(identifier, permutation[i]);
             }
-            uint16 group = uint16(i % groups + c);  // groups start at c=1
-            _state[identifier][label] = bytes32(abi.encodePacked(group, uint240(0)));
+            uint16 group = uint16(i % groups + 1);  // groups start at c=1
+            _state[identifier][permutation[i]] = bytes32(abi.encodePacked(group, uint240(0)));
             // set the initial group leaders;
             if (i<groups){
                 // when i is bigger or equal to groups, then that group already has a group leader.
-                _groupLeaders[identifier][group - c] = label;  // indexing starts at 0.
+                _groupLeaders[identifier][group - 1] = permutation[i];  // indexing starts at 0. (here c=1)
                 
             }
         }
 
         // set status 
         _status[identifier] = uint256(bytes32(abi.encodePacked(
-            uint248(c),
+            uint248(1),   // This is c=1
             uint8(uint256(IImplementResult.VotingStatusImplement.awaitcall) + rounds))));
-    }
 
-
-    function _beforeStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) internal override(BaseVotingContract){
         // hash the callback
         _callbackHash[identifier] = keccak256(callback);
-        
     }
+
+
 
     
     // returns(uint256 votes, uint256 currentGroup, bool participatesInCurrentRound)
@@ -394,56 +397,56 @@ ImplementResultWithInsertion
 }
 
 
-contract TournamentTest {
-    bytes32 public state;
+// contract TournamentTest {
+//     bytes32 public state;
 
-    function addBitwise(bytes32 a, bytes32 b) external pure returns(bytes32 c){
-        return a & b;
-    }
+//     function addBitwise(bytes32 a, bytes32 b) external pure returns(bytes32 c){
+//         return a & b;
+//     }
 
-    function start(uint8 numberOfOptions) external {
-        // can be anywhere between 0 and 255
-        state = bytes32(uint256(2**(numberOfOptions) - 1));
-    }
+//     function start(uint8 numberOfOptions) external {
+//         // can be anywhere between 0 and 255
+//         state = bytes32(uint256(2**(numberOfOptions) - 1));
+//     }
 
-    // get the state from the number
+//     // get the state from the number
 
-    function getStateOf(uint8 option) external view returns(bool up){
-        up = (state & bytes32(uint256(2**(option - 1)))) != bytes32(0);
-    }
+//     function getStateOf(uint8 option) external view returns(bool up){
+//         up = (state & bytes32(uint256(2**(option - 1)))) != bytes32(0);
+//     }
 
     
 
-    function collectiveVote(bytes32 vote) public {
-        state = state & vote;
-    }
+//     function collectiveVote(bytes32 vote) public {
+//         state = state & vote;
+//     }
 
-    function BatchCollectiveVote(bool[] memory vote) external {
-        require(vote.length<=getNumberOfOptions(), "must have strictly less than 256 options");
-        uint256 result;
-        for (uint8 i=0; i<vote.length; i++){
-            result += vote[i] ? 2**i: 0;
-        }
-        collectiveVote(bytes32(result));
-    }
+//     function BatchCollectiveVote(bool[] memory vote) external {
+//         require(vote.length<=getNumberOfOptions(), "must have strictly less than 256 options");
+//         uint256 result;
+//         for (uint8 i=0; i<vote.length; i++){
+//             result += vote[i] ? 2**i: 0;
+//         }
+//         collectiveVote(bytes32(result));
+//     }
 
-    function getNumberOfOptions() public returns(uint8){
-        return uint8(255);
-    }
+//     function getNumberOfOptions() public returns(uint8){
+//         return uint8(255);
+//     }
 
-    // e.g. 16 participants and 3 rounds
-    // 1212121212121212   // e.g. 1001101001010001
-    // 1122112211221122   // e.g. 1000001000010001
-    // 1111222233334444   // at most one each group of 4
-    // 5555555566666666   // at most one each group of 8
-    //
-    // how to enforce that you cannot vote for opponents
-    // first you can vote for anyone who has a 1 entry.
-    // second in the final, you dont need to check anything
-    // in the semifinals you need to check whether the first
-    // any two votes are separated sufficiently. For each vote
-    // you need to check whether it is smaller or bigger than
-    // half of the bits.
-}
+//     // e.g. 16 participants and 3 rounds
+//     // 1212121212121212   // e.g. 1001101001010001
+//     // 1122112211221122   // e.g. 1000001000010001
+//     // 1111222233334444   // at most one each group of 4
+//     // 5555555566666666   // at most one each group of 8
+//     //
+//     // how to enforce that you cannot vote for opponents
+//     // first you can vote for anyone who has a 1 entry.
+//     // second in the final, you dont need to check anything
+//     // in the semifinals you need to check whether the first
+//     // any two votes are separated sufficiently. For each vote
+//     // you need to check whether it is smaller or bigger than
+//     // half of the bits.
+// }
 
 
