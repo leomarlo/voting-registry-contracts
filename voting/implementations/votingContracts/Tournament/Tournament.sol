@@ -227,7 +227,7 @@ ImplementResultWithInsertion
 
     }
 
-    
+
     function triggerNextRound(uint256 identifier) public {
         bytes32 status = bytes32(_status[identifier]);
         uint248 c = uint248(bytes31(status));
@@ -236,6 +236,7 @@ ImplementResultWithInsertion
         
         if ((statusFlag > awaitCall) && block.timestamp>uint224(bytes28(_deadlineAndDuration[identifier]))){
             _startNextRound(identifier, statusFlag - awaitCall - uint8(1), c);
+
         }
     }
 
@@ -244,12 +245,12 @@ ImplementResultWithInsertion
             
         if (newRound == 0){
             // Check whether no votes were cast. Otherwise the groupLeader wins even if its a tie.
-            bool noVotesWereCast = uint240(bytes30(_state[identifier][_groupLeaders[identifier][0]]<<16)) > 0;
-            if (!noVotesWereCast) {
+            bool noVotesWereCast = uint256(uint240(bytes30(_state[identifier][_groupLeaders[identifier][0]]<<16))) == 0;
+            if (noVotesWereCast) {
+                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
+            } else {
                 _status[identifier] = uint256(IImplementResult.VotingStatusImplement.awaitcall);
                 emit WinnersOfTheFinal(identifier, _groupLeaders[identifier][0]);
-            } else {
-                _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
             }
             cPrime = c + uint248(1);
 
@@ -352,18 +353,19 @@ ImplementResultWithInsertion
         }
     }
 
+    
     function _implementingPermitted(uint256 identifier) internal view override(ImplementingPermitted) returns(bool permitted) {
         if (getStatus(identifier) == uint256(IImplementResult.VotingStatusImplement.awaitcall)){
-            permitted = true;
-            return permitted;
+            // permitted = true;
+            return true;
         }
         bool finishedVoting = _checkCondition(identifier) && getStatus(identifier)==uint256(IImplementResult.VotingStatusImplement.awaitcall) + 1;
         // the overall winner should have non-zero votes        
-        permitted = finishedVoting && uint240(bytes30(_state[identifier][_groupLeaders[identifier][0]]<<16)) > 0;
+        permitted = finishedVoting && uint256(uint240(bytes30(_state[identifier][_groupLeaders[identifier][0]]<<16))) > 0;
     }
 
     function _checkCondition(uint256 identifier) internal view override(BaseVotingContract) returns(bool condition) {
-        condition = block.timestamp > uint224(bytes28(_deadlineAndDuration[identifier]));
+        condition = block.timestamp > uint256(uint224(bytes28(_deadlineAndDuration[identifier])));
     }
 
     function getStatus(uint256 identifier) public view 

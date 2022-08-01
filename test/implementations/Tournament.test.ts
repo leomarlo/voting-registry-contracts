@@ -13,6 +13,7 @@ import {
 } from "../../typechain"
 
 import { DummyTournamentIntegratorInterface } from "../../typechain/DummyTournamentIntegrator";
+import { countReset } from "console";
 
 
 const abi = ethers.utils.defaultAbiCoder
@@ -45,13 +46,13 @@ describe("Implement a Tournament Vote", function(){
     let contracts: Contracts;
     let Alice: SignerWithAddress;
     let Bob: SignerWithAddress;
-    let Charlie: SignerWithAddress;
+    let Commodus: SignerWithAddress;
     let integratorInterface : DummyTournamentIntegratorInterface;
     let proposeImperatorCalldata : string;
     let failCalldata: string;
 
     beforeEach(async function() {
-        [Alice, Bob, Charlie] = await ethers.getSigners()  
+        [Alice, Bob, Commodus] = await ethers.getSigners()  
          
         let TournamentFactory = await ethers.getContractFactory("Tournament")
         let tournament: Tournament = await TournamentFactory.connect(Alice).deploy()
@@ -65,7 +66,7 @@ describe("Implement a Tournament Vote", function(){
 
         integratorInterface = integrator.interface
         proposeImperatorCalldata = integratorInterface.encodeFunctionData("proposeNewImperator",[zeroAddress])
-        failCalldata = integratorInterface.encodeFunctionData("fail")
+        failCalldata = integratorInterface.encodeFunctionData("fail", [10])
 
         contracts = {tournament, integrator, token}
     });
@@ -184,11 +185,11 @@ describe("Implement a Tournament Vote", function(){
     describe("Vote and Results", function() {
         let instanceInfo: IdentifierAndTimestamp;
         let contesters: Array<string>;
+        let rounds: number = 2;
         beforeEach(async function() {
             // await contracts.token.connect(Alice).mint(ONEETH.mul(100))
             await contracts.token.connect(Bob).mint(ONEETH.mul(200))
-            // await contracts.token.connect(Charlie).mint(ONEETH.mul(300))
-            let rounds = 2;
+            // await contracts.token.connect(Commodus).mint(ONEETH.mul(300))
             contesters = [ ...Array(5).keys() ].map( i => '0x' + '0'.repeat(60) + (1000 + i).toString());
             let votingParams = abi.encode(
                 ["uint48", "uint256", "uint8", "address", "bytes32[]"],
@@ -206,8 +207,12 @@ describe("Implement a Tournament Vote", function(){
             expect((await contracts.tournament.getState(instanceInfo.identifier, contesters[0])).votes)
                 .to.equal(BigNumber.from("0"));
             await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions);
+            let weightOfBob = await contracts.token.balanceOf(Bob.address)
             expect((await contracts.tournament.getState(instanceInfo.identifier, contesters[0])).votes)
-                .to.equal(await contracts.token.balanceOf(Bob.address));
+                .to.equal(weightOfBob);
+            await contracts.tournament.connect(Commodus).vote(instanceInfo.identifier, votingOptions);
+            expect((await contracts.tournament.getState(instanceInfo.identifier, contesters[0])).votes)
+                .to.equal(weightOfBob.add(await contracts.token.balanceOf(Commodus.address)));
         })
         it("Should vote on as many options as groups", async function(){
             let votingOptions = abi.encode(["bytes32[]"],[[contesters[0], contesters[3]]]);
@@ -237,6 +242,14 @@ describe("Implement a Tournament Vote", function(){
             let votingOptions = abi.encode(["bytes32[]"],[[contesters[0], contesters[0]]]);
             await expect(contracts.tournament.connect(Bob).vote(identifier, votingOptions))
                 .to.be.revertedWith(`StatusError(${identifier}, ${VotingStatus.inactive})`)
+        })
+        it("Should set the status to failed when the voting power exceeds the limits.", async function(){
+            let votingOptions = abi.encode(["bytes32[]"],[[contesters[0]]]);
+            await contracts.token.connect(Alice).mint(ethers.constants.MaxInt256)
+            expect(await contracts.tournament.getStatus(instanceInfo.identifier)).to.equal(VotingStatus.awaitcall + rounds)
+            await contracts.tournament.connect(Alice).vote(instanceInfo.identifier, votingOptions);
+            expect(await contracts.tournament.getStatus(instanceInfo.identifier)).to.equal(VotingStatus.failed)
+            
         })
     })
     describe("Finish First Round", function(){
@@ -297,6 +310,143 @@ describe("Implement a Tournament Vote", function(){
                 }
                 expect(state.currentGroup).to.equal(BigNumber.from(cPrime.toString()))
             }
+        })
+    })
+    describe("Final round", function (){
+        let contesters: Array<string>
+        let rounds: number = 1;
+        let votingOptions: string;
+        let instanceInfo: IdentifierAndTimestamp
+        let winner: string
+        beforeEach(async function(){
+            await contracts.token.connect(Bob).mint(ONEETH.mul(200))
+            
+            contesters = [ ...Array(2).keys() ].map( i => '0x' + '0'.repeat(63) + (i+1).toString());
+            let votingParamsOne = abi.encode(
+                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
+            winner = contesters[0];
+            votingOptions = abi.encode(["bytes32[]"],[[winner]]);
+            let identifier = (await contracts.tournament.getCurrentIndex()).toNumber()
+            await contracts.integrator.connect(Alice).start(votingParamsOne, proposeImperatorCalldata);
+            instanceInfo = {
+                timestamp: (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp,
+                identifier: identifier
+            }
+        })
+        it("Should emit winner event in case at least one option has a non-zero outcome.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions)
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
+            await expect(contracts.tournament.connect(Alice).triggerNextRound(instanceInfo.identifier))
+                .to.emit(contracts.tournament, "WinnersOfTheFinal")
+                .withArgs(instanceInfo.identifier, winner);
+        })
+        it("Should set the status to awaitcall and the result to the tuple of winner and votes.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions)
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
+            await contracts.tournament.connect(Alice).triggerNextRound(instanceInfo.identifier)
+            expect(await contracts.tournament.getStatus(instanceInfo.identifier)).to.equal(VotingStatus.awaitcall)
+            let expectedResult = abi.encode(["bytes32", "uint256"], [winner, await contracts.token.balanceOf(Bob.address)])
+            expect(await contracts.tournament.result(instanceInfo.identifier)).to.equal(expectedResult)
+        })
+        it("Should not emit a winner event but set status to failed when both option have zero votes.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions);
+        })
+
+    })
+    // describe("Implement - Before Deadline", function(){
+    //     it("Should revert when trying to implement the result before the deadline.")
+    // })
+    describe("Implement", function(){
+        let rounds: number = 1;
+        let votingOptions: string;
+        let instanceInfoProposeImperator: IdentifierAndTimestamp;
+        let instanceInfoFail: IdentifierAndTimestamp;
+        let CommodusOption: string
+        beforeEach(async function(){
+            // await contracts.token.connect(Alice).mint(ONEETH.mul(100))
+            await contracts.token.connect(Bob).mint(ONEETH.mul(200))
+            CommodusOption = '0x' + '0'.repeat(24) + Commodus.address.slice(2,)
+            let contesters: Array<string> = [CommodusOption, ethers.constants.MaxUint256.toHexString()]
+            let votingParams = abi.encode(
+                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
+            votingOptions = abi.encode(["bytes32[]"],[[CommodusOption]]);
+            let identifierProposeImperator = (await contracts.tournament.getCurrentIndex()).toNumber()
+            await contracts.integrator.connect(Alice).start(votingParams, proposeImperatorCalldata);
+            let identifierFail = (await contracts.tournament.getCurrentIndex()).toNumber()
+            await contracts.integrator.connect(Alice).start(votingParams, failCalldata);
+            let timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            instanceInfoProposeImperator = {timestamp, identifier: identifierProposeImperator}
+            instanceInfoFail = {timestamp, identifier: identifierFail}
+        })
+        it("Should implement the callback data with the winner inserted.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfoProposeImperator.identifier, votingOptions)
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfoProposeImperator.timestamp + VOTING_DURATION + 1]);   
+            await contracts.tournament.connect(Alice).triggerNextRound(instanceInfoProposeImperator.identifier)
+            await expect(contracts.tournament.implement(instanceInfoProposeImperator.identifier, proposeImperatorCalldata))
+                .to.emit(contracts.tournament, "Implemented")
+                .withArgs(instanceInfoProposeImperator.identifier)
+            expect(await contracts.tournament.getStatus(instanceInfoProposeImperator.identifier))
+                .to.equal(VotingStatus.completed)
+        })
+        it("Should implement the callback data directly through implement when condition is met.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfoProposeImperator.identifier, votingOptions)
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfoProposeImperator.timestamp + VOTING_DURATION + 1]);
+            await expect(contracts.tournament.implement(instanceInfoProposeImperator.identifier, proposeImperatorCalldata))
+                .to.emit(contracts.tournament, "Implemented")
+                .withArgs(instanceInfoProposeImperator.identifier)
+            expect(await contracts.tournament.getStatus(instanceInfoProposeImperator.identifier))
+                .to.equal(VotingStatus.completed)
+        })
+        it("Should implement the callback and the winner should claim his title.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfoProposeImperator.identifier, votingOptions)
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfoProposeImperator.timestamp + VOTING_DURATION + 1]);   
+            await contracts.tournament.connect(Alice).triggerNextRound(instanceInfoProposeImperator.identifier)
+            expect(await contracts.integrator.imperator()).to.equal(zeroAddress)
+            expect(await contracts.integrator.imperatorElect()).to.equal(zeroAddress)
+            await contracts.tournament.implement(instanceInfoProposeImperator.identifier, proposeImperatorCalldata)
+            expect(await contracts.integrator.imperator()).to.equal(zeroAddress)
+            expect(await contracts.integrator.imperatorElect()).to.equal(Commodus.address)
+            await contracts.integrator.connect(Commodus).claimImperatorship()
+            expect(await contracts.integrator.imperator()).to.equal(Commodus.address)
+            expect(await contracts.integrator.imperatorElect()).to.equal(zeroAddress)
+        })
+        it("Should revert when the wrong callback data is passed into the implement function.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfoProposeImperator.identifier, votingOptions)
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfoProposeImperator.timestamp + VOTING_DURATION + 1]);
+            await expect(contracts.tournament.implement(instanceInfoProposeImperator.identifier, failCalldata))
+                .to.be.revertedWith(`InvalidCalldata()`)
+        })
+        it("Should revert when implement is called when the status is not awaiting a call.", async function(){
+            
+            // First the case that the voting has not finished and we are one round behind
+            let expectedStatus = ethers.utils.solidityPack(["uint248", "uint8"], [1, VotingStatus.awaitcall + rounds])
+            await expect(contracts.tournament.implement(instanceInfoProposeImperator.identifier, proposeImperatorCalldata))
+                .to.be.revertedWith(`ImplementingNotPermitted(${instanceInfoProposeImperator.identifier}, ${parseInt(expectedStatus)})`)
+            // Next the case that the voting instance is inactive (not started yet)
+            let identifierDoesntExist: number = 999;
+            await expect(contracts.tournament.implement(identifierDoesntExist, proposeImperatorCalldata))
+                .to.be.revertedWith(`ImplementingNotPermitted(${identifierDoesntExist}, ${0})`)
+        })
+        it("Should revert when implement is called on a failed status or about to fail status.", async function(){
+            
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfoProposeImperator.timestamp + VOTING_DURATION + 1]);   
+            await contracts.tournament.connect(Alice).triggerNextRound(instanceInfoProposeImperator.identifier)
+            // expect(await contracts.tournament.getStatus(instanceInfoProposeImperator.identifier)).to.equal(VotingStatus.failed)
+            await expect(contracts.tournament.implement(instanceInfoProposeImperator.identifier, proposeImperatorCalldata))
+                .to.be.revertedWith(`ImplementingNotPermitted(${instanceInfoProposeImperator.identifier}, ${VotingStatus.failed})`)
+            
+        })
+        it("Should set the status to failed whent the low-level implementation call reverted.", async function(){
+            await contracts.tournament.connect(Bob).vote(instanceInfoFail.identifier, votingOptions)
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfoFail.timestamp + VOTING_DURATION + 1]);   
+            await contracts.tournament.connect(Alice).triggerNextRound(instanceInfoFail.identifier)
+            expect(await contracts.tournament.getStatus(instanceInfoFail.identifier))
+                .to.equal(VotingStatus.awaitcall)
+            await expect(contracts.tournament.implement(instanceInfoFail.identifier, failCalldata))
+                .to.emit(contracts.tournament, "NotImplemented")
+                .withArgs(instanceInfoFail.identifier)
             
         })
     })

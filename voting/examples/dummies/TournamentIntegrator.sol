@@ -27,6 +27,7 @@ StartOnlyCallbackMinml
     {
         // But these function do exists and are made votable
         assignedContract[bytes4(keccak256("proposeNewImperator(address)"))] = _votingContract;
+        assignedContract[bytes4(keccak256("fail(uint256)"))] = _votingContract;
     }
 
     function proposeNewImperator(address _imperator) 
@@ -37,9 +38,10 @@ StartOnlyCallbackMinml
         imperatorElect = _imperator;
     }
 
-    function fail()
+    function fail(uint256 badNumber)
     external 
-    pure
+    OnlyByVote
+    returns(bool)
     {
         revert("Zong!");
     }
