@@ -23,6 +23,34 @@ import {QuorumPrimitive} from "../../../extensions/primitives/Quorum.sol";
 /// The idea of a tournament vote is by Andrei Taranu.
 /// This is an implementation within the framework of the voting contract system.
 
+library TournamentLib {
+    
+    function firstBytes2Uint256(bytes32 encoded) public pure returns (uint256) {
+        return uint256(uint16(bytes2(encoded)));
+    }
+
+    function firstBytes28Uint256(bytes32 encoded) public pure returns (uint256) {
+        return uint256(uint224(bytes28(encoded)));
+    }
+
+    function firstUint248Uint256(uint256 encoded) public pure returns (uint256) {
+        return uint256(uint248(bytes31(bytes32(encoded))));
+    }
+
+    function lastBytes30toUint256(bytes32 encoded) public pure returns(uint256) {
+        return uint256(uint240(bytes30(encoded<<16)));
+    }
+
+    function lastBytes4toUint32(bytes32 encoded) public pure returns(uint32) {
+        return uint32(bytes4(encoded<<224));
+    }
+
+    function lastUint8Uint256(uint256 encoded) public pure returns(uint256) {
+        return uint256(uint8(bytes1(bytes32(encoded)<<248)));
+    }
+
+}
+
 /// @title Tournament Voting Contract
 /// @dev This voting contract allows several rounds of voting, like in a tournament
 contract Tournament is 
@@ -38,18 +66,8 @@ HandleImplementationResponse,
 ImplementResultWithInsertion
 {
 
-    // Should only vote through another contract
-    // Should vote in rounds. The number of rounds is determined by the number of initial options
-    // Should be based on a token. 
-    // Should handle a tie. Depending on the setting, 
-    //              - either a relegation is created amongst the ties
-    //              - the first motion that is approved gets it and if no one approved then the zeroAddress goes on.
-    //              - there will be another round choose either the one with 
-    // Should have individual deadlines for each round
-    // Should vote on all the pairs
-    // 
-
-
+    using TournamentLib for bytes32;
+    using TournamentLib for uint256;
 
     mapping(uint256=>mapping(bytes32=>bytes32)) internal _state;
     mapping(uint256=>mapping(uint256=>mapping(address=>uint8))) internal _alreadyVoted;
@@ -58,13 +76,12 @@ ImplementResultWithInsertion
     mapping(uint256=>bytes32) internal _deadlineAndDuration; 
     
     event WinnersOfThisRound(uint256 identifier, uint8 round, bytes32[] winners);
-    event WinnersOfTheFinal(uint256 identifier, bytes32 winner);
 
     error CallbackTooShortForBytes32Insertion(uint48 insertAtByte, bytes callback);
     error OnlyDistinctOptions(uint256 identifier, bytes32 label);
     error TooManyRounds(uint256 identifier, uint8 rounds, uint256 options);
     error AtLeastOneRound(uint256 identifier);
-    error AlreadyVoted(uint256 identifier, uint16 group, bytes32 label, address voter);
+    error AlreadyVoted(uint256 identifier, uint256 group, bytes32 label, address voter);
 
     function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback)
     virtual
@@ -153,18 +170,11 @@ ImplementResultWithInsertion
     view
     returns(uint256 votes, uint256 currentGroup, bool participatesInCurrentRound)
     {
-        currentGroup = uint256(uint16(bytes2(_state[identifier][option])));
-        votes = uint256(uint240(bytes30(_state[identifier][option]<<16)));
-        participatesInCurrentRound = currentGroup >= uint256(uint248(bytes31(bytes32(_status[identifier]))));
+        currentGroup = _state[identifier][option].firstBytes2Uint256();
+        votes = _state[identifier][option].lastBytes30toUint256();
+        participatesInCurrentRound = currentGroup >= _status[identifier].firstUint248Uint256();
     }
 
-    // function getStatePure(uint256 identifier, bytes32 option)
-    // external 
-    // view
-    // returns(bytes32 state)
-    // {
-    //     return _state[identifier][option];
-    // }
 
 
     /// @dev We must implement a vote function 
@@ -174,9 +184,7 @@ ImplementResultWithInsertion
     returns (uint256)
     {
         
-
-        bytes32 status = bytes32(_status[identifier]);
-        uint8 statusFlag = uint8(bytes1(status<<(8 * 31)));
+        uint256 statusFlag = _status[identifier].lastUint8Uint256();
         
         // add some voting guards. For instance, no voting when status does not permit
         if(statusFlag <= uint256(IImplementResult.VotingStatusImplement.awaitcall)) {
@@ -184,12 +192,12 @@ ImplementResultWithInsertion
         }
 
         // check whether time is over
-        uint248 c = uint248(bytes31(status));
+        uint256 c = _status[identifier].firstUint248Uint256();
         if (block.timestamp > uint224(bytes28(_deadlineAndDuration[identifier]))){
             // set the next round
             c = _startNextRound(
                 identifier, 
-                statusFlag - uint8(uint256(IImplementResult.VotingStatusImplement.awaitcall)) - 1,
+                uint8(statusFlag - uint256(IImplementResult.VotingStatusImplement.awaitcall) - 1),
                 c);
         }
         
@@ -199,12 +207,12 @@ ImplementResultWithInsertion
 
         for (uint16 i=0; i<ballot.length; i++){
             // for each label it casts the vote
-            uint16 group = uint16(bytes2(_state[identifier][ballot[i]]));
+            uint256 group = _state[identifier][ballot[i]].firstBytes2Uint256();
             if (_alreadyVoted[identifier][group][voter]>0){
                 revert AlreadyVoted(identifier, group, ballot[i], voter);
             }
             uint256 weight = IERC721(_token[identifier]).balanceOf(voter);
-            if (uint256(uint240(bytes30(_state[identifier][ballot[i]]<<16))) + weight > (2**(240) - 1)){
+            if (_state[identifier][ballot[i]].lastBytes30toUint256() + weight > (2**(240) - 1)){
                 // This tournament is invalid.
                 _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
                 // revert VotingWeightExceedsBallotLimit(identifier, ballot[i], _state[identifier][ballot[i]], weight);
@@ -214,9 +222,9 @@ ImplementResultWithInsertion
             // check whether state exceeds the groupLeader
             bytes32 leaderLabel;
             if (c==1){
-                leaderLabel = _groupLeaders[identifier][uint16(group) - uint16(c)];
+                leaderLabel = _groupLeaders[identifier][group - c];
                 if ((uint256(_state[identifier][ballot[i]])>uint256(_state[identifier][leaderLabel])) && (ballot[i]!=leaderLabel)){
-                    _groupLeaders[identifier][uint16(group) - uint16(c)] = ballot[i];
+                    _groupLeaders[identifier][group - c] = ballot[i];
                 }
             } else {
                 leaderLabel = _groupLeaders[identifier][0];
@@ -232,35 +240,33 @@ ImplementResultWithInsertion
 
 
     function triggerNextRound(uint256 identifier) public {
-        bytes32 status = bytes32(_status[identifier]);
-        uint248 c = uint248(bytes31(status));
-        uint8 statusFlag = uint8(bytes1(status<<(8 * 31)));
-        uint8 awaitCall = uint8(uint256(IImplementResult.VotingStatusImplement.awaitcall));
+        uint256 c = _status[identifier].firstUint248Uint256();
+        uint256 statusFlag = _status[identifier].lastUint8Uint256();
+        uint256 awaitCall = uint256(IImplementResult.VotingStatusImplement.awaitcall);
         
-        if ((statusFlag > awaitCall) && block.timestamp>uint224(bytes28(_deadlineAndDuration[identifier]))){
-            _startNextRound(identifier, statusFlag - awaitCall - uint8(1), c);
+        if ((statusFlag > awaitCall) && block.timestamp>_deadlineAndDuration[identifier].firstBytes28Uint256()){
+            _startNextRound(identifier, uint8(statusFlag - awaitCall - 1), c);
 
         }
     }
 
     
-    function _startNextRound(uint256 identifier, uint8 newRound, uint248 c) internal returns(uint248 cPrime){
+    function _startNextRound(uint256 identifier, uint8 newRound, uint256 c) internal returns(uint256 cPrime){
             
         if (newRound == 0){
             // Check whether no votes were cast. Otherwise the groupLeader wins even if its a tie.
-            bool noVotesWereCast = uint256(uint240(bytes30(_state[identifier][_groupLeaders[identifier][0]]<<16))) == 0;
-            if (noVotesWereCast) {
+            if (_state[identifier][_groupLeaders[identifier][0]].lastBytes30toUint256() == 0) {
                 _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
             } else {
                 _status[identifier] = uint256(IImplementResult.VotingStatusImplement.awaitcall);
-                emit WinnersOfTheFinal(identifier, _groupLeaders[identifier][0]);
+                emit WinnersOfThisRound(identifier, newRound + uint8(1), _groupLeaders[identifier]);
             }
-            cPrime = c + uint248(1);
+            cPrime = c + 1;
 
         } else {
 
             emit WinnersOfThisRound(identifier, newRound + uint8(1), _groupLeaders[identifier]);
-            cPrime =  c + uint248(2 ** newRound);
+            cPrime = c + 2 ** newRound;
             _status[identifier] = uint256(bytes32(abi.encodePacked(
                     uint248(cPrime),
                     uint8(uint256(IImplementResult.VotingStatusImplement.awaitcall) + newRound))));
@@ -282,9 +288,9 @@ ImplementResultWithInsertion
             }
 
             // change deadline and duration;
-            uint32 duration = uint32(bytes4(bytes32(_deadlineAndDuration[identifier]<<(8*28))));
+            uint32 duration = _deadlineAndDuration[identifier].lastBytes4toUint32();
             _deadlineAndDuration[identifier] = bytes32(abi.encodePacked(
-                uint224(block.timestamp + duration), uint32(duration)));
+                uint224(block.timestamp + duration), duration));
             
         }
     }
@@ -327,11 +333,11 @@ ImplementResultWithInsertion
         if (_groupLeaders[identifier].length==1){
             return abi.encode(
                 _groupLeaders[identifier][0],
-                uint256(uint240(bytes30(_state[identifier][_groupLeaders[identifier][0]]<<16))));
+                _state[identifier][_groupLeaders[identifier][0]].lastBytes30toUint256());
         } else {
             uint256[] memory votes = new uint256[](_groupLeaders[identifier].length);
             for(uint256 i=0; i<_groupLeaders[identifier].length; i++){
-                votes[i] = uint256(uint240(bytes30(_state[identifier][_groupLeaders[identifier][i]]<<16)));
+                votes[i] = _state[identifier][_groupLeaders[identifier][i]].lastBytes30toUint256();
             }
             return abi.encode(_groupLeaders[identifier], votes);
         }
@@ -364,17 +370,17 @@ ImplementResultWithInsertion
         }
         bool finishedVoting = _checkCondition(identifier) && getStatus(identifier)==uint256(IImplementResult.VotingStatusImplement.awaitcall) + 1;
         // the overall winner should have non-zero votes        
-        permitted = finishedVoting && uint256(uint240(bytes30(_state[identifier][_groupLeaders[identifier][0]]<<16))) > 0;
+        permitted = finishedVoting && _state[identifier][_groupLeaders[identifier][0]].lastBytes30toUint256() > 0;
     }
 
     function _checkCondition(uint256 identifier) internal view override(BaseVotingContract) returns(bool condition) {
-        condition = block.timestamp > uint256(uint224(bytes28(_deadlineAndDuration[identifier])));
+        condition = block.timestamp > _deadlineAndDuration[identifier].firstBytes28Uint256();
     }
 
     function getStatus(uint256 identifier) public view 
     override(StatusGetter)
     returns(uint256){
-        return uint256(uint8(bytes1(bytes32(_status[identifier])<<(8 * 31))));
+        return _status[identifier].lastUint8Uint256();
     }
 
 

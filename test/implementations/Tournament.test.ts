@@ -54,7 +54,13 @@ describe("Implement a Tournament Vote", function(){
     beforeEach(async function() {
         [Alice, Bob, Commodus] = await ethers.getSigners()  
          
-        let TournamentFactory = await ethers.getContractFactory("Tournament")
+        const TournamentLibFactory = await ethers.getContractFactory("TournamentLib");
+        const tournamentLib = await TournamentLibFactory.deploy();
+        await tournamentLib.deployed();
+
+    
+        let TournamentFactory = await ethers.getContractFactory("Tournament",{
+            libraries:{TournamentLib: tournamentLib.address}})
         let tournament: Tournament = await TournamentFactory.connect(Alice).deploy()
         await tournament.deployed()
         let IntegratorFactory = await ethers.getContractFactory("DummyTournamentIntegrator")
@@ -347,8 +353,8 @@ describe("Implement a Tournament Vote", function(){
             await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions)
             await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
             await expect(contracts.tournament.connect(Alice).triggerNextRound(instanceInfo.identifier))
-                .to.emit(contracts.tournament, "WinnersOfTheFinal")
-                .withArgs(instanceInfo.identifier, winner);
+                .to.emit(contracts.tournament, "WinnersOfThisRound")
+                .withArgs(instanceInfo.identifier, 1, [winner]);
         })
         it("Should set the status to awaitcall and the result to the tuple of winner and votes.", async function(){
             await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions)
