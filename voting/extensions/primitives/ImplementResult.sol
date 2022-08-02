@@ -88,35 +88,32 @@ ImplementResultPrimitive
     returns(IImplementResult.Response) {
 
         // check whether the current voting instance allows implementation
-        if(!_implementingPermitted(identifier)) {
-            revert IImplementingPermitted.ImplementingNotPermitted(identifier, _status[identifier]);
-        }
+        if(!_implementingPermitted(identifier)) revert IImplementingPermitted.ImplementingNotPermitted(identifier, _status[identifier]);
 
         // check wether this is the correct calldata for the voting instance
         _requireValidCallbackData(identifier, callback);
 
-        // retrieve calling contract from the identifier.
-        address callingContract = CallerPrimitive._caller[identifier];
-        
-        
+        // retrieve calling contract from the identifier
+        // modify the callback and
         // implement the result
         (
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
         ) = ImplementResultPrimitive._implement(
-            callingContract,
+            CallerPrimitive._caller[identifier],
             _modifyCallback(identifier, callback));
         
         // check whether the response from the call was susccessful
-        if (_responseStatus == IImplementResult.Response.successful) {
-            // calling a non-contract address by accident can result in a successful response, when it shouldn't.
-            // That's why the user is encouraged to implement a return value to the target function and pass to the 
-            // votingParams a flag that a return value should be expected.
-            _responseStatus = _handleNotFailedImplementation(identifier, _responseData);
-        } else {
-            // this can be implemented by the user.
-            _responseStatus = _handleFailedImplementation(identifier, _responseData);
-        } 
+        // calling a non-contract address by accident can result in a successful response, when it shouldn't.
+        // That's why the user is encouraged to implement a return value to the target function and pass to the 
+        // votingParams a flag that a return value should be expected. 
+        // this can be implemented by the user.
+        
+
+        _responseStatus = (_responseStatus == IImplementResult.Response.successful) ? 
+                          _handleNotFailedImplementation(identifier, _responseData) :
+                          _handleFailedImplementation(identifier, _responseData);
+
 
         _status[identifier] = _responseStatus == IImplementResult.Response.successful? 
             uint256(IImplementResult.VotingStatusImplement.completed): 

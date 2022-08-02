@@ -54,13 +54,13 @@ describe("Implement a Tournament Vote", function(){
     beforeEach(async function() {
         [Alice, Bob, Commodus] = await ethers.getSigners()  
          
-        const TournamentLibFactory = await ethers.getContractFactory("TournamentLib");
-        const tournamentLib = await TournamentLibFactory.deploy();
-        await tournamentLib.deployed();
+        // const TournamentLibFactory = await ethers.getContractFactory("TournamentLib");
+        // const tournamentLib = await TournamentLibFactory.deploy();
+        // await tournamentLib.deployed();
 
     
-        let TournamentFactory = await ethers.getContractFactory("Tournament",{
-            libraries:{TournamentLib: tournamentLib.address}})
+        let TournamentFactory = await ethers.getContractFactory("Tournament")//,{
+            // libraries:{TournamentLib: tournamentLib.address}})
         let tournament: Tournament = await TournamentFactory.connect(Alice).deploy()
         await tournament.deployed()
         let IntegratorFactory = await ethers.getContractFactory("DummyTournamentIntegrator")
@@ -93,7 +93,7 @@ describe("Implement a Tournament Vote", function(){
         beforeEach(async function(){
             contesters = [ ...Array(2).keys() ].map( i => '0x' + '0'.repeat(63) + (i+1).toString());
             votingParamsOne = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
         })
         it("Should start a new voting instance with valid votingParams.", async function() {
@@ -110,50 +110,37 @@ describe("Implement a Tournament Vote", function(){
             let contestersState = await contracts.tournament.getState(0, contesters[0])
             expect(contestersState.votes).to.equal(ONEETH.mul(0))
             expect(contestersState.currentGroup).to.equal(1)
-            expect(contestersState.participatesInCurrentRound).to.equal(true);
         })
-        // it("Should start a new voting instance with huge list of options.", async function() {
-        //     let manyRounds : number = 8;
-        //     let addresses = [ ...Array(256).keys() ].map( i => '0x' + '0'.repeat(60) + (1000 + i).toString());
-        //     let votingParamsLostOfAddresses: string = abi.encode(
-        //         ["uint48", "uint256", "uint8", "address", "bytes32[]"],
-        //         [0, VOTING_DURATION, manyRounds, contracts.token.address, addresses])
-        //     expect(await contracts.tournament.getCurrentIndex()).to.equal(0)
-        //     await expect(contracts.integrator.connect(Alice).start(votingParamsLostOfAddresses, proposeImperatorCalldata))
-        //         .to.emit(contracts.tournament,'VotingInstanceStarted')
-        //         .withArgs(0, contracts.integrator.address)
-        //     expect((await contracts.tournament.getStatus(0)).toNumber()).to.equal(VotingStatus.awaitcall + manyRounds)
-        // }) 
 
         it("Should revert when non-distinct options are passed into the votingParams.", async function(){
             let nondistinctContesters : Array<string>  = [ ethers.constants.HashZero, ethers.constants.HashZero ]
             let votingParamsNonDistinct: string = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, 1, contracts.token.address, nondistinctContesters])
             await expect(contracts.integrator.connect(Alice).start(votingParamsNonDistinct, proposeImperatorCalldata))
                 .to.be.revertedWith(`'OnlyDistinctOptions(${0}, "${ethers.constants.HashZero}")'`);
         })
         it("Should revert when zero rounds are passed into the votingParams.", async function(){
             let votingParamsZero: string = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, 0, contracts.token.address, contesters])
             await expect(contracts.integrator.connect(Alice).start(votingParamsZero, proposeImperatorCalldata))
-                .to.be.revertedWith(`'AtLeastOneRound(${0})'`);
+                .to.be.revertedWith(`'InvalidRounds(${0}, ${0}, ${2})'`);
         })
         it("Should revert when too many rounds are passed into the votingParams.", async function(){
             let votingParamsTwo: string = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, 2, contracts.token.address, contesters])
             await expect(contracts.integrator.connect(Alice).start(votingParamsTwo, proposeImperatorCalldata))
-                .to.be.revertedWith(`'TooManyRounds(${0}, ${2}, ${2})'`);
+                .to.be.revertedWith(`'InvalidRounds(${0}, ${2}, ${2})'`);
         })
         it("Should revert when the callback is too short for bytesInsertion.", async function(){
             let insertAtByte = 1;
             let votingParamsTwo: string = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [insertAtByte, VOTING_DURATION, 1, contracts.token.address, contesters])
             await expect(contracts.integrator.connect(Alice).start(votingParamsTwo, proposeImperatorCalldata))
-                .to.be.revertedWith(`'CallbackTooShortForBytes32Insertion(${insertAtByte}, "${proposeImperatorCalldata}")'`);
+                .to.be.revertedWith(`'CallbackInsert(${insertAtByte}, "${proposeImperatorCalldata}")'`);
         
         })
         it("Should set the integrator contract as the caller.", async function(){
@@ -174,7 +161,7 @@ describe("Implement a Tournament Vote", function(){
             rounds = 1;
             tokenAddress = contracts.token.address;
             votingParamsOne = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [insertAtByte, VOTING_DURATION, rounds, tokenAddress, contesters])
         })
         it("Should encode the voting parameters correctly.", async function(){
@@ -207,7 +194,7 @@ describe("Implement a Tournament Vote", function(){
             // await contracts.token.connect(Commodus).mint(ONEETH.mul(300))
             contesters = [ ...Array(5).keys() ].map( i => '0x' + '0'.repeat(60) + (1000 + i).toString());
             let votingParams = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
             let identifier = (await contracts.tournament.getCurrentIndex()).toNumber()
             await contracts.integrator.connect(Alice).start(votingParams, proposeImperatorCalldata);
@@ -241,7 +228,7 @@ describe("Implement a Tournament Vote", function(){
             let groupLeaders = [contesters[0], contesters[3]]
             let votingOptions = abi.encode(["bytes32[]"],[groupLeaders]);
             await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions);
-            let expectedResult = abi.encode(["bytes32[]","uint256[]"],[groupLeaders, Array(2).fill(await contracts.token.balanceOf(Bob.address))])
+            let expectedResult = abi.encode(["bytes32[]"],[groupLeaders])//, Array(2).fill(await contracts.token.balanceOf(Bob.address))])
             expect(await contracts.tournament.result(0)).to.equal(expectedResult);
         })
         it("Should revert when voting on two options from the same group.", async function(){
@@ -249,7 +236,7 @@ describe("Implement a Tournament Vote", function(){
             let votingOptions = abi.encode(["bytes32[]"],[[contesters[0], contesters[0]]]);
             let group = (await contracts.tournament.getState(instanceInfo.identifier, contesters[0])).currentGroup;
             await expect(contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions))
-                .to.be.revertedWith(`AlreadyVoted(${0}, ${group.toNumber()}, "${contesters[0]}", "${Bob.address}")`);
+                .to.be.revertedWith(`AlreadyVoted(${0}, ${group.toNumber()}, "${Bob.address}")`);
 
         });
         it("Should revert when voting on an inactive instance (that has not been started yet)", async function(){
@@ -276,7 +263,7 @@ describe("Implement a Tournament Vote", function(){
             let rounds = 2;
             contesters = [ ...Array(5).keys() ].map( i => '0x' + '0'.repeat(60) + (1000 + i).toString());
             let votingParams = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
             let identifier = (await contracts.tournament.getCurrentIndex()).toNumber()
             await contracts.integrator.connect(Alice).start(votingParams, proposeImperatorCalldata);
@@ -299,7 +286,6 @@ describe("Implement a Tournament Vote", function(){
             expect(await contracts.tournament.getStatus(instanceInfo.identifier)).to.equal(VotingStatus.awaitcall + totalRounds - 1)
             for (let i=0; i<groupLeaders.length; i++){
                 let state = await contracts.tournament.getState(instanceInfo.identifier, groupLeaders[i])
-                expect(state.participatesInCurrentRound).to.equal(true)
                 expect(state.votes).to.equal(ONEETH.mul(0))
                 expect(state.currentGroup).to.equal(BigNumber.from(cPrime.toString()))
             }
@@ -317,7 +303,6 @@ describe("Implement a Tournament Vote", function(){
             expect(await contracts.tournament.getStatus(instanceInfo.identifier)).to.equal(VotingStatus.awaitcall + totalRounds - 1)
             for (let i=0; i<groupLeaders.length; i++){
                 let state = await contracts.tournament.getState(instanceInfo.identifier, groupLeaders[i])
-                expect(state.participatesInCurrentRound).to.equal(true)
                 if (groupLeaders[i] == nextOption){
                     expect(state.votes).to.equal(await contracts.token.balanceOf(Bob.address))
                 } else {
@@ -338,7 +323,7 @@ describe("Implement a Tournament Vote", function(){
             
             contesters = [ ...Array(2).keys() ].map( i => '0x' + '0'.repeat(63) + (i+1).toString());
             let votingParamsOne = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
             winner = contesters[0];
             votingOptions = abi.encode(["bytes32[]"],[[winner]]);
@@ -361,7 +346,7 @@ describe("Implement a Tournament Vote", function(){
             await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
             await contracts.tournament.connect(Alice).triggerNextRound(instanceInfo.identifier)
             expect(await contracts.tournament.getStatus(instanceInfo.identifier)).to.equal(VotingStatus.awaitcall)
-            let expectedResult = abi.encode(["bytes32", "uint256"], [winner, await contracts.token.balanceOf(Bob.address)])
+            let expectedResult = abi.encode(["bytes32"], [winner])
             expect(await contracts.tournament.result(instanceInfo.identifier)).to.equal(expectedResult)
         })
         it("Should not emit a winner event but set status to failed when both option have zero votes.", async function(){
@@ -384,7 +369,7 @@ describe("Implement a Tournament Vote", function(){
             CommodusOption = '0x' + '0'.repeat(24) + Commodus.address.slice(2,)
             let contesters: Array<string> = [CommodusOption, ethers.constants.MaxUint256.toHexString()]
             let votingParams = abi.encode(
-                ["uint48", "uint256", "uint8", "address", "bytes32[]"],
+                ["uint48", "uint32", "uint8", "address", "bytes32[]"],
                 [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
             votingOptions = abi.encode(["bytes32[]"],[[CommodusOption]]);
             let identifierProposeImperator = (await contracts.tournament.getCurrentIndex()).toNumber()
