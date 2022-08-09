@@ -22,6 +22,6 @@ interface IStartVoteAndImplement {
 
     function vote(uint256 identifier, bytes memory votingData) external;
 
-    function implement(uint256 identifier, bytes calldata callback) external;
+    function implement(uint256 identifier, bytes calldata callback) external payable;
 
 }

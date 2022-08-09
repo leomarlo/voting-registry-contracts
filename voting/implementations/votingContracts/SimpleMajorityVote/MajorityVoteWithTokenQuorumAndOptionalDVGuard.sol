@@ -25,6 +25,10 @@ import {ImplementResult} from "../../../extensions/primitives/ImplementResult.so
 import {TokenPrimitive} from "../../../extensions/primitives/TokenPrimitive.sol";
 import {QuorumPrimitive} from "../../../extensions/primitives/Quorum.sol";
 
+import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
+import {IGetQuorum} from "../../../extensions/interfaces/IGetQuorum.sol";
+import {IGetDoubleVotingGuardEnabled} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+
 
 error QuorumExceeded(uint256 quorum);
 
@@ -36,9 +40,12 @@ StatusGetter,
 CheckCalldataValidity,
 TokenPrimitive,
 NoDoubleVoting,
+IGetDoubleVotingGuardEnabled,
 HandleDoubleVotingGuard,
 CastYesNoAbstainVote,
+IGetDeadline,
 Deadline,
+IGetQuorum,
 QuorumPrimitive,
 ImplementingPermitted,
 BaseVotingContract,
@@ -224,6 +231,36 @@ ImplementResult
             emit HandleImplementationResponse.Implemented(identifier);
         }
 
+    }
+
+
+    function getDeadline(uint256 identifier) 
+    external view
+    override(IGetDeadline) 
+    returns(uint256) {
+        return _deadline[identifier];
+    }
+
+    function getQuorum(uint256 identifier) 
+    external view
+    override(IGetQuorum) 
+    returns(uint256 quorum, uint256 inUnitsOf) {
+        return (_quorum[identifier], 1e5);
+    }
+
+    function getDoubleVotingGuardEnabled(uint256 identifier)
+    external view
+    override(IGetDoubleVotingGuardEnabled)
+    returns(bool) {
+        // by default any vote that is not inactive has this guard enabled
+        return uint256(_status[identifier])!=0;
+    } 
+
+    function supportsInterface(bytes4 interfaceId) public pure virtual override(BaseVotingContract) returns (bool) {
+        return 
+            super.supportsInterface(interfaceId) ||
+            interfaceId == type(IGetDeadline).interfaceId ||
+            interfaceId == type(IGetDoubleVotingGuardEnabled).interfaceId;
     }
 
 }

@@ -231,6 +231,7 @@ describe("Implement a Tournament Vote", function(){
             let expectedResult = abi.encode(["bytes32[]"],[groupLeaders])//, Array(2).fill(await contracts.token.balanceOf(Bob.address))])
             expect(await contracts.tournament.result(0)).to.equal(expectedResult);
         })
+        
         it("Should revert when voting on two options from the same group.", async function(){
 
             let votingOptions = abi.encode(["bytes32[]"],[[contesters[0], contesters[0]]]);
@@ -258,13 +259,14 @@ describe("Implement a Tournament Vote", function(){
         let instanceInfo: IdentifierAndTimestamp;
         let contesters: Array<string>;
         let groupLeaders: Array<string>;
+        let totalRounds: number = 2;
+        let options : string;
         beforeEach(async function() {
             await contracts.token.connect(Bob).mint(ONEETH.mul(200))
-            let rounds = 2;
             contesters = [ ...Array(5).keys() ].map( i => '0x' + '0'.repeat(60) + (1000 + i).toString());
             let votingParams = abi.encode(
                 ["uint48", "uint32", "uint8", "address", "bytes32[]"],
-                [0, VOTING_DURATION, rounds, contracts.token.address, contesters])
+                [0, VOTING_DURATION, totalRounds, contracts.token.address, contesters])
             let identifier = (await contracts.tournament.getCurrentIndex()).toNumber()
             await contracts.integrator.connect(Alice).start(votingParams, proposeImperatorCalldata);
             instanceInfo = {
@@ -272,13 +274,13 @@ describe("Implement a Tournament Vote", function(){
                 identifier: identifier
             }
             groupLeaders = [contesters[0], contesters[3]]
-            let votingOptions = abi.encode(["bytes32[]"],[groupLeaders]);
-            await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, votingOptions);
+            options = abi.encode(["bytes32[]"],[groupLeaders]);
+            await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, options);
             await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
             
         })
         it("Should enter the next round by calling the triggerNextRound function.", async function(){
-            let totalRounds = 2;
+            
             let cPrime = 3
             await expect(contracts.tournament.connect(Alice).triggerNextRound(instanceInfo.identifier))
                 .to.emit(contracts.tournament, "WinnersOfThisRound")
@@ -292,7 +294,7 @@ describe("Implement a Tournament Vote", function(){
         })
         it("Should enter the next round also by casting a new vote.", async function(){
             // We vote for the winner of group 2
-            let totalRounds = 2;
+            
             let cPrime = 3
             let nextOption = groupLeaders[1]
             let votingOptions = abi.encode(["bytes32[]"],[[nextOption]]);
@@ -310,6 +312,17 @@ describe("Implement a Tournament Vote", function(){
                 }
                 expect(state.currentGroup).to.equal(BigNumber.from(cPrime.toString()))
             }
+        })
+        it("Should receive votes on all rounds until the final.", async function(){
+            let winner = contesters[3];
+            let finalOptions = abi.encode(["bytes32[]"],[[winner]]);
+            let finalResult = abi.encode(["bytes32"],[winner]);
+            expect(await contracts.tournament.getStatus(0)).to.equal(VotingStatus.awaitcall + totalRounds);
+            expect(await contracts.tournament.result(0)).to.equal(options);
+            await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
+            await contracts.tournament.connect(Bob).vote(instanceInfo.identifier, finalOptions);
+            expect(await contracts.tournament.getStatus(0)).to.equal(VotingStatus.awaitcall + totalRounds - 1);
+            expect(await contracts.tournament.result(0)).to.equal(finalResult);
         })
     })
     describe("Final round", function (){

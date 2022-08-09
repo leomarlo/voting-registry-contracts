@@ -15,14 +15,19 @@ import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.s
 import {CallerGetter} from "../../../extensions/primitives/Caller.sol";
 import {TokenPrimitive} from "../../../extensions/primitives/TokenPrimitive.sol";
 
+import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
+import {IGetDoubleVotingGuardEnabled} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract YesNoAbstainSnapshotWithToken is 
 NoDoubleVoting,
 HandleDoubleVotingGuard,
 CastYesNoAbstainVote,
+IGetDeadline,
 Deadline,
 TokenPrimitive,
+IGetDoubleVotingGuardEnabled,
 StatusGetter,
 CallerGetter,
 BaseVotingContract
@@ -127,6 +132,28 @@ BaseVotingContract
     /// @dev Use the convenient helper function to determine whether the voting has ended or not
     function _checkCondition(uint256 identifier) internal view override(BaseVotingContract) returns(bool condition) {
         condition = Deadline._deadlineHasPassed(identifier);
+    }
+
+     function getDeadline(uint256 identifier) 
+    external view
+    override(IGetDeadline) 
+    returns(uint256) {
+        return _deadline[identifier];
+    }
+
+    function getDoubleVotingGuardEnabled(uint256 identifier)
+    external view
+    override(IGetDoubleVotingGuardEnabled)
+    returns(bool) {
+        // by default any vote that is not inactive has this guard enabled
+        return uint256(_status[identifier])!=0;
+    } 
+
+    function supportsInterface(bytes4 interfaceId) public pure virtual override(BaseVotingContract) returns (bool) {
+        return 
+            super.supportsInterface(interfaceId) ||
+            interfaceId == type(IGetDeadline).interfaceId ||
+            interfaceId == type(IGetDoubleVotingGuardEnabled).interfaceId;
     }
 
 

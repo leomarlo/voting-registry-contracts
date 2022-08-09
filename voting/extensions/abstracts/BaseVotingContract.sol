@@ -68,11 +68,11 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
         // emit event
         emit VotingInstanceStarted(_currentIndex, msg.sender);
         
-        // increment currentIndex
-        _currentIndex += 1;
-
         // return the identifier of this voting instance
         identifier = _currentIndex;
+        
+        // increment currentIndex
+        _currentIndex += 1;
     }
 
 

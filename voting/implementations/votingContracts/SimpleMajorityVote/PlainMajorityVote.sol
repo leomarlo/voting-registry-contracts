@@ -13,6 +13,10 @@ import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContra
 import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
 import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
+
+import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
+import {IGetDoubleVotingGuardEnabled} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+
 import {
     ExpectReturnValue,
     HandleImplementationResponse
@@ -27,8 +31,10 @@ CallbackHashPrimitive,
 CallerGetter,
 StatusGetter,
 CheckCalldataValidity,
+IGetDoubleVotingGuardEnabled,
 NoDoubleVoting,
 CastSimpleVote,
+IGetDeadline,
 Deadline,
 ImplementingPermitted,
 BaseVotingContract,
@@ -163,6 +169,28 @@ ImplementResult
             emit HandleImplementationResponse.Implemented(identifier);
         }
 
+    }
+
+    function getDeadline(uint256 identifier) 
+    external view
+    override(IGetDeadline) 
+    returns(uint256) {
+        return _deadline[identifier];
+    }
+
+    function getDoubleVotingGuardEnabled(uint256 identifier)
+    external view
+    override(IGetDoubleVotingGuardEnabled)
+    returns(bool) {
+        // by default any vote that is not inactive has this guard enabled
+        return uint256(_status[identifier])!=0;
+    } 
+
+    function supportsInterface(bytes4 interfaceId) public pure virtual override(BaseVotingContract) returns (bool) {
+        return 
+            super.supportsInterface(interfaceId) ||
+            interfaceId == type(IGetDeadline).interfaceId ||
+            interfaceId == type(IGetDoubleVotingGuardEnabled).interfaceId;
     }
 
 }

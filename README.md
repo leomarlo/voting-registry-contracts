@@ -63,7 +63,7 @@ This standard is really meant for voting with on-chain consequences, but it can 
 ```js
 enum Response {precall, successful, failed}
 
-function implement(uint256 identifier, bytes calldata callback) external returns(Response response); 
+function implement(uint256 identifier, bytes calldata callback) external payable returns(Response response); 
 ```
 The `implement` function `MAY` be implemented. Having another contract make low-level calls with calldata that it could potentially temper with requires a high level of trust. The voting contract `SHOULD NOT` be a proxy contract, which would open possible attack vectors. The target contract, that calls the `implement` function `SHOULD` be able to block calls from a voting instance that implements this function. (see **Voting Integration**). These concerns lead to the suggestion of having the `implement` function as an optional but recommended extension of the minimal voting standard.
 
@@ -172,7 +172,7 @@ function vote(uint256 identifier, bytes memory votingData) external;
 We maintain five integration patterns that use the vote interface. The first one is intended for a snapshot-like scenario, where a globally stored voting contract is used (one to rule them all) and the identifier coincides with that instance's identifier on that voting contract. A second and third one call the vote function, but also implement the outcome depending on its returned status flag. In one case it's implemented in the caller, in the other it calls the implement function of the voting contract. The fourth and fifth ones only calls vote function and instead of implementing the outcome directly, they have separate `implement` functions that respectively implement in the caller or call the voting contract's implement function:
 
 ```js
-function implement(uint256 identifier, bytes calldata callback) external;
+function implement(uint256 identifier, bytes calldata callback) external payable;
 ```
 
 These five patterns come in a minimal version, which just implements the basic functionality and a swiss-army knife version with hooks. Users may come up with their own integration and are encouraged to draw inspiration from these integration patterns or mix-n-match. 

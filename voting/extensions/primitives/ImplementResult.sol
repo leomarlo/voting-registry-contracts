@@ -22,6 +22,7 @@ ImplementResultPrimitive
     /// @return response information on whether the call was successful or unsuccessful.
     function implement(uint256 identifier, bytes calldata callback) 
     external 
+    payable
     override(IImplementResult)
     returns(IImplementResult.Response) {
 
@@ -84,6 +85,7 @@ ImplementResultPrimitive
     /// @return response information on whether the call was successful or unsuccessful.
     function implement(uint256 identifier, bytes calldata callback) 
     external 
+    payable
     override(IImplementResult)
     returns(IImplementResult.Response) {
 

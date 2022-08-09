@@ -42,6 +42,7 @@ InstanceInfoPrimitive
 
     function implement(uint256 identifier, bytes calldata callback)
     external 
+    payable
     override(IStartVoteAndImplement) 
     {
         IImplementResult(instances[identifier].votingContract).implement(
@@ -85,12 +86,13 @@ InstanceInfoPrimitive
         _beforeVote(identifier, votingData);
         uint256 status = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
-            votingData);
+            _modifyVotingData(identifier, votingData));
         _afterVote(identifier, status, votingData);
     }
 
     function implement(uint256 identifier, bytes calldata callback)
     external 
+    payable
     override(IStartVoteAndImplement) 
     {
         _beforeImplement(identifier);
@@ -98,7 +100,7 @@ InstanceInfoPrimitive
         _response = IImplementResult(instances[identifier].votingContract).implement(
                 instances[identifier].identifier,
                 callback);
-        _afterImplementation(identifier, _response);
+        _afterImplement(identifier, _response);
         
     }
 
@@ -108,11 +110,13 @@ InstanceInfoPrimitive
     
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 
+    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
+
     function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
 
     function _beforeImplement(uint256 identifier) virtual internal {}
     
-    function _afterImplementation(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal {}    
+    function _afterImplement(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal {}    
 
 }
 
@@ -158,8 +162,10 @@ InstanceInfoPrimitive
 
     function implement(uint256 identifier, bytes calldata callback)
     external 
+    payable
     override(IStartVoteAndImplement) 
     {
+        _beforeImplement(identifier);
         IImplementResult(instances[identifier].votingContract).implement(
                 instances[identifier].identifier,
                 callback);
@@ -169,6 +175,9 @@ InstanceInfoPrimitive
     function _beforeStart(bytes memory votingParams) virtual internal {}
 
     function _beforeVote(uint256 identifier) virtual internal {}
+
+    function _beforeImplement(uint256 identifier) virtual internal {}
+    
 }
 
 abstract contract StartVoteAndImplementHybridVotingImplRemoteHooks is 
@@ -205,20 +214,25 @@ InstanceInfoPrimitive
         _beforeVote(identifier, votingData);
         uint256 status = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
-            votingData);
+            _modifyVotingData(identifier, votingData));
         _afterVote(identifier, status, votingData);
     }
 
     function implement(uint256 identifier, bytes calldata callback)
-    external 
+    external
+    payable 
     override(IStartVoteAndImplement) 
     {
         _beforeImplement(identifier);
-        IImplementResult.Response _response;
-        _response = IImplementResult(instances[identifier].votingContract).implement(
+        (, bytes memory data) = instances[identifier].votingContract.call{value: msg.value}(
+            abi.encodeWithSelector(
+                IImplementResult.implement.selector, 
                 instances[identifier].identifier,
-                callback);
-        _afterImplementation(identifier, _response);
+                callback));
+        _afterImplement(
+            identifier, 
+            abi.decode(data,(IImplementResult.Response))
+        );
         
     }
 
@@ -230,10 +244,12 @@ InstanceInfoPrimitive
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
 
+    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
+
     function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
 
     function _beforeImplement(uint256 identifier) virtual internal {}
     
-    function _afterImplementation(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal {}    
+    function _afterImplement(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal {}    
 
 }

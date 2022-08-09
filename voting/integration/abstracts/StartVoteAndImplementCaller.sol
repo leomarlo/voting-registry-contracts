@@ -67,6 +67,7 @@ ImplementResultPrimitive
 
     function implement(uint256 identifier, bytes calldata callback)
     external 
+    payable
     override(IStartVoteAndImplement) 
     {
         if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
@@ -139,7 +140,8 @@ ImplementResultPrimitive
 
 
     function implement(uint256 identifier, bytes calldata callback)
-    external 
+    external
+    payable 
     override(IStartVoteAndImplement) 
     {
         if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
@@ -225,6 +227,7 @@ ImplementingPermitted
 
     function implement(uint256 identifier, bytes calldata callback)
     external 
+    payable
     override(IStartVoteAndImplement) 
     {
         if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
@@ -298,13 +301,14 @@ ImplementingPermitted
         _beforeVote(identifier, votingData);
         uint256 remoteStatus = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
-            votingData);
+            _modifyVotingData(identifier, votingData));
         _afterVote(identifier, remoteStatus, votingData);
     }
 
 
     function implement(uint256 identifier, bytes calldata callback)
     external 
+    payable
     override(IStartVoteAndImplement) 
     {
         if(!CheckCalldataValidity._isValidCalldata(identifier, callback)){
@@ -334,6 +338,8 @@ ImplementingPermitted
     function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+
+    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
     function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
 

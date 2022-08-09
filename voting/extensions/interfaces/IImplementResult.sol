@@ -11,5 +11,7 @@ interface IImplementResult {
     /// @param identifier the index for the voting instance in question
     /// @param callback data that is passed along with the function call.
     /// @return response information on whether the call was successful or unsuccessful.
-    function implement(uint256 identifier, bytes calldata callback) external returns(Response response); 
+    function implement(uint256 identifier, bytes calldata callback) 
+    external payable
+    returns(Response response); 
 }

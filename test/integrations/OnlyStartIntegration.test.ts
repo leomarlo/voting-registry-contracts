@@ -58,7 +58,7 @@ let VOTING_DURATION_ARGUMENT : number = 432000;  // 5 days
 
 
 
-describe("Integration Through Starting a Hybrid Voting Instance", function() {
+describe("Integration through starting a Hybrid Voting Instance", function() {
     let incrementCalldata: string;
     let resetCalldata: string;
     let contracts: Contracts;

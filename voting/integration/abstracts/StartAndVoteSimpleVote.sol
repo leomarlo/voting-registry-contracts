@@ -54,7 +54,7 @@ abstract contract StartAndVoteSimpleVotingHooks is IStartAndVote, InstanceInfoPr
         _beforeVote(identifier, votingData);
         uint256 status = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
-            votingData);
+            _modifyVotingData(identifier, votingData));
         _afterVote(identifier, status, votingData);
     }
 
@@ -65,6 +65,8 @@ abstract contract StartAndVoteSimpleVotingHooks is IStartAndVote, InstanceInfoPr
     function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+
+    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
     function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
 

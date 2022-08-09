@@ -132,7 +132,7 @@ ImplementingPermitted
 
         uint256 status = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
-            votingData);
+            _modifyVotingData(identifier, votingData));
         if(status==uint256(IImplementResult.VotingStatusImplement.awaitcall) && instances[identifier].callback.length<4 && _implementingPermitted(identifier)){
             // implement the result
             (
@@ -161,6 +161,8 @@ ImplementingPermitted
     function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+
+    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
     function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
 
@@ -262,7 +264,7 @@ ImplementResultPrimitive
         _beforeVote(identifier, votingData);
         uint256 remoteStatus = IVotingContract(instances[identifier].votingContract).vote(
             instances[identifier].identifier,
-            votingData);
+            _modifyVotingData(identifier, votingData));
         if(remoteStatus==uint256(IImplementResult.VotingStatusImplement.awaitcall) && _implementingPermitted(identifier)){
             // implement the result
             (
@@ -288,6 +290,8 @@ ImplementResultPrimitive
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
 
     function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+
+    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
     function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
 

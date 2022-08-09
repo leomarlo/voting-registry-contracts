@@ -25,7 +25,7 @@ abstract contract ImplementResultPrimitive {
     virtual
     returns(IImplementResult.Response, bytes memory)
     {
-        (bool success, bytes memory errorMessage) = _contract.call(callback);
+        (bool success, bytes memory errorMessage) = _contract.call{value: msg.value}(callback);
         IImplementResult.Response response = success ? IImplementResult.Response.successful : IImplementResult.Response.failed; 
         return (response, errorMessage);
     }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.13;
 
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotingContract} from "../../../votingContractStandard/IVotingContract.sol";
 import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
@@ -56,10 +56,6 @@ library TournamentLib {
     function initializeState(uint16 group) internal pure returns(bytes32) {
         return  bytes32(abi.encodePacked(group, uint240(0)));
     } 
-
-    function castVote(bytes32 state, uint256 weight) internal pure returns(uint256){
-        return lastBytes30toUint256(state) + weight;
-    }  
 
     function encodeStatus(uint256 c, uint256 status) internal pure returns(uint256) {
         return uint256(bytes32(abi.encodePacked(uint248(c), uint8(status))));
@@ -185,7 +181,7 @@ ImplementResultWithInsertion
 
             if (_alreadyVoted[identifier][group][msg.sender]>0) revert AlreadyVoted(identifier, group, msg.sender);
 
-            uint256 weight = IERC721(_token[identifier]).balanceOf(msg.sender); 
+            uint256 weight = IERC20(_token[identifier]).balanceOf(msg.sender); 
             
             // Having a uint240 instead of a uint256 encoding might cause problems, but probably not
             if (weight + _state[identifier][ballot[i]].lastBytes30toUint256() > type(uint240).max) _status[identifier] = uint256(IImplementResult.VotingStatusImplement.failed);
@@ -294,6 +290,13 @@ ImplementResultWithInsertion
     view
     returns(uint256){
         return _deadlineAndDuration[identifier].firstBytes28Uint256();
+    }
+
+    function alreadyVoted(uint256 identifier, uint16 group, address voter)
+    external
+    view 
+    returns(bool){
+        return _alreadyVoted[identifier][group][voter] == 1;
     }
 
 
