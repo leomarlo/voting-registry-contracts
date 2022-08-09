@@ -6,6 +6,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
+import {IVotingRegistry} from "../../registration/registry/IVotingRegistry.sol";
+import {IGetDeadline} from "../../extensions/interfaces/IGetDeadline.sol";
+import {IGetQuorum} from "../../extensions/interfaces/IGetQuorum.sol";
+import {IGetToken} from "../../extensions/interfaces/IGetToken.sol";
+
 // import {Deployer} from "../../registration/registrar/Deployer.sol";
 import {StartVoteAndImplementHybridVotingImplRemoteHooks} from "../../integration/abstracts/StartVoteAndImplementRemote.sol";
 import {
@@ -152,6 +157,12 @@ interface IPlaygroundVotingBadge is IERC721{
     function changeTradingEnabledGlobally(bool enable) external;
 }
 
+struct VotingMetaParams {
+    uint256 minDuration;
+    uint256 minQuorumInPercentmille;
+    address token;
+}
+
 
 contract VotingPlayground is 
 AssignedContractPrimitive,
@@ -169,12 +180,97 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     mapping(bytes4=>uint256) public minXpToStartThisFunction;
     bool public acceptingNFTs;
 
+    // Change the Counter
+    uint256 public counter;
+    enum Operation {add, subtract, divide, multiply, modulo, exponentiate}
+    Operation public operation;
+
+    // Change people
+    string[] public roles;
+    mapping(uint256=>address) internal _incumbents;
+    mapping(string=>uint256) public _rolesIndexPlusOne;
+
+    mapping(bytes4=>VotingMetaParams) public votingMetaParams;
+    address internal deployer;
+    uint8 internal oneExtraTransaction;
+    IVotingRegistry public immutable VOTING_CONTRACT_REGISTRY;
+
     event Received(address caller, uint amount);
 
+    uint256 public numberOfInstances;
+    uint256 public numberOfVotes;
+    uint256 public numberOfImplementations;
+
+    mapping(uint24=>address) public simpleVotingContract;
+    uint24 public numberOfSimpleVotingContracts;
+    mapping(bytes4=>bool) public fixedVotingContract;
     // setting parameters
-    constructor() {
+
+
+
+    constructor(
+        address votingContractRegistry,
+        bytes5[] memory flagAndSelectors,
+        address[] memory votingContracts,
+        uint256[] memory minDurations,
+        uint256[] memory minQuorumInPercentmilles,
+        address[] memory tokens
+        )
+    {
+        // set deployer
+        deployer = msg.sender;
+        // set the registry;
+        VOTING_CONTRACT_REGISTRY = IVotingRegistry(votingContractRegistry);
         // set a few voting contracts
+        // assign the voting contract the increment function.
+        for (uint8 j; j<votingContracts.length; j++){
+            bytes4 selector = bytes4(flagAndSelectors[j] << 8);
+            fixedVotingContract[selector] = bytes1(flagAndSelectors[j])!=bytes1(0x00);
+            votingMetaParams[selector] = VotingMetaParams({
+                minDuration: minDurations[j],
+                minQuorumInPercentmille: minQuorumInPercentmilles[j],
+                token: tokens[j]
+            });
+        }
     }
+
+    function addSimpleVotingContract(address votingContract) external {
+        // check whether it is Registered
+        require(VOTING_CONTRACT_REGISTRY.isRegistered(votingContract));
+        simpleVotingContract[uint24(numberOfSimpleVotingContracts)] = votingContract;
+        numberOfSimpleVotingContracts += 1;
+    }
+
+    // change the contract for certain functions
+    function changeAssignedContract(bytes4 selector, address newVotingContract) 
+    external 
+    OnlyByVote
+    {
+        // check whether it is Registered
+        require(VOTING_CONTRACT_REGISTRY.isRegistered(newVotingContract));
+        require(!fixedVotingContract[selector]);
+        assignedContract[selector] = newVotingContract;
+    }
+
+
+    // change the metaParameters for those functions
+    function changeMetaParameters(
+        bytes4 selector,
+        uint256 minDuration,
+        uint256 minQuorumInPercentmille,
+        address token
+    )
+    external
+    OnlyByVote
+    {
+        require(!fixedVotingContract[selector]);
+        votingMetaParams[selector] = VotingMetaParams({
+            minDuration: minDuration,
+            minQuorumInPercentmille: minQuorumInPercentmille,
+            token: token
+        });
+    }
+        
 
     //////////////////////////////////////////////
     // PARAMETER SETTINGS                       //
@@ -228,9 +324,51 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     // DO INTERACTIVE STUFF                     //
     //////////////////////////////////////////////
 
-    function deployNewBadge(bytes32 salt, bytes memory bytecode, address badger) 
+    function changeCounter(uint256 by) 
+    external 
+    OnlyByVote
+    {
+        if (operation==Operation.add){
+            counter += by;
+        } else if (operation==Operation.subtract) {
+            counter -= by;
+        } else if (operation==Operation.multiply) {
+            counter *= by;
+        } else if (operation==Operation.divide) {
+            counter = counter / by;
+        } else if (operation==Operation.modulo) {
+            counter = counter % by;
+        } else if (operation==Operation.exponentiate) {
+            counter = counter ** by;
+        } 
+        
+    }
+
+    function changeOperation(Operation newOperation)
     external
     OnlyByVote
+    {
+        operation = newOperation;
+    }
+
+    function changeIncumbent(string memory office, address newIncumbent)
+    external
+    OnlyByVote 
+    {
+        if (_rolesIndexPlusOne[office]==0){
+            roles.push(office);
+            _rolesIndexPlusOne[office] = roles.length;
+        }
+        _incumbents[_rolesIndexPlusOne[office] - 1] = newIncumbent;
+    }
+
+    //////////////////////////////////////////////
+    // CREATE CONTRACTS                         //
+    //////////////////////////////////////////////
+
+    function deployNewBadge(bytes32 salt, bytes memory bytecode, address badger) 
+    external
+    OnlyByVoteOrOnceByDeployer
     returns(address deployedContract){
         deployedContract = _deployContract(salt, bytecode);
         IPlaygroundVotingBadge newBadge = IPlaygroundVotingBadge(deployedContract);
@@ -252,15 +390,24 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         deployedContracts.push(deployedContract);
     }
 
+
+
     //////////////////////////////////////////////
     // SENDING THINGS                           //
     //////////////////////////////////////////////
 
-    function sendToken(address token, address to, uint256 amount) 
+    function sendNFT(address token, address to, uint256 tokenId) 
     external 
     OnlyByVote
     {
+        IERC721(token).safeTransferFrom(address(this), to, tokenId);
+    }
 
+    function sendERC20Token(address token, address to, uint256 amount) 
+    external 
+    OnlyByVote
+    {
+        IERC20(token).transfer(to, amount);
     }
 
     enum ApprovalTypes {limitedApproval, unapproveAll, approveAll}
@@ -274,8 +421,6 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         (approvalType==ApprovalTypes.limitedApproval)?
         IERC721(token).approve(spender, tokenId):
         IERC721(token).setApprovalForAll(spender, approvalType==ApprovalTypes.approveAll);
-
-        
     }
 
 
@@ -320,11 +465,31 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback)
     internal override(StartVoteAndImplementHybridVotingImplRemoteHooks)
     {
+        // check whether conditions are met
+        uint256 index = instances[identifier].identifier;
+        address votingContract = instances[identifier].votingContract;
+        if (callback.length>=4){
+           bytes4 selector = bytes4(callback[0:4]);
+           if (votingMetaParams[selector].minDuration!=0){
+                require(votingMetaParams[selector].minDuration <= IGetDeadline(votingContract).getDeadline(index) - block.timestamp);
+           }
+           if (votingMetaParams[selector].token!=address(0)){
+                require(IGetToken(votingContract).getToken(index) == votingMetaParams[selector].token);
+           }
+           if (votingMetaParams[selector].minQuorumInPercentmille!=0){
+                (uint256 _quorum, uint256 inUnitsOf) = IGetQuorum(votingContract).getQuorum(index);
+                // when inUnitsOf is zero (i.e. the quorum is measured in absolute terms, then the condition is true irrespective of what _quroum is).
+                require((votingMetaParams[selector].minQuorumInPercentmille * inUnitsOf) <= (_quorum * 1e5));                
+           }
+        }
+        
         badges[mainBadge].mint(
             msg.sender,
-            instances[identifier].identifier,
+            index,
             msg.sig,
-            instances[identifier].votingContract);
+            votingContract);
+
+        numberOfInstances += 1;
     }
 
     function _beforeVote(uint256 identifier, bytes memory votingData) 
@@ -342,6 +507,14 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         }
     }
 
+    function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) 
+    internal override(StartVoteAndImplementHybridVotingImplRemoteHooks) 
+    {
+        numberOfVotes += 1;
+    }
+
+
+
     function _beforeImplement(uint256 identifier) 
     internal override(StartVoteAndImplementHybridVotingImplRemoteHooks)
     {
@@ -350,11 +523,13 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
                 instances[identifier].identifier,
                 msg.sig,
                 instances[identifier].votingContract);
+
+        numberOfImplementations += 1;
     }
 
     fallback() external payable {
-        emit Received(msg.sender, msg.value);
     }
+
 
     // interface IERC721Receiver {
     /**
@@ -377,12 +552,24 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     }
 // }
 
+    function getIncumbent(string memory office) external view returns(address incumbent){
+        return _incumbents[_rolesIndexPlusOne[office] - 1];
+    }
+
     
     modifier OnlyByVote {
+        if(!_isImplementer()) revert OnlyVoteImplementer(msg.sender);
+        _;
+    }
+
+    modifier OnlyByVoteOrOnceByDeployer {
         if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
+            require(msg.sender==deployer && oneExtraTransaction<1);
+            oneExtraTransaction ++;
         }
         _;
     }
+
+    
     
 }

@@ -86,7 +86,7 @@ contract VotingRegistry is IVotingRegistry{
     external
     override(IVotingRegistry)
     {
-        if (records[contractAddress].registrar!=address(0)){
+        if (isRegistered(contractAddress)){
             revert AlreadyRegistered(contractAddress, records[contractAddress].registrar);
         }
         if (! checkInterface(contractAddress)){
@@ -138,6 +138,15 @@ contract VotingRegistry is IVotingRegistry{
     returns(address resolver)
     {
         resolver = records[votingContract].resolver;
+    }
+    
+    function isRegistered(address votingContract) 
+    public 
+    view 
+    override(IVotingRegistry)
+    returns(bool registrationStatus)
+    {
+        registrationStatus =  records[votingContract].registrar!=address(0);
     }
 
 

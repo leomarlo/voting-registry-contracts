@@ -12,4 +12,5 @@ interface IVotingRegistry {
 
     function getResolver(address votingContract) external view returns(address resolver);
 
+    function isRegistered(address votingContract) external view returns(bool registrationStatus);
 }
