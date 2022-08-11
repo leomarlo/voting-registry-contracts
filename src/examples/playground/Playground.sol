@@ -386,9 +386,6 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         // no empty incumbents
         require(newIncumbent!=address(0));
         // check whether we should add a new office
-        _incumbents[office].indexPlusOne;
-        _incumbents[office].incumbent;
-
         if (_incumbents[office].indexPlusOne==0){
             offices.push(office);
             _incumbents[office].indexPlusOne = offices.length;
