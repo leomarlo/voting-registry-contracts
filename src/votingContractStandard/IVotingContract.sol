@@ -17,7 +17,7 @@ interface IVotingContract is IERC165{
 
     function start(bytes memory votingParams, bytes calldata callback) external returns(uint256 identifier); 
 
-    function vote(uint256 identifier, bytes memory votingData) external returns(uint256 status);
+    function vote(uint256 identifier, bytes calldata votingData) external returns(uint256 status);
 
     /// @notice The result can be the casted version of an address, an integer or a pointer to a mapping that contains the entire result.
     function result(uint256 identifier) external view returns(bytes memory resultData);

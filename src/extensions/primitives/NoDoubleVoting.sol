@@ -15,10 +15,11 @@ abstract contract NoDoubleVoting  {
 
 abstract contract HandleDoubleVotingGuard {
 
-    mapping(uint256=>bool) internal _handleDoubleVotingGuard;
+    enum VotingGuard {none, onSender, onVotingData}
+
+    mapping(uint256=>VotingGuard) internal _guardOnSenderVotingDataOrNone; //_guardOnSenderVotingDataOrNone;
 
 }
-
 
 
 abstract contract NoDoubleVotingPublic is 

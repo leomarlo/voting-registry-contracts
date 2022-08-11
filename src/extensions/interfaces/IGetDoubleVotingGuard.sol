@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.13;
 
+import {HandleDoubleVotingGuard} from "../primitives/NoDoubleVoting.sol";
 
-interface IGetDoubleVotingGuardEnabled{
-    function getDoubleVotingGuardEnabled(uint256 identifier) external view returns(bool);
+interface IGetDoubleVotingGuard{
+    function getDoubleVotingGuard(uint256 identifier) external view returns(HandleDoubleVotingGuard.VotingGuard);
 }

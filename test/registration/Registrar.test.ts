@@ -143,11 +143,11 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
             let tokenAddress : string = contracts.registrar.address
             let votingDuration : number = 5555;
             let expectReturnFlag : boolean = true;
-            let handleDoubleVotingGuard : boolean = true;
+            let guardOnSenderVotingDataOrNone : boolean = true;
             let changeControllKeyCalldata : string = registrarInterface.encodeFunctionData("changeRegistrarControlledKeys",[isProxyKey, true])
             let votingParams : string = abi.encode(
                 ["address", "uint256", "uint256", "bool", "bool"],
-                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, handleDoubleVotingGuard])
+                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, guardOnSenderVotingDataOrNone])
             await contracts.registrar.start(votingParams, changeControllKeyCalldata)
             let identifier: number = 0
             await contracts.majority.connect(Bob).vote(identifier, APPROVE)
@@ -186,11 +186,11 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
             let tokenAddress : string = contracts.registrar.address
             let votingDuration : number = 5555;
             let expectReturnFlag : boolean = true;
-            let handleDoubleVotingGuard : boolean = true;
+            let guardOnSenderVotingDataOrNone : boolean = true;
             let changeControllKeyCalldata : string = registrarInterface.encodeFunctionData("changeRegistrarControlledKeys",[newKeyBytes, true])
             let votingParams : string = abi.encode(
                 ["address", "uint256", "uint256", "bool", "bool"],
-                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, handleDoubleVotingGuard])
+                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, guardOnSenderVotingDataOrNone])
             await contracts.registrar.start(votingParams, changeControllKeyCalldata)
             let identifier: number = 0
             await contracts.majority.connect(Bob).vote(identifier, APPROVE)
@@ -211,14 +211,14 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
         let tokenAddress : string;
         let votingDuration : number = 5555;
         let expectReturnFlag : boolean = true;
-        let handleDoubleVotingGuard : boolean = true;
+        let guardOnSenderVotingDataOrNone : boolean = true;
         beforeEach(async function(){
             tokenAddress = contracts.registrar.address
             await contracts.registrar.connect(Alice).register(contracts.snapshot.address, contracts.resolver.address, Bob.address)
             let changeControllKeyCalldata : string = registrarInterface.encodeFunctionData("changeRegistrarControlledKeys",[newKeyBytes, true])
             let votingParams : string = abi.encode(
                 ["address", "uint256", "uint256", "bool", "bool"],
-                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, handleDoubleVotingGuard])
+                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, guardOnSenderVotingDataOrNone])
             let identifier: number = 0
             await expect(contracts.registrar.connect(Alice).start(votingParams, changeControllKeyCalldata))
                 .to.emit(contracts.majority,'VotingInstanceStarted')
@@ -237,7 +237,7 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
             let setInformationCalldata : string = registrarInterface.encodeFunctionData("setInformation",[newKeyBytes, contracts.snapshot.address, newValue])
             let votingParams : string = abi.encode(
                 ["address", "uint256", "uint256", "bool", "bool"],
-                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, handleDoubleVotingGuard])
+                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, guardOnSenderVotingDataOrNone])
             let identifier: number = 1
             await expect(contracts.registrar.connect(Alice).start(votingParams, setInformationCalldata))
                 .to.emit(contracts.majority,'VotingInstanceStarted')
@@ -254,7 +254,7 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
             let setInformationCalldata : string = registrarInterface.encodeFunctionData("setInformation",[isProxyKeyBytes, contracts.snapshot.address, newValue])
             let votingParams : string = abi.encode(
                 ["address", "uint256", "uint256", "bool", "bool"],
-                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, handleDoubleVotingGuard])
+                [tokenAddress, votingDuration, quorumInHolders, expectReturnFlag, guardOnSenderVotingDataOrNone])
             let identifier: number = 1
             await expect(contracts.registrar.connect(Alice).start(votingParams, setInformationCalldata))
                 .to.emit(contracts.majority,'VotingInstanceStarted')

@@ -46,6 +46,12 @@ let VotingStatus = {
     "awaitcall": 4
 }
 
+let VotingGuard = {
+    "none": 0,
+    "onSender": 1,
+    "onVotingData": 2
+}
+
 let DISAPPROVE = abi.encode(["uint256"],[0])
 let APPROVE = abi.encode(["uint256"],[1])
 let ABSTAIN = abi.encode(["uint256"],[2])
@@ -245,7 +251,7 @@ describe("Integration through starting a Hybrid Voting Instance", function() {
         it("Should create a new function targeted voting instance for the purely function-targeted (only callback) voting instances.", async function(){
             let majorityVotingParams = abi.encode(["address", "bool"], [ethers.constants.AddressZero, false])
             let tokenWeightedMajorityvotingParams : string = abi.encode(
-                ["address", "uint256", "uint256", "bool", "bool"], [ethers.constants.AddressZero, 0, 0, false, false])            
+                ["address", "uint256", "uint256", "bool", "uint8"], [ethers.constants.AddressZero, 0, 0, false, 0])            
             // The minimal version like the advanced one only knows how to handle calldata that points to a function
             await contracts.integrationCallbackMinml.connect(Alice).start(majorityVotingParams, incrementCalldata)
             expect(await contracts.majority.getCurrentIndex()).to.equal(1)
@@ -305,7 +311,7 @@ describe("Integration through starting a Hybrid Voting Instance", function() {
             let badSelector = "0x12345678"
             let majorityVotingParams = abi.encode(["address", "bool"], [ethers.constants.AddressZero, false])
             let tokenWeightedMajorityvotingParams : string = abi.encode(
-                ["address", "uint256", "uint256", "bool", "bool"], [ethers.constants.AddressZero, 0, 0, false, false])            
+                ["address", "uint256", "uint256", "bool", "uint8"], [ethers.constants.AddressZero, 0, 0, false, 0])            
             await expect(contracts.integrationHybridMinml.connect(Alice).start(majorityVotingParams, badSelector))
                 .to.be.revertedWith(`IsNotVotableFunction("${badSelector}")`)
             await expect(contracts.integrationHybridHooks.connect(Alice).start(majorityVotingParams, badSelector))
@@ -366,7 +372,7 @@ describe("Integration through starting a Hybrid Voting Instance", function() {
             let votingParamsForCallbackMinml : string = abi.encode(["address", "bool"], [contracts.integrationCallbackMinml .address, expectReturnFlag])
             let votingParamsForCallbackHooks : string = abi.encode(["address", "bool"], [contracts.integrationCallbackHooks .address, expectReturnFlag])
             let tokenWeightedMajorityvotingParams : string = abi.encode(
-                ["address", "uint256", "uint256", "bool", "bool"], [contracts.token.address, votingDurationMajorityWithToken, 1, false, true])            
+                ["address", "uint256", "uint256", "bool", "uint8"], [contracts.token.address, votingDurationMajorityWithToken, 1, false, VotingGuard.onSender])            
             expect(await contracts.integrationCallbackMinml.i()).to.equal(0)
             expect(await contracts.integrationCallbackHooks.i()).to.equal(0)
 

@@ -16,7 +16,7 @@ import {CallerGetter} from "../../../extensions/primitives/Caller.sol";
 import {TokenPrimitive} from "../../../extensions/primitives/TokenPrimitive.sol";
 
 import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
-import {IGetDoubleVotingGuardEnabled} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+import {IGetDoubleVotingGuard} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
 
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
@@ -27,7 +27,7 @@ CastYesNoAbstainVote,
 IGetDeadline,
 Deadline,
 TokenPrimitive,
-IGetDoubleVotingGuardEnabled,
+IGetDoubleVotingGuard,
 StatusGetter,
 CallerGetter,
 BaseVotingContract
@@ -49,13 +49,13 @@ BaseVotingContract
         // Store the status in storage.
         _status[identifier] = uint256(IVotingContract.VotingStatus.active);
         
-        (_token[identifier], _handleDoubleVotingGuard[identifier]) = decodeParameters(votingParams);
+        (_token[identifier], _guardOnSenderVotingDataOrNone[identifier]) = decodeParameters(votingParams);
         Deadline._setDeadline(identifier, VOTING_DURATION);
     }
 
 
     /// @dev We must implement a vote function 
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     virtual 
     override(BaseVotingContract)
@@ -72,15 +72,24 @@ BaseVotingContract
             return _status[identifier]; 
         } 
 
-        if(NoDoubleVoting._alreadyVoted[identifier][msg.sender]){
-            revert NoDoubleVoting.AlreadyVoted(identifier, msg.sender);
+        uint256 option;
+        if (_guardOnSenderVotingDataOrNone[identifier] != HandleDoubleVotingGuard.VotingGuard.none){
+            address voter;
+            if (_guardOnSenderVotingDataOrNone[identifier] == HandleDoubleVotingGuard.VotingGuard.onSender){
+                voter = msg.sender;
+                option = abi.decode(votingData, (uint256));
+            } else {
+                voter = address(bytes20(votingData[0:20]));
+                option = abi.decode(votingData[20:votingData.length], (uint256));
+            }
+            if(NoDoubleVoting._alreadyVoted[identifier][voter]){
+                revert NoDoubleVoting.AlreadyVoted(identifier, voter);
+            }
+            NoDoubleVoting._alreadyVoted[identifier][voter] = true;
+        } else {
+            option = abi.decode(votingData, (uint256));
         }
-        if (_handleDoubleVotingGuard[identifier]){
-            NoDoubleVoting._alreadyVoted[identifier][msg.sender] = true;
-        }
-        
-        
-        uint256 option = abi.decode(votingData, (uint256));
+
         uint256 weight = IERC20(_token[identifier]).balanceOf(msg.sender);
         CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
         CastYesNoAbstainVote._castVote(identifier, voteOption, weight);
@@ -109,17 +118,17 @@ BaseVotingContract
     function decodeParameters(bytes memory votingParams) 
     public
     pure 
-    returns(address token, bool handleDoubleVotingGuard) {
-        (token, handleDoubleVotingGuard) = abi.decode(votingParams, (address, bool));
+    returns(address token, HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone) {
+        (token, guardOnSenderVotingDataOrNone) = abi.decode(votingParams, (address, HandleDoubleVotingGuard.VotingGuard));
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function encodeParameters(address token, bool handleDoubleVotingGuard) 
+    function encodeParameters(address token, HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone) 
     public 
     pure 
     returns(bytes memory votingParams) 
     {
-        votingParams = abi.encode(token, handleDoubleVotingGuard); 
+        votingParams = abi.encode(token, guardOnSenderVotingDataOrNone); 
     }
 
     function _setStatus(uint256 identifier) internal {
@@ -141,19 +150,19 @@ BaseVotingContract
         return _deadline[identifier];
     }
 
-    function getDoubleVotingGuardEnabled(uint256 identifier)
+    function getDoubleVotingGuard(uint256 identifier)
     external view
-    override(IGetDoubleVotingGuardEnabled)
-    returns(bool) {
+    override(IGetDoubleVotingGuard)
+    returns(HandleDoubleVotingGuard.VotingGuard) {
         // by default any vote that is not inactive has this guard enabled
-        return uint256(_status[identifier])!=0;
+        return _guardOnSenderVotingDataOrNone[identifier];
     } 
 
     function supportsInterface(bytes4 interfaceId) public pure virtual override(BaseVotingContract) returns (bool) {
         return 
             super.supportsInterface(interfaceId) ||
             interfaceId == type(IGetDeadline).interfaceId ||
-            interfaceId == type(IGetDoubleVotingGuardEnabled).interfaceId;
+            interfaceId == type(IGetDoubleVotingGuard).interfaceId;
     }
 
 

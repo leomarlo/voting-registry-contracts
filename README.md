@@ -33,10 +33,10 @@ Once the voting instance has been configured and created a pointer to that insta
 
 ### **Casting a Vote**
 
-The vote function should be called to cast a vote. It needs to receive the `uint256 identifier` as one argument and information about the vote via `bytes memory votingData`. The current status `uint256 status` should be returned, so that a calling contract could immediately act upon a status-change. To allow for greater flexibility the status is of type `uint256`. We recommend that the first four are reserved to `inactive`, `completed`, `failed` and `active`.
+The vote function should be called to cast a vote. It needs to receive the `uint256 identifier` as one argument and information about the vote via `bytes calldata votingData`. The current status `uint256 status` should be returned, so that a calling contract could immediately act upon a status-change. To allow for greater flexibility the status is of type `uint256`. We recommend that the first four are reserved to `inactive`, `completed`, `failed` and `active`.
 
 ```js
-function vote(uint256 identifier, bytes memory votingData) external returns(uint256 status);
+function vote(uint256 identifier, bytes calldata votingData) external returns(uint256 status);
 ```
 
 Typically one would encode the voter's choice in the `votingData`. The options `approve`, `disapprove` and `abstain` could be encoded. Depending on the typ of vote one might also choose to leave it blank and consider the bare vote as sufficient indication of preference. When the `vote`-function is called via a contract rather than directly, the voter's address should be encoded in the `votingData`. When it is called directly the voter is the `msg.sender`. One might also encode data that can be inserted into the callback. For instance, if the vote is about choosing between several candidates, then the candidate address could be passed into the `votingData`. Care must be taken in the `callback` argument when defining the bytes range where the option can be inserted.  
@@ -166,7 +166,7 @@ If the voting contract is the place where votes are cast and potentially impleme
 If the calling contract is the place where votes are cast and potentially implemented depending on the developers'choice, then one requires at least a `vote` function. It allows users not only to call the voting contract's vote function but also to execute custom logic. The *status* of the voting instance is returned and can also be subjected to customized logic on the caller contract. One could for for instance immediately implement the outcome of the vote when the returned status is *complete* or *awaitcall*. In this case it would be helpful to have the value of the callback data stored in cache and trigger an implement routine that is either intrinsic to the caller contract or the one on the voting contract, if it exists. The instance needs to be uniquely defined throught an *identifier*, which must be able to disambiguate between voting instances from different voting contracts and may thus not be the same as the one issued by the voting contract for that instance. The recommended interface is:
 
 ```js
-function vote(uint256 identifier, bytes memory votingData) external;
+function vote(uint256 identifier, bytes calldata votingData) external;
 ```
 
 We maintain five integration patterns that use the vote interface. The first one is intended for a snapshot-like scenario, where a globally stored voting contract is used (one to rule them all) and the identifier coincides with that instance's identifier on that voting contract. A second and third one call the vote function, but also implement the outcome depending on its returned status flag. In one case it's implemented in the caller, in the other it calls the implement function of the voting contract. The fourth and fifth ones only calls vote function and instead of implementing the outcome directly, they have separate `implement` functions that respectively implement in the caller or call the voting contract's implement function:

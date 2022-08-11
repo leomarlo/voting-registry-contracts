@@ -12,7 +12,7 @@ interface IStartAndVote {
 
     function start(bytes memory votingParams, bytes calldata callback) external; 
 
-    function vote(uint256 identifier, bytes memory votingData) external;
+    function vote(uint256 identifier, bytes calldata votingData) external;
 
 }
 
@@ -20,7 +20,7 @@ interface IStartVoteAndImplement {
    
     function start(bytes memory votingParams, bytes calldata callback) external; 
 
-    function vote(uint256 identifier, bytes memory votingData) external;
+    function vote(uint256 identifier, bytes calldata votingData) external;
 
     function implement(uint256 identifier, bytes calldata callback) external payable;
 

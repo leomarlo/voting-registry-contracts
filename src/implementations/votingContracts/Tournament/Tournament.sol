@@ -20,6 +20,11 @@ import {ImplementResultWithInsertion} from "../../../extensions/primitives/Imple
 import {TokenPrimitive} from "../../../extensions/primitives/TokenPrimitive.sol";
 import {QuorumPrimitive} from "../../../extensions/primitives/Quorum.sol";
 
+
+import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
+import {IGetDoubleVotingGuard} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+import {IGetToken} from "../../../extensions/interfaces/IGetToken.sol";
+
 /// The idea of a tournament vote is by Andrei Taranu.
 /// This is an implementation within the framework of the voting contract system.
 
@@ -159,7 +164,7 @@ ImplementResultWithInsertion
 
 
     /// @dev We must implement a vote function 
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(BaseVotingContract)
     returns (uint256)

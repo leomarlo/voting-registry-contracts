@@ -13,9 +13,11 @@ import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContra
 import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
 import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
+import {HandleDoubleVotingGuard} from "../../../extensions/primitives/NoDoubleVoting.sol";
 
 import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
-import {IGetDoubleVotingGuardEnabled} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+import {IGetDoubleVotingGuard} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+import {IGetToken} from "../../../extensions/interfaces/IGetToken.sol";
 
 import {
     ExpectReturnValue,
@@ -31,7 +33,7 @@ CallbackHashPrimitive,
 CallerGetter,
 StatusGetter,
 CheckCalldataValidity,
-IGetDoubleVotingGuardEnabled,
+IGetDoubleVotingGuard,
 NoDoubleVoting,
 CastSimpleVote,
 IGetDeadline,
@@ -84,7 +86,7 @@ ImplementResult
 
 
     /// @dev We must implement a vote function 
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(BaseVotingContract)
     returns (uint256)
@@ -178,19 +180,21 @@ ImplementResult
         return _deadline[identifier];
     }
 
-    function getDoubleVotingGuardEnabled(uint256 identifier)
+    function getDoubleVotingGuard(uint256 identifier)
     external view
-    override(IGetDoubleVotingGuardEnabled)
-    returns(bool) {
+    override(IGetDoubleVotingGuard)
+    returns(HandleDoubleVotingGuard.VotingGuard) {
         // by default any vote that is not inactive has this guard enabled
-        return uint256(_status[identifier])!=0;
+        return _status[identifier]==0? 
+            HandleDoubleVotingGuard.VotingGuard.none:
+            HandleDoubleVotingGuard.VotingGuard.onSender;
     } 
 
     function supportsInterface(bytes4 interfaceId) public pure virtual override(BaseVotingContract) returns (bool) {
         return 
             super.supportsInterface(interfaceId) ||
             interfaceId == type(IGetDeadline).interfaceId ||
-            interfaceId == type(IGetDoubleVotingGuardEnabled).interfaceId;
+            interfaceId == type(IGetDoubleVotingGuard).interfaceId;
     }
 
 }

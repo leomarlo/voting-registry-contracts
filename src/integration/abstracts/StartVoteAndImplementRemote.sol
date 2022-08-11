@@ -31,7 +31,7 @@ InstanceInfoPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartVoteAndImplement){
         _beforeVote(identifier);
@@ -80,7 +80,7 @@ InstanceInfoPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartVoteAndImplement){
         _beforeVote(identifier, votingData);
@@ -108,11 +108,11 @@ InstanceInfoPrimitive
 
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
     
-    function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+    function _beforeVote(uint256 identifier, bytes calldata votingData) virtual internal {}
 
-    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
+    function _modifyVotingData(uint256 identifier, bytes calldata votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
-    function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata votingData) virtual internal {}
 
     function _beforeImplement(uint256 identifier) virtual internal {}
     
@@ -151,7 +151,7 @@ InstanceInfoPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartVoteAndImplement){
         _beforeVote(identifier);
@@ -208,7 +208,7 @@ InstanceInfoPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartVoteAndImplement){
         _beforeVote(identifier, votingData);
@@ -242,11 +242,11 @@ InstanceInfoPrimitive
     
     function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 
-    function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+    function _beforeVote(uint256 identifier, bytes calldata votingData) virtual internal {}
 
-    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
+    function _modifyVotingData(uint256 identifier, bytes calldata votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
-    function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata votingData) virtual internal {}
 
     function _beforeImplement(uint256 identifier) virtual internal {}
     

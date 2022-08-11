@@ -32,6 +32,12 @@ let VotingStatus = {
     "awaitcall": 4
 }
 
+let VotingGuard = {
+    "none": 0,
+    "onSender": 1,
+    "onVotingData": 2
+}
+
 let DISAPPROVE = abi.encode(["uint256"],[0])
 let APPROVE = abi.encode(["uint256"],[1])
 let ABSTAIN = abi.encode(["uint256"],[2])
@@ -47,17 +53,17 @@ async function startVotingInstance(
     functionName: string,
     quorumInPercentmilleOfSupply: number,
     expectReturnFlag: boolean,
-    handleDoubleVotingGuard: boolean): Promise<IdentifierAndTimestamp> 
+    guardOnSenderVotingDataOrNone: number): Promise<IdentifierAndTimestamp> 
 {
 
     let votingParams : string = abi.encode(
-        ["address", "uint256", "uint256", "bool", "bool"],
+        ["address", "uint256", "uint256", "bool", "uint8"],
         [
             contracts.token.address,
             VOTING_DURATION,
             quorumInPercentmilleOfSupply,
             expectReturnFlag,
-            handleDoubleVotingGuard
+            guardOnSenderVotingDataOrNone
         ])
     let calldata : string
     let integratorInterface = contracts.integrator.interface
@@ -161,17 +167,17 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
         let votingParams: string
         let quorumInPercentmilleOfSupply: number = 77777;
         let expectReturnFlag: boolean = true;
-        let handleDoubleVotingGuard: boolean = true;
+        let guardOnSenderVotingDataOrNone: number = VotingGuard.onSender;
 
         beforeEach(async function(){
             votingParams = abi.encode(
-                ["address", "uint256", "uint256", "bool", "bool"],
+                ["address", "uint256", "uint256", "bool", "uint8"],
                 [
                     contracts.token.address,
                     VOTING_DURATION,
                     quorumInPercentmilleOfSupply,
                     expectReturnFlag,
-                    handleDoubleVotingGuard
+                    guardOnSenderVotingDataOrNone
                 ])
         })
         it("Should encode the token address, voting duration, quorum, expectedReturn flag, couble voting guard.", async function(){
@@ -180,7 +186,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
                 VOTING_DURATION,
                 quorumInPercentmilleOfSupply,
                 expectReturnFlag,
-                handleDoubleVotingGuard
+                guardOnSenderVotingDataOrNone
                 )
             expect(encodedParameters).to.equal(votingParams)
         });
@@ -190,7 +196,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
             expect(decodedParameters.duration).to.equal(VOTING_DURATION)
             expect(decodedParameters.quorumInPercentmilleOfSupply).to.equal(quorumInPercentmilleOfSupply)
             expect(decodedParameters.expectReturnValue).to.equal(expectReturnFlag)
-            expect(decodedParameters.handleDoubleVotingGuard).to.equal(handleDoubleVotingGuard)
+            expect(decodedParameters.guardOnSenderVotingDataOrNone).to.equal(guardOnSenderVotingDataOrNone)
         })
     })
     describe("Vote and Results", function() {
@@ -204,14 +210,14 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
             await contracts.token.connect(Dave).mint(ONEETH.mul(100))
         })
         it("Should vote for, against and abstain and retrieve result.", async function(){
-            let handleDoubleVotingGuard: boolean = true;
+            let guardOnSenderVotingDataOrNone: number = VotingGuard.onSender;
             instanceInfo = await startVotingInstance(
                 contracts, 
                 Alice, 
                 "increment", 
                 quorumInPercentmilleOfSupply,
                 expectReturnFlag,
-                handleDoubleVotingGuard)
+                guardOnSenderVotingDataOrNone)
             await contracts.majority.connect(Alice).vote(instanceInfo.identifier, APPROVE)
             expect(await contracts.majority.result(instanceInfo.identifier))
                 .to.equal(abi.encode(
@@ -234,27 +240,27 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
                     [ONEETH.mul(100), ONEETH.mul(100), ONEETH.mul(100).mul(2)]))
         });
         it("Should revert a double voting attempt, when the double voting guard is switched on.", async function(){
-            let handleDoubleVotingGuard: boolean = true;
+            let guardOnSenderVotingDataOrNone: number = VotingGuard.onSender;
             instanceInfo = await startVotingInstance(
                 contracts, 
                 Alice, 
                 "increment", 
                 quorumInPercentmilleOfSupply,
                 expectReturnFlag,
-                handleDoubleVotingGuard)
+                guardOnSenderVotingDataOrNone)
             await contracts.majority.connect(Alice).vote(instanceInfo.identifier, APPROVE)
             await expect(contracts.majority.connect(Alice).vote(instanceInfo.identifier, APPROVE))
                 .to.be.revertedWith(`'AlreadyVoted(${instanceInfo.identifier}, "${Alice.address}")'`);
         });
         it("Shouldn't revert a double voting attempt, when the double voting guard is switched off.", async function(){
-            let handleDoubleVotingGuard: boolean = false;
+            let guardOnSenderVotingDataOrNone: number = VotingGuard.none;
             instanceInfo = await startVotingInstance(
                 contracts, 
                 Alice, 
                 "increment", 
                 quorumInPercentmilleOfSupply,
                 expectReturnFlag,
-                handleDoubleVotingGuard)
+                guardOnSenderVotingDataOrNone)
             await contracts.majority.connect(Alice).vote(instanceInfo.identifier, APPROVE)
             await expect(contracts.majority.connect(Alice).vote(instanceInfo.identifier, APPROVE))
                 .to.not.be.reverted
@@ -271,7 +277,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
         let instanceInfo: IdentifierAndTimestamp;
         let quorumInPercentmilleOfSupply: number = 77777;
         let expectReturnFlag: boolean = false;
-        let handleDoubleVotingGuard: boolean = true;
+        let guardOnSenderVotingDataOrNone: number = VotingGuard.onSender;
         let AliceFunds : BigNumber = ONEETH.mul(100).mul(4);
         let BobFunds : BigNumber = ONEETH.mul(100);
 
@@ -284,7 +290,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
                 "increment", 
                 quorumInPercentmilleOfSupply,
                 expectReturnFlag,
-                handleDoubleVotingGuard)
+                guardOnSenderVotingDataOrNone)
             await contracts.majority.connect(Alice).vote(instanceInfo.identifier, APPROVE)
             await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
             
@@ -312,7 +318,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
         let instanceInfo: IdentifierAndTimestamp;
         let quorumInPercentmilleOfSupply: number = 77777;
         let expectReturnFlag: boolean = false;
-        let handleDoubleVotingGuard: boolean = true;
+        let guardOnSenderVotingDataOrNone: number = VotingGuard.onSender;
         let AliceFunds : BigNumber = ONEETH.mul(100).mul(8);
         let BobFunds : BigNumber = ONEETH.mul(100);
         let CharlieFunds : BigNumber = ONEETH.mul(100);
@@ -327,7 +333,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
                 "increment", 
                 quorumInPercentmilleOfSupply,
                 expectReturnFlag,
-                handleDoubleVotingGuard)
+                guardOnSenderVotingDataOrNone)
         });
         it("Should have a failed status when casting a vote on a disapproved motion that meets the quorum.", async()=>{
             await contracts.majority.connect(Alice).vote(instanceInfo.identifier, DISAPPROVE)
@@ -377,7 +383,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
         it("Should revert when calling implement.", async()=>{
             let integratorInterface : DummyIntegratorInterface = contracts.integrator.interface
             let calldata = integratorInterface.encodeFunctionData("increment")
-            let instanceInfo = await startVotingInstance(contracts, Alice, "increment", 0, false, false)
+            let instanceInfo = await startVotingInstance(contracts, Alice, "increment", 0, false, VotingGuard.none)
             await expect(contracts.majority.connect(Alice).implement(instanceInfo.identifier, calldata))
                 .to.be.revertedWith(`'ImplementingNotPermitted(${instanceInfo.identifier}, ${VotingStatus.active})'`)
         });
@@ -385,7 +391,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
     describe("Implement - After Deadline", function(){
         it("Should revert when providing the wrong callback data.",async function(){
             await contracts.token.connect(Alice).mint(ONEETH)
-            let instanceInfo = await startVotingInstance(contracts, Alice, "increment", 0, false, true)
+            let instanceInfo = await startVotingInstance(contracts, Alice, "increment", 0, false, VotingGuard.onSender)
             await contracts.majority.connect(Alice).vote(instanceInfo.identifier, APPROVE)
             await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]); 
             await expect( contracts.majority.implement(instanceInfo.identifier, failCalldata))
@@ -398,12 +404,12 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
         let instanceInfoIncrementWithReturn: IdentifierAndTimestamp;
         let instanceInfoFail: IdentifierAndTimestamp;
         beforeEach(async function() {
-            let handleDoubleVotingGuard: boolean = true;
+            let guardOnSenderVotingDataOrNone: number = VotingGuard.onSender;
             await contracts.token.connect(Alice).mint(ONEETH)
-            instanceInfoIncrementDontExpectReturnFlag = await startVotingInstance(contracts, Alice, "increment", 0, false, handleDoubleVotingGuard)
-            instanceInfoIncrementExpectReturnFlag = await startVotingInstance(contracts, Alice, "increment", 0, true, handleDoubleVotingGuard)
-            instanceInfoIncrementWithReturn = await startVotingInstance(contracts, Alice, "incrementWithReturn", 0, true, handleDoubleVotingGuard)
-            instanceInfoFail = await startVotingInstance(contracts, Alice, "fail", 0, false, handleDoubleVotingGuard)
+            instanceInfoIncrementDontExpectReturnFlag = await startVotingInstance(contracts, Alice, "increment", 0, false, guardOnSenderVotingDataOrNone)
+            instanceInfoIncrementExpectReturnFlag = await startVotingInstance(contracts, Alice, "increment", 0, true, guardOnSenderVotingDataOrNone)
+            instanceInfoIncrementWithReturn = await startVotingInstance(contracts, Alice, "incrementWithReturn", 0, true, guardOnSenderVotingDataOrNone)
+            instanceInfoFail = await startVotingInstance(contracts, Alice, "fail", 0, false, guardOnSenderVotingDataOrNone)
             await contracts.majority.vote(instanceInfoIncrementDontExpectReturnFlag.identifier, APPROVE)
             await contracts.majority.vote(instanceInfoIncrementExpectReturnFlag.identifier, APPROVE)
             await contracts.majority.vote(instanceInfoIncrementWithReturn.identifier, APPROVE)
@@ -540,9 +546,9 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
     });
     describe("Implement - After Deadline and Dismissed Motion", function(){
         it("Should revert when attempting to implement the motion.", async function(){
-            let handleDoubleVotingGuard: boolean = true;
+            let guardOnSenderVotingDataOrNone: number = VotingGuard.onSender;
             await contracts.token.connect(Alice).mint(ONEETH)
-            let instanceInfo = await startVotingInstance(contracts, Alice, "increment", 0, false, handleDoubleVotingGuard)
+            let instanceInfo = await startVotingInstance(contracts, Alice, "increment", 0, false, guardOnSenderVotingDataOrNone)
             await contracts.majority.connect(Alice).vote(instanceInfo.identifier, DISAPPROVE)
             await ethers.provider.send('evm_setNextBlockTimestamp', [instanceInfo.timestamp + VOTING_DURATION + 1]);  
             expect((await contracts.majority.getStatus(instanceInfo.identifier)).toNumber())

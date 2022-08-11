@@ -9,9 +9,10 @@ import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
 import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
 import {CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {HandleDoubleVotingGuard} from "../../../extensions/primitives/NoDoubleVoting.sol";
 
 import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
-import {IGetDoubleVotingGuardEnabled} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+import {IGetDoubleVotingGuard} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
 
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
@@ -20,7 +21,7 @@ NoDoubleVoting,
 CastSimpleVote,
 IGetDeadline,
 Deadline,
-IGetDoubleVotingGuardEnabled,
+IGetDoubleVotingGuard,
 StatusGetter,
 CallerGetter,
 BaseVotingContract
@@ -48,7 +49,7 @@ BaseVotingContract
 
 
     /// @dev We must implement a vote function 
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     virtual 
     override(BaseVotingContract)
@@ -113,19 +114,21 @@ BaseVotingContract
         return _deadline[identifier];
     }
 
-    function getDoubleVotingGuardEnabled(uint256 identifier)
+    function getDoubleVotingGuard(uint256 identifier)
     external view
-    override(IGetDoubleVotingGuardEnabled)
-    returns(bool) {
+    override(IGetDoubleVotingGuard)
+    returns(HandleDoubleVotingGuard.VotingGuard) {
         // by default any vote that is not inactive has this guard enabled
-        return uint256(_status[identifier])!=0;
+        return _status[identifier]==0? 
+            HandleDoubleVotingGuard.VotingGuard.none:
+            HandleDoubleVotingGuard.VotingGuard.onSender;
     } 
 
     function supportsInterface(bytes4 interfaceId) public pure virtual override(BaseVotingContract) returns (bool) {
         return 
             super.supportsInterface(interfaceId) ||
             interfaceId == type(IGetDeadline).interfaceId ||
-            interfaceId == type(IGetDoubleVotingGuardEnabled).interfaceId;
+            interfaceId == type(IGetDoubleVotingGuard).interfaceId;
     }
 
 

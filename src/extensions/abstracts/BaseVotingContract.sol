@@ -79,7 +79,7 @@ abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC16
     /// @dev The vote function needs to be implemented by the inheriting contract. There is quite a bit of liberty in the choice of implementation here.
     /// @param identifier the index for the voting instance in question
     /// @param votingData some extra data passed into the function call, like proxy or delegate votes or options.
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     virtual 
     override(IVotingContract) 

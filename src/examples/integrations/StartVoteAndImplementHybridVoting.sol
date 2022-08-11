@@ -161,13 +161,13 @@ StartVoteAndImplementHybridVotingImplRemoteHooks
         votingContract = simpleVotingContract[uint24(bytes3(callback[0:3]))];
     }
 
-    function _beforeVote(uint256 identifier, bytes memory votingData) 
+    function _beforeVote(uint256 identifier, bytes calldata votingData) 
     internal override(StartVoteAndImplementHybridVotingImplRemoteHooks) 
     {
         votes += 1;
     }
 
-    function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) 
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata votingData) 
     internal override(StartVoteAndImplementHybridVotingImplRemoteHooks) 
     {
         votingStatus[identifier] = status;

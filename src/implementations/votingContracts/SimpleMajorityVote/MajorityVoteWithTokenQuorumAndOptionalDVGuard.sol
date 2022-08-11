@@ -27,7 +27,8 @@ import {QuorumPrimitive} from "../../../extensions/primitives/Quorum.sol";
 
 import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
 import {IGetQuorum} from "../../../extensions/interfaces/IGetQuorum.sol";
-import {IGetDoubleVotingGuardEnabled} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+import {IGetDoubleVotingGuard} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
+import {IGetToken} from "../../../extensions/interfaces/IGetToken.sol";
 
 
 error QuorumExceeded(uint256 quorum);
@@ -40,7 +41,8 @@ StatusGetter,
 CheckCalldataValidity,
 TokenPrimitive,
 NoDoubleVoting,
-IGetDoubleVotingGuardEnabled,
+IGetDoubleVotingGuard,
+IGetToken,
 HandleDoubleVotingGuard,
 CastYesNoAbstainVote,
 IGetDeadline,
@@ -67,13 +69,13 @@ ImplementResult
         uint256 duration;
         uint256 quorum;
         bool expectReturnValue;
-        bool handleDoubleVotingGuard;
+        HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone;
     
         (tokenAddress, 
          duration,
          quorum,
          expectReturnValue, 
-         handleDoubleVotingGuard
+         guardOnSenderVotingDataOrNone
         ) = decodeParameters(votingParams);
         
         if (quorum > 1e5){
@@ -83,7 +85,7 @@ ImplementResult
         _caller[identifier] = msg.sender;
         _token[identifier] = tokenAddress;
         _expectReturnValue[identifier] = expectReturnValue;
-        _handleDoubleVotingGuard[identifier] = handleDoubleVotingGuard;
+        _guardOnSenderVotingDataOrNone[identifier] = guardOnSenderVotingDataOrNone;
         _quorum[identifier] = quorum;
 
         Deadline._setDeadline(identifier, duration);
@@ -102,15 +104,15 @@ ImplementResult
         uint256 duration,
         uint256 quorumInPercentmilleOfSupply,
         bool expectReturnValue,
-        bool handleDoubleVotingGuard)
+        HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone)
     {
         (
             token, 
             duration,
             quorumInPercentmilleOfSupply,
             expectReturnValue, 
-            handleDoubleVotingGuard
-        ) = abi.decode(votingParams, (address, uint256, uint256, bool, bool)); 
+            guardOnSenderVotingDataOrNone
+        ) = abi.decode(votingParams, (address, uint256, uint256, bool, HandleDoubleVotingGuard.VotingGuard)); 
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
@@ -119,7 +121,7 @@ ImplementResult
         uint256 duration,
         uint256 quorumInPercentmilleOfSupply,
         bool expectReturnValue,
-        bool handleDoubleVotingGuard) 
+        HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone) 
     public
     pure
     returns(bytes memory votingParams) 
@@ -129,14 +131,14 @@ ImplementResult
             duration,
             quorumInPercentmilleOfSupply,
             expectReturnValue,
-            handleDoubleVotingGuard); 
+            guardOnSenderVotingDataOrNone); 
     }
 
 
 
 
     /// @dev We must implement a vote function 
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(BaseVotingContract)
     returns (uint256)
@@ -150,15 +152,25 @@ ImplementResult
             return _status[identifier];
         } 
         
-        if(NoDoubleVoting._alreadyVoted[identifier][msg.sender]){
-            revert NoDoubleVoting.AlreadyVoted(identifier, msg.sender);
-        }
-        if (_handleDoubleVotingGuard[identifier]){
-            NoDoubleVoting._alreadyVoted[identifier][msg.sender] = true;
-        }
         
-        
-        uint256 option = abi.decode(votingData, (uint256));
+        uint256 option;
+        if (_guardOnSenderVotingDataOrNone[identifier] != HandleDoubleVotingGuard.VotingGuard.none){
+            address voter;
+            if (_guardOnSenderVotingDataOrNone[identifier] == HandleDoubleVotingGuard.VotingGuard.onSender){
+                voter = msg.sender;
+                option = abi.decode(votingData, (uint256));
+            } else {
+                voter = address(bytes20(votingData[0:20]));
+                option = abi.decode(votingData[20:votingData.length], (uint256));
+            }
+            if(NoDoubleVoting._alreadyVoted[identifier][voter]){
+                revert NoDoubleVoting.AlreadyVoted(identifier, voter);
+            }
+            NoDoubleVoting._alreadyVoted[identifier][voter] = true;
+        } else {
+            option = abi.decode(votingData, (uint256));
+        }
+
         uint256 weight = IERC20(_token[identifier]).balanceOf(msg.sender);
         CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
         CastYesNoAbstainVote._castVote(identifier, voteOption, weight);
@@ -247,20 +259,29 @@ ImplementResult
     returns(uint256 quorum, uint256 inUnitsOf) {
         return (_quorum[identifier], 1e5);
     }
-
-    function getDoubleVotingGuardEnabled(uint256 identifier)
+    
+    function getToken(uint256 identifier) 
     external view
-    override(IGetDoubleVotingGuardEnabled)
-    returns(bool) {
+    override(IGetToken) 
+    returns(address) {
+        return _token[identifier];
+    }
+
+    function getDoubleVotingGuard(uint256 identifier)
+    external view
+    override(IGetDoubleVotingGuard)
+    returns(HandleDoubleVotingGuard.VotingGuard) {
         // by default any vote that is not inactive has this guard enabled
-        return uint256(_status[identifier])!=0;
+        return _guardOnSenderVotingDataOrNone[identifier];
     } 
 
     function supportsInterface(bytes4 interfaceId) public pure virtual override(BaseVotingContract) returns (bool) {
         return 
             super.supportsInterface(interfaceId) ||
             interfaceId == type(IGetDeadline).interfaceId ||
-            interfaceId == type(IGetDoubleVotingGuardEnabled).interfaceId;
+            interfaceId == type(IGetDoubleVotingGuard).interfaceId ||
+            interfaceId == type(IGetQuorum).interfaceId ||
+            interfaceId == type(IGetToken).interfaceId;
     }
 
 }

@@ -43,7 +43,7 @@ AssignedContractPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartAndVote){
         _beforeVote(identifier);
@@ -96,7 +96,7 @@ AssignedContractPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartAndVote){
         _beforeVote(identifier, votingData);
@@ -120,11 +120,11 @@ AssignedContractPrimitive
 
     function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 
-    function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+    function _beforeVote(uint256 identifier, bytes calldata votingData) virtual internal {}
 
-    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
+    function _modifyVotingData(uint256 identifier, bytes calldata votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
-    function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata votingData) virtual internal {}
 
     function _afterImplementation(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal;
 }
@@ -155,7 +155,7 @@ AssignedContractPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartAndVote){
         _beforeVote(identifier);
@@ -200,7 +200,7 @@ AssignedContractPrimitive
     }
 
     
-    function vote(uint256 identifier, bytes memory votingData) 
+    function vote(uint256 identifier, bytes calldata votingData) 
     external 
     override(IStartAndVote){
         _beforeVote(identifier, votingData);
@@ -222,11 +222,11 @@ AssignedContractPrimitive
 
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback) virtual internal {}
     
-    function _beforeVote(uint256 identifier, bytes memory votingData) virtual internal {}
+    function _beforeVote(uint256 identifier, bytes calldata votingData) virtual internal {}
 
-    function _modifyVotingData(uint256 identifier, bytes memory votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
+    function _modifyVotingData(uint256 identifier, bytes calldata votingData) virtual internal returns(bytes memory newVotingData){ return votingData;}
 
-    function _afterVote(uint256 identifier, uint256 status, bytes memory votingData) virtual internal {}
+    function _afterVote(uint256 identifier, uint256 status, bytes calldata votingData) virtual internal {}
 
     function _afterImplementation(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal;
     
