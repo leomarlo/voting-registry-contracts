@@ -96,11 +96,10 @@ InstanceInfoPrimitive
     override(IStartVoteAndImplement) 
     {
         _beforeImplement(identifier);
-        IImplementResult.Response _response;
-        _response = IImplementResult(instances[identifier].votingContract).implement(
+        IImplementResult.Response _response = IImplementResult(instances[identifier].votingContract).implement(
                 instances[identifier].identifier,
                 callback);
-        _afterImplement(identifier, _response);
+        _afterImplement(identifier, _response==IImplementResult.Response.successful);
         
     }
 
@@ -116,7 +115,7 @@ InstanceInfoPrimitive
 
     function _beforeImplement(uint256 identifier) virtual internal {}
     
-    function _afterImplement(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal {}    
+    function _afterImplement(uint256 identifier, bool responseFlag) virtual internal {}    
 
 }
 
@@ -218,23 +217,28 @@ InstanceInfoPrimitive
         _afterVote(identifier, status, votingData);
     }
 
+    event Balaa(address votingContract, bool successflag, bytes response);
+
     function implement(uint256 identifier, bytes calldata callback)
     external
     payable 
     override(IStartVoteAndImplement) 
     {
         _beforeImplement(identifier);
-        (, bytes memory data) = instances[identifier].votingContract.call{value: msg.value}(
-            abi.encodeWithSelector(
+        bytes memory data = abi.encodeWithSelector(
                 IImplementResult.implement.selector, 
                 instances[identifier].identifier,
-                callback));
-        _afterImplement(
-            identifier, 
-            abi.decode(data,(IImplementResult.Response))
-        );
+                callback);
+        (bool success, bytes memory responsedata) = instances[identifier].votingContract.call{value: msg.value}(data);
+       
+        emit Balaa(instances[identifier].votingContract, success, responsedata);
+        _afterImplement(identifier, success);
         
     }
+
+    event WhatsNow(bool success, bytes response);
+
+    
 
     function _beforeStart(bytes memory votingParams, bytes calldata callback) virtual internal {}
 
@@ -250,6 +254,6 @@ InstanceInfoPrimitive
 
     function _beforeImplement(uint256 identifier) virtual internal {}
     
-    function _afterImplement(uint256 identifier, IImplementResult.Response _responseStatus) virtual internal {}    
+    function _afterImplement(uint256 identifier, bool responseFlag) virtual internal {}    
 
 }

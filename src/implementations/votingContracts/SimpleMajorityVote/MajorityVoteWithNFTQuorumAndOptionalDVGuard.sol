@@ -128,6 +128,7 @@ ImplementResult
     }
 
 
+    event VoteCasted(uint256 option, uint256 weight);
 
 
     /// @dev We must implement a vote function 
@@ -146,6 +147,7 @@ ImplementResult
         } 
 
         uint256 option;
+        uint256 weight;
         if (_guardOnSenderVotingDataOrNone[identifier] != HandleDoubleVotingGuard.VotingGuard.none){
             address voter;
             if (_guardOnSenderVotingDataOrNone[identifier] == HandleDoubleVotingGuard.VotingGuard.onSender){
@@ -158,17 +160,20 @@ ImplementResult
             if(NoDoubleVoting._alreadyVoted[identifier][voter]){
                 revert NoDoubleVoting.AlreadyVoted(identifier, voter);
             }
+            weight = IERC721(_token[identifier]).balanceOf(voter);
             NoDoubleVoting._alreadyVoted[identifier][voter] = true;
         } else {
-            option = abi.decode(votingData, (uint256));
+            (option, weight) = abi.decode(votingData, (uint256, uint256));
         }
         
-        uint256 weight = IERC721(_token[identifier]).balanceOf(msg.sender);
+        
         CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
         CastYesNoAbstainVote._castVote(identifier, voteOption, weight);
-
+        emit VoteCasted(option, weight);
         return _status[identifier];
     }
+
+    
 
 
     /// @dev We must implement a result function 

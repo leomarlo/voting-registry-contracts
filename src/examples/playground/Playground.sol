@@ -10,6 +10,8 @@ import {IVotingRegistry} from "../../registration/registry/IVotingRegistry.sol";
 import {IGetDeadline} from "../../extensions/interfaces/IGetDeadline.sol";
 import {IGetQuorum} from "../../extensions/interfaces/IGetQuorum.sol";
 import {IGetToken} from "../../extensions/interfaces/IGetToken.sol";
+import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol";
+
 
 import {HandleDoubleVotingGuard} from "../../extensions/primitives/NoDoubleVoting.sol";
 import {IGetDoubleVotingGuard} from "../../extensions/interfaces/IGetDoubleVotingGuard.sol";
@@ -30,11 +32,12 @@ error OnlyMotherContract(address sender, address _motherContract);
 error BadgeDoesntExist(uint256 mainBadge, uint256 numberOfBadges);
 
 abstract contract CalculateId {
-    function calculateId(uint256 index, bytes4 selector, address votingContract) public pure returns (uint256) {
+    function calculateId(uint256 index, bytes4 selector, address votingContract, address minter) public pure returns (uint256) {
         return uint256(bytes32(abi.encodePacked(
-            uint64(bytes8(bytes32(index) << 192)),
+            uint32(bytes4(bytes32(index) << 224)),
+            bytes12(bytes20(minter)),
             selector,
-            bytes20(votingContract))));
+            bytes12(bytes20(votingContract)))));
     }
 }
 
@@ -55,8 +58,8 @@ CalculateId, ERC721 {
         isApprovedContract[msg.sender] = true;
     }
 
-    function balanceOfSignature(address owner, bytes4 selector) public returns(uint256) {
-        _balanceOfSignature[owner][selector];
+    function balanceOfSignature(address owner, bytes4 selector) public view returns(uint256 balance) {
+        balance = _balanceOfSignature[owner][selector];
     } 
 
 
@@ -65,9 +68,12 @@ CalculateId, ERC721 {
     external 
     onlyApprovedContract
     {
-
-        _mint(to, calculateId(index, selector, votingContract));
+        _mint(to, calculateId(index, selector, votingContract, to));
         
+    }
+
+    function exists(uint256 tokenId) external view returns (bool) {
+        return _exists(tokenId);
     }
 
     function _afterTokenTransfer(
@@ -75,7 +81,7 @@ CalculateId, ERC721 {
         address to,
         uint256 tokenId
     ) internal override(ERC721) {
-        bytes4 selector = bytes4(bytes32(tokenId) << 64);
+        bytes4 selector = bytes4(bytes32(tokenId) << 128);
         if (from==address(0)){
             // minting
             _balanceOfSignature[to][selector] += 1;
@@ -102,8 +108,8 @@ CalculateId, ERC721 {
     function _transferAllowed(uint256 tokenId) internal returns(bool){
         // you need to have at least a certain amount of voting badges
         // transferral must be enabled
-        uint256 balance =  balanceOf(ownerOf(tokenId));
-        if (!tradingEnabled[msg.sender] && balance >= enableTradingThreshold){
+        if (!tradingEnabled[msg.sender] && balanceOf(ownerOf(tokenId)) >= enableTradingThreshold){
+            // it's sufficient to be above the threshold once.
             tradingEnabled[msg.sender] = true;
         }
 
@@ -155,6 +161,7 @@ CalculateId, ERC721 {
 
 interface IPlaygroundVotingBadge is IERC721{
     function mint(address to, uint256 index, bytes4 selector, address votingContract) external; 
+    function exists(uint256 tokenId) external view returns(bool);
     function balanceOfSignature(address owner, bytes4 selector) external returns(uint256);
     function changeEnableTradingThreshold(uint256 newThreshold) external;
     function changeTradingEnabledGlobally(bool enable) external;
@@ -163,7 +170,7 @@ interface IPlaygroundVotingBadge is IERC721{
 
 struct VotingMetaParams {
     uint256 minDuration;
-    uint256 minQuorumInPercentmille;
+    uint256 minQuorum;
     address token;
 }
 
@@ -179,14 +186,20 @@ struct Counter {
     Operation operation;
 }
 
-struct DeploymentHelpers {
-    address deployer;
-    uint8 oneExtraTransaction;
-}
 
 struct NFTsAndBadgesInfo {
     uint256 mainBadge;
     bool acceptingNFTs;
+}
+
+struct Incumbent {
+    address incumbent;
+    uint256 indexPlusOne;
+}
+
+struct ImmutableAddresses {
+    address deployer;
+    address REGISTRY;
 }
 
 enum Operation {add, subtract, divide, multiply, modulo, exponentiate}
@@ -210,20 +223,14 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     // Change the Counter
     Counter public counter;
 
-    struct Incumbent {
-        address incumbent;
-        uint256 indexPlusOne;
-    }
     // Change people
     string[] public offices;
     mapping(string=>Incumbent) internal _incumbents;
     mapping(address=>uint256) internal _numberOfOffices;
     mapping(uint256=>bytes4) internal _selectorOfThisVote;
 
-    mapping(string=>uint256) public _rolesIndexPlusOne;
     mapping(bytes4=>VotingMetaParams) public votingMetaParams;
-    address public deployer;
-    IVotingRegistry public immutable VOTING_CONTRACT_REGISTRY;
+    address public immutable VOTING_REGISTRY;
     mapping(address=>uint256) public donationsBy;
     Analytics public analytics;
     mapping(uint24=>address) public simpleVotingContract;
@@ -237,25 +244,25 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         bytes5[] memory flagAndSelectors,
         address[] memory votingContracts,
         uint256[] memory minDurations,
-        uint256[] memory minQuorumInPercentmilles,
+        uint256[] memory minQuorums,
         bool[] memory badgeWeightedVote,
         bytes32 badgeSalt,
         bytes memory badgeBytecode
         )
     {
-        // set deployer
-        deployer = msg.sender;
         // set the registry;
-        VOTING_CONTRACT_REGISTRY = IVotingRegistry(votingContractRegistry);
+        VOTING_REGISTRY = votingContractRegistry;
+
         // set a few voting contracts
         // assign the voting contract the increment function.
         address badgeToken = _deployNewBadge(badgeSalt, badgeBytecode, msg.sender) ;
+        nftAndBadgesInfo.mainBadge = 0;
         for (uint8 j; j<votingContracts.length; j++){
             bytes4 selector = bytes4(flagAndSelectors[j] << 8);
             fixedVotingContract[selector] = bytes1(flagAndSelectors[j])!=bytes1(0x00);
             votingMetaParams[selector] = VotingMetaParams({
                 minDuration: minDurations[j],
-                minQuorumInPercentmille: minQuorumInPercentmilles[j],
+                minQuorum: minQuorums[j],
                 token: badgeWeightedVote[j] ? badgeToken : address(0)
             });
             assignedContract[selector] = votingContracts[j];
@@ -264,7 +271,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function addSimpleVotingContract(address votingContract) external {
         // check whether it is Registered
-        require(VOTING_CONTRACT_REGISTRY.isRegistered(votingContract));
+        require(IVotingRegistry(VOTING_REGISTRY).isRegistered(votingContract));
         simpleVotingContract[uint24(analytics.numberOfSimpleVotingContracts)] = votingContract;
         analytics.numberOfSimpleVotingContracts += 1;
     }
@@ -275,7 +282,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     OnlyByVote
     {
         // check whether it is Registered
-        require(VOTING_CONTRACT_REGISTRY.isRegistered(newVotingContract));
+        require(IVotingRegistry(VOTING_REGISTRY).isRegistered(newVotingContract));
         require(!fixedVotingContract[selector]);
         assignedContract[selector] = newVotingContract;
     }
@@ -285,7 +292,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     function changeMetaParameters(
         bytes4 selector,
         uint256 minDuration,
-        uint256 minQuorumInPercentmille,
+        uint256 minQuorum,
         address token
     )
     external
@@ -294,7 +301,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         require(!fixedVotingContract[selector]);
         votingMetaParams[selector] = VotingMetaParams({
             minDuration: minDuration,
-            minQuorumInPercentmille: minQuorumInPercentmille,
+            minQuorum: minQuorum,
             token: token
         });
     }
@@ -315,13 +322,14 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     function setMinXpToStartAnything(uint256 newXP) external
     OnlyByVote
     {
-        require(newXP>0, "Needs to be at least 1");
+        require(newXP>0 && newXP<30, "Must be within bounds");
         minXpToStartAnything = newXP;
     }
 
     function setMinXpToStartThisFunction(bytes4 selector, uint256 newXP) external
     OnlyByVote
     {
+        require(newXP<40, "Must be within bounds");
         minXpToStartThisFunction[selector] = newXP;
     }
 
@@ -379,7 +387,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         counter.operation = newOperation;
     }
 
-    function changeIncumbent(string memory office, address newIncumbent)
+    function newIncumbent(string memory office, address newIncumbent)
     external
     OnlyByVote 
     {
@@ -397,19 +405,30 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         _numberOfOffices[newIncumbent] += 1;
     }
 
+    function getAssignedContract(bytes4 selector) external view returns(address _assignedContract) {
+        _assignedContract = assignedContract[selector];
+    }
+
     function getIncumbentFromOffice(string memory office) external view returns(address incumbent) {
         incumbent = _incumbents[office].incumbent;
     }
 
-    function getOfficesFromAddress(address incumbent) external view returns(string[] memory _offices) {
-        uint256 j;
-        for(uint256 i=0; i<offices.length; i++){
-            if (_incumbents[offices[i]].incumbent == incumbent){
-                _offices[j] = offices[i];
-                j += 1;
-            }
-        }
-    }
+    // function getOfficesFromAddress(address incumbent) external view returns(string[] memory) {
+    //     uint256[] memory indices;
+    //     uint256 j;
+    //     for(uint256 i=0; i<offices.length; i++){
+    //         if (_incumbents[offices[i]].incumbent == incumbent) {
+    //             indices[j] = i;
+    //             j ++;
+    //         }
+    //     }
+    //     string[] memory _offices = new string[](indices.length);
+    //     for (uint256 k=0; k<indices.length; k++){
+    //         _offices[k] = offices[indices[k]];
+    //     }
+    //     return _offices;
+        
+    // }
 
     //////////////////////////////////////////////
     // CREATE CONTRACTS                         //
@@ -453,18 +472,18 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     // SENDING THINGS                           //
     //////////////////////////////////////////////
 
-    function sendNFT(address token, address to, uint256 tokenId) 
+    function sendNFT(address token, address from, address to, uint256 tokenId) 
     external 
     OnlyByVote
     {
-        IERC721(token).safeTransferFrom(address(this), to, tokenId);
+        IERC721(token).safeTransferFrom(from, to, tokenId);
     }
 
-    function sendERC20Token(address token, address to, uint256 amount) 
+    function sendERC20Token(address token, address from, address to, uint256 amount) 
     external 
     OnlyByVote
     {
-        IERC20(token).transfer(to, amount);
+        IERC20(token).transferFrom(from,to, amount);
     }
 
     function approveNFT(address token, address spender, uint256 tokenId, ApprovalTypes approvalType)
@@ -539,11 +558,11 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
                 (success, response) = votingContract.call(abi.encodeWithSelector(IGetToken.getToken.selector, index));
                 if (success) goodSpecs = goodSpecs && abi.decode(response, (address)) == votingMetaParams[selector].token;
             }
-            if (votingMetaParams[selector].minQuorumInPercentmille!=0){
+            if (votingMetaParams[selector].minQuorum!=0){
                 (success, response) = votingContract.call(abi.encodeWithSelector(IGetQuorum.getQuorum.selector, index));
                 (uint256 _quorum, uint256 inUnitsOf) = abi.decode(response, (uint256, uint256));
                 // when inUnitsOf is zero (i.e. the quorum is measured in absolute terms, then the condition is true irrespective of what _quroum is).
-                goodSpecs = goodSpecs && (votingMetaParams[selector].minQuorumInPercentmille * inUnitsOf) <= (_quorum * 1e5);                
+                goodSpecs = goodSpecs && (votingMetaParams[selector].minQuorum * inUnitsOf) <= (_quorum * 1e5);                
             }
             require(goodSpecs, "Invalid Parameters");
         }
@@ -567,7 +586,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         }
         uint256 index = instances[identifier].identifier;
         address votingContract = instances[identifier].votingContract;
-        if (badges[nftAndBadgesInfo.mainBadge].ownerOf(calculateId(index, msg.sig, votingContract))==address(0)){
+        if (!badges[nftAndBadgesInfo.mainBadge].exists(calculateId(index, msg.sig, votingContract, msg.sender))){
             // e.g. in tournament this might be interesting
             badges[nftAndBadgesInfo.mainBadge].mint(
                 msg.sender,
@@ -585,15 +604,24 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
 
 
-    function _beforeImplement(uint256 identifier) 
-    internal override(StartVoteAndImplementHybridVotingImplRemoteHooks)
+    // function _beforeImplement(uint256 identifier) 
+    // internal override(StartVoteAndImplementHybridVotingImplRemoteHooks)
+    // {
+
+    //     analytics.numberOfImplementations += 1;
+    // }
+
+    function _afterImplement(uint256 identifier, bool responseFlag)
+    internal override(StartVoteAndImplementHybridVotingImplRemoteHooks) 
     {
-        badges[nftAndBadgesInfo.mainBadge].mint(
+        if (responseFlag){
+            badges[nftAndBadgesInfo.mainBadge].mint(
                 msg.sender,
                 instances[identifier].identifier,
                 msg.sig,
                 instances[identifier].votingContract);
-
+        }
+        
         analytics.numberOfImplementations += 1;
     }
 

@@ -15,7 +15,7 @@ ImplementingPermitted,
 HandleImplementationResponse,
 ImplementResultPrimitive
 {
-
+    
     /// @dev Checks whether the current voting instance permits voting. This is customizable.
     /// @param identifier the index for the voting instance in question
     /// @param callback data that is passed along with the function call.

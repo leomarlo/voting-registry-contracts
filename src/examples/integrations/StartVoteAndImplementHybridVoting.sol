@@ -109,7 +109,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks
     uint256 public votes;
     uint256 public implementations;
     mapping(uint256=>uint256) public votingStatus;
-    mapping(uint256=>IImplementResult.Response) public responseStatus;
+    mapping(uint256=>bool) public responseStatus;
     mapping(uint24=>address) internal simpleVotingContract;
     
     constructor(address _votingContractOne, address _votingContractTwo) {
@@ -179,10 +179,10 @@ StartVoteAndImplementHybridVotingImplRemoteHooks
         implementations += 1;
     }
     
-    function _afterImplement(uint256 identifier, IImplementResult.Response _responseStatus)  
+    function _afterImplement(uint256 identifier, bool responseFlag)  
     internal override(StartVoteAndImplementHybridVotingImplRemoteHooks) 
     {
-        responseStatus[identifier] = _responseStatus;
+        responseStatus[identifier] = responseFlag;
     }    
 
     modifier OnlyByVote {

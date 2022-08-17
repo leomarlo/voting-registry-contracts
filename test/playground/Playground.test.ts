@@ -10,17 +10,19 @@ import {
     VotingPlayground,
     PlainMajorityVote,
     SimpleSnapshotWithoutToken,
-    MajorityVoteWithTokenQuorumAndOptionalDVGuard,
+    MajorityVoteWithNFTQuorumAndOptionalDVGuard,
     DummyNFT,
     DummyToken,
-    VotingRegistry
+    VotingRegistry,
+    ExpectReturnValue,
+    PlaygroundVotingBadge__factory
 } from "../../typechain"
 
 import { VotingPlaygroundInterface } from "../../typechain/VotingPlayground";
 
 
 interface Contracts {
-    majorityWithToken: MajorityVoteWithTokenQuorumAndOptionalDVGuard,
+    majorityWithNftToken: MajorityVoteWithNFTQuorumAndOptionalDVGuard,
     majorityWithoutToken: PlainMajorityVote,
     snapshot: SimpleSnapshotWithoutToken,
     playground: VotingPlayground,
@@ -101,7 +103,7 @@ describe("Playground", function(){
             "security": "open",
             "duration": durations.medium,
             "badgeWeightedVote": false},
-        "changeIncumbent": {
+        "newIncumbent": {
             "security": "open",
             "duration": durations.medium,
             "badgeWeightedVote": true},
@@ -134,14 +136,14 @@ describe("Playground", function(){
             "duration": durations.short,
             "badgeWeightedVote": true},
         }
-    let minQuorumInPercentmille = 550 // 0.55 %  
-
+    let minQuorum = 2 // at least two people need to vote. 550 // 0.55 %  
+    let BadgeFactory: PlaygroundVotingBadge__factory
     beforeEach(async function(){
         [Alice, Bob, Charlie, Dave] = await ethers.getSigners()  
          
-        let MajorityWithtokenFactory = await ethers.getContractFactory("MajorityVoteWithTokenQuorumAndOptionalDVGuard")
-        let majorityWithToken: MajorityVoteWithTokenQuorumAndOptionalDVGuard = await MajorityWithtokenFactory.connect(Alice).deploy()
-        await majorityWithToken.deployed()
+        let MajorityWithtokenFactory = await ethers.getContractFactory("MajorityVoteWithNFTQuorumAndOptionalDVGuard")
+        let majorityWithNftToken: MajorityVoteWithNFTQuorumAndOptionalDVGuard = await MajorityWithtokenFactory.connect(Alice).deploy()
+        await majorityWithNftToken.deployed()
 
         let MajorityWithoutTokenFactory = await ethers.getContractFactory("PlainMajorityVote")
         let majorityWithoutToken: PlainMajorityVote = await MajorityWithoutTokenFactory.connect(Alice).deploy()
@@ -162,8 +164,9 @@ describe("Playground", function(){
         let ERC721Factory = await ethers.getContractFactory("DummyNFT")
         let nft: DummyNFT = await ERC721Factory.connect(Alice).deploy()
         await nft.deployed() 
+        
 
-        let BadgeFactory = await ethers.getContractFactory("PlaygroundVotingBadge")
+        BadgeFactory = await ethers.getContractFactory("PlaygroundVotingBadge")
         const playgroundMockup = await ethers.getContractAt("VotingPlayground", ethers.constants.AddressZero);
         playgroundInterface = playgroundMockup.interface;
 
@@ -171,7 +174,7 @@ describe("Playground", function(){
         let flagAndSelectors : Array<string> = []
         let votingContracts : Array<string> = []
         let minDurations : Array<number> = []
-        let minQuorumInPercentmilles : Array<number> = []
+        let minQuorums : Array<number> = []
         let badgeWeightedVote : Array<boolean> = []
 
         let functions = Object.keys(types)
@@ -181,17 +184,16 @@ describe("Playground", function(){
                 (types[fct].security=="secure" ? "0x01": "0x00") + playgroundInterface.getSighash(fct).slice(2,)
             )
             votingContracts.push(
-                types[fct].badgeWeightedVote ? majorityWithToken.address : majorityWithoutToken.address
+                types[fct].badgeWeightedVote ? majorityWithNftToken.address : majorityWithoutToken.address
             )
             badgeWeightedVote.push(types[fct].badgeWeightedVote as boolean)
             if (types[fct].duration)
             minDurations.push(types[fct].duration as number)
-            minQuorumInPercentmilles.push(minQuorumInPercentmille)
+            minQuorums.push(minQuorum)
         }
 
         let deployArguments = abi.encode(["string", "string"],["Playground Voting Badge", "PLAY"])
         let rawByteCode = BadgeFactory.bytecode + deployArguments.slice(2,);
-        console.log(deployArguments)
 
         let PlaygroundFactory = await ethers.getContractFactory("VotingPlayground")
         let playground: VotingPlayground = await PlaygroundFactory.connect(Alice).deploy(
@@ -199,7 +201,7 @@ describe("Playground", function(){
             flagAndSelectors,
             votingContracts,
             minDurations,
-            minQuorumInPercentmilles,
+            minQuorums,
             badgeWeightedVote,
             abi.encode(["uint256"], [666]),
             rawByteCode
@@ -210,7 +212,7 @@ describe("Playground", function(){
         let badge = await ethers.getContractAt("PlaygroundVotingBadge", await playground.badges(0));
         
         contracts = {
-            majorityWithToken,
+            majorityWithNftToken,
             majorityWithoutToken,
             snapshot,
             playground,
@@ -220,22 +222,502 @@ describe("Playground", function(){
             token
         }
     })
+    // describe("Deployment", function(){
+    //     it("Should instantiate all the public variables", async function(){
+    //         expect(await contracts.playground.badges(0)).to.equal(contracts.badge.address);
+    //         await expect(contracts.playground.deployedContracts(0)).to.be.reverted;
+    //         expect(await contracts.playground.minXpToStartAnything()).to.equal(0)
+    //         expect(await contracts.playground.minXpToStartThisFunction('0x00000000')).to.equal(0)
+    //         let mainBadgeAndAcceptingNft = await contracts.playground.nftAndBadgesInfo()
+    //         expect(mainBadgeAndAcceptingNft.mainBadge).to.equal(0)
+    //         expect(mainBadgeAndAcceptingNft.acceptingNFTs).to.equal(false)
+    //         let counterStruct = await contracts.playground.counter()
+    //         expect(counterStruct.counter).to.equal(0)
+    //         expect(counterStruct.operation).to.equal(0)
+    //         await expect(contracts.playground.offices(0)).to.be.reverted;
+    //         expect(await contracts.playground.getIncumbentFromOffice("doesNotExist")).to.equal(ethers.constants.AddressZero)
+    //         let votingMetaParams = await contracts.playground.votingMetaParams('0x00000000')
+    //         expect(votingMetaParams.minDuration).to.equal(0)
+    //         expect(votingMetaParams.minQuorum).to.equal(0)
+    //         expect(votingMetaParams.minQuorum).to.equal(0)
+    //         expect(votingMetaParams.token).to.equal(ethers.constants.AddressZero)
+    //         expect(await contracts.playground.VOTING_REGISTRY()).to.equal(contracts.registry.address)
+    //         expect(await contracts.playground.donationsBy(ethers.constants.AddressZero)).to.equal(0)
+    //         let analytics = await contracts.playground.analytics()
+    //         expect(analytics.numberOfInstances).to.equal(0)
+    //         expect(analytics.numberOfVotes).to.equal(0)
+    //         expect(analytics.numberOfImplementations).to.equal(0)
+    //         expect(analytics.numberOfSimpleVotingContracts).to.equal(0)
+    //         expect(await contracts.playground.simpleVotingContract(0)).to.equal(ethers.constants.AddressZero)
+    //         expect(await contracts.playground.fixedVotingContract("0x12345678")).to.equal(false)
+    //     })
+    //     it("Should revert any attempt to trigger a function that can be triggered only by vote.", async function(){
+    //         let functions = Object.keys(types)
+    //         await expect(contracts.playground.connect(Alice).changeMetaParameters('0x00000000',0,0,ethers.constants.AddressZero))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).changeAssignedContract('0x00000000',ethers.constants.AddressZero))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).setMainBadge(0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`)
+    //         await expect(contracts.playground.connect(Alice).setMinXpToStartAnything(0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`)
+    //         await expect(contracts.playground.connect(Alice).setMinXpToStartThisFunction('0x00000000',0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).setEnableTradingThreshold(0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).setTradingEnabledGlobally(true))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`)  
+    //         await expect(contracts.playground.connect(Alice).setAcceptingNFTs(true))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).changeCounter(0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).changeOperation(0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).newIncumbent("",ethers.constants.AddressZero))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`)  
+    //         await expect(contracts.playground.connect(Alice).deployNewBadge(ethers.constants.HashZero, "0x",ethers.constants.AddressZero))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).deployNewContract(ethers.constants.HashZero, "0x"))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).sendNFT(ethers.constants.AddressZero, ethers.constants.AddressZero, 1))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).approveNFT(ethers.constants.AddressZero, ethers.constants.AddressZero, 1,0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`) 
+    //         await expect(contracts.playground.connect(Alice).approveERC20Token(ethers.constants.AddressZero, ethers.constants.AddressZero, 1))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`)
+    //         await expect(contracts.playground.connect(Alice).wildCard(ethers.constants.AddressZero, ethers.constants.AddressZero, 0))
+    //             .to.be.revertedWith(`OnlyVoteImplementer("${Alice.address}")`)
+    //     })
+    //     it("Should calculate the token it", async function(){
+    //         let randomNumber = BigNumber.from("2452614324145145234512446909")
+    //         let sigHash = playgroundInterface.getSighash("start")
+    //         let tokenId = ethers.utils.solidityPack(
+    //             ["bytes4", "bytes12", "bytes4", "bytes12"],
+    //             [
+    //                 "0x" + abi.encode(["uint256"],[randomNumber]).slice(-8,), 
+    //                 Alice.address.slice(0,26),
+    //                 sigHash,
+    //                 contracts.badge.address.slice(0,26)])
+    //         let computedTokenId = await contracts.playground.calculateId(randomNumber, sigHash, contracts.badge.address, Alice.address)
+    //         expect(computedTokenId.toHexString()).to.equal(tokenId)
+    //     })
+    //     it("Sould get the assigned contract.", async function(){
+    //         let selector = playgroundInterface.getSighash("changeCounter")
+    //         expect(await contracts.playground.getAssignedContract(selector)).to.equal(contracts.majorityWithNftToken.address)
+    //     })
+    // })
+    // describe("Start, vote and Implement", function(){
+    //     let changeCounterSig : string 
+    //     let expectReturnValue : boolean = false;
+    //     let guardOnSenderVotingDataOrNone: number = 2;
+    //     let callback : string
+    //     let counterVotingMetaParams: [BigNumber, BigNumber, string] & {
+    //         minDuration: BigNumber;
+    //         minQuorum: BigNumber;
+    //         token: string;
+    //     }
+    //     let regularVotingParams : string
+    //     let startSigHash: string 
+    //     let voteSigHash: string 
+    //     let implementSigHash: string
+    //     let changeCounterBy: number = 3;
+    //     beforeEach(async function(){
+    //         changeCounterSig = playgroundInterface.getSighash("changeCounter")
+    //         callback = playgroundInterface.encodeFunctionData("changeCounter",[changeCounterBy])
+    //         counterVotingMetaParams = await contracts.playground.votingMetaParams(changeCounterSig)
+    //         regularVotingParams = abi.encode(
+    //             ["address", "uint256", "uint256", "bool", "uint8"],
+    //             [contracts.badge.address, types.changeCounter.duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+    //         startSigHash = playgroundInterface.getSighash("start")
+    //         voteSigHash = playgroundInterface.getSighash("vote")
+    //         implementSigHash = playgroundInterface.getSighash("implement")
+    //     })
+        
+    //     it("Should start a new voting instance", async function(){
+    //         expect(counterVotingMetaParams.token).to.equal(contracts.badge.address)
+    //         expect(counterVotingMetaParams.minQuorum).to.equal(minQuorum)
+    //         await expect(contracts.playground.connect(Alice).start(regularVotingParams, callback))
+    //             .to.emit(contracts.majorityWithNftToken, 'VotingInstanceStarted')
+    //             .withArgs(0,contracts.playground.address)
+            
+    //         expect(await contracts.badge.balanceOf(Alice.address)).to.equal(2)
+    //         let tokenId = await contracts.playground.calculateId(0, startSigHash, contracts.majorityWithNftToken.address, Alice.address)
+    //         expect(await contracts.badge.ownerOf(tokenId)).to.equal(Alice.address)
+    //     })
+    //     it("Should vote on that voting instance", async function(){
+    //         await contracts.playground.connect(Alice).start(regularVotingParams, callback)
+    //         let identifier = (await contracts.majorityWithNftToken.getCurrentIndex()).toNumber() - 1;
+    //         await contracts.playground.connect(Bob).vote(0, APPROVE)
+    //         expect(await contracts.badge.balanceOfSignature(Bob.address, voteSigHash)).to.equal(1)
+    //         let tokenIdBob = await contracts.playground.calculateId(0, voteSigHash, contracts.majorityWithNftToken.address, Bob.address)
+    //         expect(await contracts.badge.ownerOf(tokenIdBob)).to.equal(Bob.address)
+    //         await contracts.playground.connect(Charlie).vote(0, APPROVE)
+    //         let tokenIdCharlie = await contracts.playground.calculateId(0, voteSigHash, contracts.majorityWithNftToken.address, Charlie.address)
+    //         expect(await contracts.badge.ownerOf(tokenIdCharlie)).to.equal(Charlie.address)
+    //         expect(await contracts.majorityWithNftToken.result(identifier))
+    //             .to.equal(abi.encode(["uint256[3]"],[[0,2,0]]))
+    //     })
+    //     it("Should implement the result", async function(){
+    //         await contracts.playground.connect(Alice).start(regularVotingParams, callback)
+    //         await contracts.playground.connect(Bob).vote(0, APPROVE)
+    //         await contracts.playground.connect(Alice).vote(0, APPROVE)
+    //         let timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+    //         let duration : number = types.changeCounter.duration as number
+    //         await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp + duration + 1]); 
+    //         await contracts.playground.connect(Alice).vote(0, APPROVE)
+    //         let identifier = (await contracts.majorityWithNftToken.getCurrentIndex()).toNumber() - 1;
+    //         await contracts.playground.connect(Alice).implement(0, callback)
+    //         let tokenIdAlice = await contracts.playground.calculateId(0, implementSigHash, contracts.majorityWithNftToken.address, Alice.address)
+    //         expect(await contracts.badge.ownerOf(tokenIdAlice)).to.equal(Alice.address)
+    //         expect(await contracts.badge.balanceOfSignature(Alice.address, implementSigHash)).to.equal(1)
+    //         expect((await contracts.playground.counter()).counter).to.equal(changeCounterBy);
+    //     })
+    //     it("Should revert when starting a new voting instance with incorrect token, quorum or duration.", async function(){
+    //         let votingParamsWrongToken = abi.encode(
+    //             ["address", "uint256", "uint256", "bool", "uint8"],
+    //             [contracts.token.address, types.changeCounter.duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+    //         await expect(contracts.playground.connect(Alice).start(votingParamsWrongToken, callback))
+    //             .to.be.revertedWith(`'Invalid Parameters'`)
+    //         let votingParamsWrongDuration = abi.encode(
+    //             ["address", "uint256", "uint256", "bool", "uint8"],
+    //             [contracts.badge.address, types.changeCounter.duration as number - 1, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+    //         await expect(contracts.playground.connect(Alice).start(votingParamsWrongDuration, callback))
+    //             .to.be.revertedWith(`'Invalid Parameters'`)
+    //         let votingParamsWrongQuorum = abi.encode(
+    //             ["address", "uint256", "uint256", "bool", "uint8"],
+    //             [contracts.badge.address, types.changeCounter.duration, minQuorum - 1, expectReturnValue, guardOnSenderVotingDataOrNone])
+    //         await expect(contracts.playground.connect(Alice).start(votingParamsWrongQuorum, callback))
+    //             .to.be.revertedWith(`'Invalid Parameters'`)
+    //     })
+    // })
+    describe("Write Operations That require Token Weighted Votes", function(){
 
-    describe("Deployment", function(){
-        it("Should print stuff", async function(){
-            // let wildcardId = playgroundInterface.getSighash("wildCard")
-            // console.log(wildcardId)
-            // // console.log(bla);
-            // let bytecode = "0x60806040526000805534801561001457600080fd5b50610226806100246000396000f3fe6080604052600436106100345760003560e01c806358116a0d146100395780637cf5dab014610064578063e5aa3d5814610080575b600080fd5b34801561004557600080fd5b5061004e6100ab565b60405161005b919061012a565b60405180910390f35b61007e600480360381019061007991906100ee565b6100b1565b005b34801561008c57600080fd5b506100956100d3565b6040516100a2919061012a565b60405180910390f35b60015481565b806000808282546100c29190610145565b925050819055503460018190555050565b60005481565b6000813590506100e8816101d9565b92915050565b600060208284031215610104576101036101d4565b5b6000610112848285016100d9565b91505092915050565b6101248161019b565b82525050565b600060208201905061013f600083018461011b565b92915050565b60006101508261019b565b915061015b8361019b565b9250827fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff038211156101905761018f6101a5565b5b828201905092915050565b6000819050919050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b600080fd5b6101e28161019b565b81146101ed57600080fd5b5056fea2646970667358221220e13d8d58ff67f5e6d4441f6546aaa11eb5142c7ad0e58185c0cb2a8393f82a6064736f6c63430008070033"
-            // let salt = "0x0000000000000000000000000000000000000000000000000000000000000001"
-            // let address = "0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8"
-            // let flag = "0xff"
-            // let hashedBytecode = ethers.utils.keccak256(bytecode)
-            // let concatenatedPacked = ethers.utils.solidityPack(
-            //     ["bytes1", "address", "bytes32", "bytes32"], 
-            //     [flag, address, salt, hashedBytecode])
-            // let predictedAddress = ethers.utils.keccak256(concatenatedPacked)
-            // console.log(predictedAddress)
+        let expectReturnValue : boolean = false;
+        let guardOnSenderVotingDataOrNone: number = 2;
+        let callback : string
+        it("Should change Meta Parameters.", async function(){
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, types.changeMetaParameters.duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let changeCounterSig = playgroundInterface.getSighash("changeCounter")
+            let newDuration: number = 99
+            let newQuorum: number = 1
+            callback = playgroundInterface.encodeFunctionData(
+                "changeMetaParameters",
+                [changeCounterSig, newDuration, newQuorum, contracts.badge.address ])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            let duration : number = types.changeMetaParameters.duration as number
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp + duration + 1]); 
+            await contracts.playground.connect(Alice).implement(0, callback)
+            expect( await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.completed)
+            let metaParams = await contracts.playground.votingMetaParams(changeCounterSig)
+            expect(metaParams.minDuration.toNumber()).to.equal(newDuration)
+            expect(metaParams.minQuorum.toNumber()).to.equal(newQuorum)
+        })
+        it("Should change assigned voting contract when it's registered.", async function(){
+            let duration : number = types.changeAssignedContract.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let changeCounterSig = playgroundInterface.getSighash("changeCounter")
+            expect(await contracts.playground.getAssignedContract(changeCounterSig)).to.equal(contracts.majorityWithNftToken.address)
+            callback = playgroundInterface.encodeFunctionData(
+                "changeAssignedContract",
+                [changeCounterSig, contracts.snapshot.address])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Alice).implement(0, callback)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.failed)
+            
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(1, APPROVE)
+            timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.registry.register(contracts.snapshot.address, ethers.constants.AddressZero)
+            await contracts.playground.connect(Alice).implement(1, callback) 
+            expect(await contracts.playground.getAssignedContract(changeCounterSig)).to.equal(contracts.snapshot.address)
+            // It should revert when trying to change the assigned contract for a function that must not get a new contract
+            let changeMetaParametersSig = playgroundInterface.getSighash("changeMetaParameters")
+            callback = playgroundInterface.encodeFunctionData(
+                "changeAssignedContract",
+                [changeMetaParametersSig, contracts.snapshot.address])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(2, APPROVE)
+            timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).vote(2, APPROVE)
+            expect(await contracts.majorityWithNftToken.getStatus(2)).to.equal(VotingStatus.awaitcall)
+            await contracts.playground.connect(Alice).implement(2, callback)
+            expect(await contracts.majorityWithNftToken.getStatus(2)).to.equal(VotingStatus.failed)
+            
+                
+        })
+        it("Should revert trying to set a new badge that doesn't exist", async function(){
+            let duration : number = types.setMainBadge.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            callback = playgroundInterface.encodeFunctionData("setMainBadge",[2])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.awaitcall)
+            await contracts.playground.connect(Alice).implement(0, callback)
+            //     .to.be.revertedWith(`'BadgeDoesntExist(${1}, ${1})'`)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.awaitcall)
+        })
+        it("should deploy a new badge and change the main badge.", async function(){
+            // deploy new badge
+            let duration : number = types.deployNewBadge.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let salt = abi.encode(["uint256"],[999])
+            let deployArguments = abi.encode(["string", "string"],["Playground Voting Badge Number Two", "PLAY2"])
+            let rawByteCode = BadgeFactory.bytecode + deployArguments.slice(2,);
+            callback = playgroundInterface.encodeFunctionData(
+                "deployNewBadge",
+                [salt, rawByteCode, Bob.address])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            await contracts.playground.connect(Alice).implement(0, callback)
+            await expect(contracts.playground.badges(1)).to.not.be.reverted
+            let badge2 = await ethers.getContractAt("PlaygroundVotingBadge", await contracts.playground.badges(1))
+            expect(await badge2.balanceOf(Bob.address)).to.equal(1)
+            expect(await badge2.balanceOf(Alice.address)).to.equal(0)
+            // set badge as main badge
+            duration = types.setMainBadge.duration as number
+            votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            callback = playgroundInterface.encodeFunctionData("setMainBadge",[1])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(1, APPROVE)
+            timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).vote(1, APPROVE)
+            expect(await contracts.majorityWithNftToken.getStatus(1)).to.equal(VotingStatus.awaitcall)
+            await contracts.playground.connect(Alice).implement(1, callback)
+            expect(await contracts.majorityWithNftToken.getStatus(1)).to.equal(VotingStatus.completed)
+            // await expect(contracts.playground.connect(Alice).start(votingParams, callback))
+            //     .to.be.revertedWith('"Not enough badges"')
+            
+        }) 
+        it("Should set min Experience Points to start a new voting instance.", async function(){
+            let duration : number = types.setMinXpToStartAnything.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let newMinXP = 2;
+            callback = playgroundInterface.encodeFunctionData(
+                "setMinXpToStartAnything", [newMinXP])
+            expect(await contracts.playground.minXpToStartAnything()).to.equal(0)
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            await contracts.playground.connect(Charlie).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.awaitcall)
+            await contracts.playground.connect(Alice).implement(0, callback)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.completed)
+            expect(await contracts.playground.minXpToStartAnything()).to.equal(newMinXP)
+            // check whether Bob is unable to start an instance, but Alice is
+            callback = playgroundInterface.encodeFunctionData("changeCounter", [87])
+            expect((await contracts.badge.balanceOf(Bob.address)).toNumber()).to.be.lessThan(newMinXP)
+            await expect(contracts.playground.connect(Bob).start(votingParams, callback))
+                .to.be.revertedWith("'Not enough badges'")
+            expect((await contracts.badge.balanceOf(Alice.address)).toNumber()).to.be.greaterThanOrEqual(newMinXP)
+            await expect(contracts.playground.connect(Alice).start(votingParams, callback))
+                .to.be.not.reverted
+            
+        })
+        it("Should set min Experience Points to start a particular function.", async function(){
+            let duration : number = types.setMinXpToStartThisFunction.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let newMinXP = 3;
+            let changeCounterSig = playgroundInterface.getSighash("changeCounter")
+            callback = playgroundInterface.encodeFunctionData(
+                "setMinXpToStartThisFunction", [changeCounterSig, newMinXP])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Alice).implement(0, callback)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.completed)
+            expect(await contracts.playground.minXpToStartThisFunction(changeCounterSig)).to.equal(newMinXP)
+            // check
+            callback = playgroundInterface.encodeFunctionData("changeCounter", [87])
+            expect((await contracts.badge.balanceOf(Bob.address)).toNumber()).to.be.lessThan(newMinXP)
+            await expect(contracts.playground.connect(Bob).start(votingParams, callback))
+                .to.be.revertedWith("'Not enough badges'")
+            expect((await contracts.badge.balanceOf(Alice.address)).toNumber()).to.be.greaterThanOrEqual(newMinXP)
+            await expect(contracts.playground.connect(Alice).start(votingParams, callback))
+                .to.be.not.reverted
+            
+        })
+        it("Should set the threshold that enables trading individually and generally.", async function(){
+            // transfering badges should not be possible
+            let tokenId = await contracts.badge.calculateId(0,"0x00000000",Alice.address, Alice.address)
+            expect(await contracts.badge.exists(tokenId)).to.equal(true)
+            expect(await contracts.badge.ownerOf(tokenId)).to.equal(Alice.address)
+            await expect(contracts.badge.connect(Alice).transferFrom(Alice.address, Bob.address, tokenId))
+                .to.be.revertedWith(`'TransferNotAllowed(${tokenId})'`)
+            // set trading threshold
+            let duration : number = types.setEnableTradingThreshold.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let newThreshold: number = 6;
+            callback = playgroundInterface.encodeFunctionData("setEnableTradingThreshold", [newThreshold])
+            expect(await contracts.badge.enableTradingThreshold()).to.equal(0);
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.awaitcall)
+            await contracts.playground.connect(Alice).implement(0, callback)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.completed)
+            
+            expect(await contracts.badge.enableTradingThreshold()).to.equal(newThreshold);
+            
+            // enable trading globally
+            duration = types.setTradingEnabledGlobally.duration as number
+            votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            callback = playgroundInterface.encodeFunctionData("setTradingEnabledGlobally", [true])
+            expect(await contracts.badge.tradingEnabledGlobally()).to.equal(false);
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(1, APPROVE)
+            await contracts.playground.connect(Bob).vote(1, APPROVE)
+            timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).implement(1, callback)
+            expect(await contracts.badge.tradingEnabledGlobally()).to.equal(true);
+            // test
+            expect((await contracts.badge.balanceOf(Alice.address)).toNumber()).to.be.greaterThanOrEqual(newThreshold)
+            await expect(contracts.badge.connect(Alice).transferFrom(Alice.address, Bob.address, tokenId))
+                .to.be.not.reverted
+            expect(await contracts.badge.ownerOf(tokenId)).to.equal(Bob.address)
+        })
+        it("Should switch the acceptance of NFTs", async function(){
+            // check that NFTs are not accepted
+            expect(await contracts.nft.issuedNFTs()).to.equal(0)
+            await contracts.nft.connect(Bob).freeMint()
+            expect(await contracts.nft.ownerOf(0)).to.equal(Bob.address)
+            expect(await contracts.nft.issuedNFTs()).to.equal(1)
+            await expect( contracts.nft.connect(Bob)["safeTransferFrom(address,address,uint256)"](Bob.address,contracts.playground.address, 0))
+                .to.be.revertedWith("'ERC721: transfer to non ERC721Receiver implementer'")
+            // setAcceptingNFTs
+            let duration: number = types.setAcceptingNFTs.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            callback = playgroundInterface.encodeFunctionData("setAcceptingNFTs", [true])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).implement(0, callback)
+            await expect( contracts.nft.connect(Bob)["safeTransferFrom(address,address,uint256)"](Bob.address,contracts.playground.address, 0))
+                .to.be.not.reverted
+            
+        })
+        it("Should change the counter.", async function(){
+            let duration: number = types.changeCounter.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let byThisMuch: number = 76;
+            let callback = playgroundInterface.encodeFunctionData("changeCounter", [byThisMuch])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).implement(0, callback)
+            let counter = (await contracts.playground.counter()).counter;
+            expect(counter).to.equal(byThisMuch)
+        })
+        it("Should set a new incumbent for an office.", async function(){
+            let duration: number = types.newIncumbent.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let newOffice: string = "Guru"
+            let callback = playgroundInterface.encodeFunctionData("newIncumbent", [newOffice, Bob.address])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).implement(0, callback)
+            expect(await contracts.playground.getIncumbentFromOffice(newOffice)).to.equal(Bob.address)
+            // let offices = await contracts.playground.getOfficesFromAddress(Bob.address)
+            // console.log('offices', offices)
+            // expect().to.deep.equal([newOffice])
+            
+        })
+        it("Should send nfts.", async function(){
+            await contracts.nft.connect(Bob).freeMint()
+            expect(await contracts.nft.ownerOf(0)).to.equal(Bob.address)
+            await contracts.nft.connect(Bob).transferFrom(Bob.address, contracts.playground.address, 0)
+            expect(await contracts.nft.ownerOf(0)).to.equal(contracts.playground.address)
+            let duration: number = types.sendNFT.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let callback = playgroundInterface.encodeFunctionData("sendNFT", [contracts.nft.address,contracts.playground.address, Charlie.address, 0])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 1]); 
+            await contracts.playground.connect(Bob).implement(0, callback)
+            expect(await contracts.nft.ownerOf(0)).to.equal(Charlie.address)
+            // expect(await contracts.playground.getIncumbentFromOffice(newOffice)).to.equal(Bob.address)
+            
+        })
+        it("Should send erc20 tokens.", async function(){
+            let someEth = ethers.utils.parseEther("1.0").mul(44);
+            await contracts.token.connect(Bob).mint(someEth)
+            await contracts.token.connect(Bob).transfer(contracts.playground.address, someEth)
+            expect(await contracts.token.balanceOf(contracts.playground.address)).to.equal(someEth)
+            let duration: number = types.sendERC20Token.duration as number
+            let votingParams = abi.encode(
+                ["address", "uint256", "uint256", "bool", "uint8"],
+                [contracts.badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
+            let callback = playgroundInterface.encodeFunctionData("sendERC20Token", [contracts.token.address, contracts.playground.address, Charlie.address, someEth])
+            await contracts.playground.connect(Alice).start(votingParams, callback)
+            await contracts.playground.connect(Alice).vote(0, APPROVE)
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            let timestamp1 = (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp
+            await ethers.provider.send('evm_setNextBlockTimestamp', [timestamp1 + duration + 2]); 
+            await contracts.playground.connect(Bob).vote(0, APPROVE)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.awaitcall)
+            await contracts.playground.connect(Bob).implement(0, callback)
+            expect(await contracts.majorityWithNftToken.getStatus(0)).to.equal(VotingStatus.completed)
+            expect(await contracts.token.balanceOf(Charlie.address)).to.equal(someEth)
+            
+            
         })
     })
+    
 })

@@ -154,6 +154,7 @@ ImplementResult
         
         
         uint256 option;
+        uint256 weight;
         if (_guardOnSenderVotingDataOrNone[identifier] != HandleDoubleVotingGuard.VotingGuard.none){
             address voter;
             if (_guardOnSenderVotingDataOrNone[identifier] == HandleDoubleVotingGuard.VotingGuard.onSender){
@@ -166,12 +167,12 @@ ImplementResult
             if(NoDoubleVoting._alreadyVoted[identifier][voter]){
                 revert NoDoubleVoting.AlreadyVoted(identifier, voter);
             }
+            weight = IERC20(_token[identifier]).balanceOf(voter);
             NoDoubleVoting._alreadyVoted[identifier][voter] = true;
         } else {
-            option = abi.decode(votingData, (uint256));
+            (option, weight) = abi.decode(votingData, (uint256, uint256));
         }
-
-        uint256 weight = IERC20(_token[identifier]).balanceOf(msg.sender);
+        
         CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
         CastYesNoAbstainVote._castVote(identifier, voteOption, weight);
 
