@@ -14,6 +14,7 @@ import {ImplementingPermitted} from "../../../extensions/primitives/Implementing
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
 import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
 import {HandleDoubleVotingGuard} from "../../../extensions/primitives/NoDoubleVoting.sol";
+import {QuorumPrimitive} from "../../../extensions/primitives/Quorum.sol";
 
 import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
 import {IGetDoubleVotingGuard} from "../../../extensions/interfaces/IGetDoubleVotingGuard.sol";
@@ -29,7 +30,7 @@ import {ImplementResult} from "../../../extensions/primitives/ImplementResult.so
 // WARNING: THIS IS AN EXAMPLE IMPLEMENTATION. It should not be used for production. This voting contract allows the user to choose and vote on any desired target contract. This could cause problems if that target contract is known to integrate with this voting contract. Otherwise it is a convenient way to trigger a function by popular vote.
 
 /// @dev This implementation of a snapshot vote is not sybill-proof.
-contract PlainMajorityVote is 
+contract PlainMajorityVoteWithQuorum is 
 CallbackHashPrimitive,
 CallerGetter,
 StatusGetter,
@@ -39,6 +40,8 @@ NoDoubleVoting,
 CastSimpleVote,
 IGetDeadline,
 Deadline,
+IGetQuorum,
+QuorumPrimitive,
 ImplementingPermitted,
 BaseVotingContract,
 ExpectReturnValue,
@@ -48,7 +51,7 @@ ImplementResult
 
     // GLOBAL DURATION
     uint256 public constant VOTING_DURATION = 5 days;
-
+    mapping(uint256=>uint256) internal _totalVotesCast;
     /// @dev We must implement a start function. 
     // We choose the start function from VotingWithImplementing, which handles 
     // the iteration and identification of instances via a progressing index (VotingContract)
@@ -65,7 +68,7 @@ ImplementResult
         // Store the status in storage.
         _status[identifier] = uint256(IVotingContract.VotingStatus.active);
         
-        (_caller[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
+        (_caller[identifier], _quorum[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
         Deadline._setDeadline(identifier, VOTING_DURATION);
 
         // hash the callback
@@ -74,13 +77,13 @@ ImplementResult
 
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function decodeParameters(bytes memory votingParams) public pure returns(address caller, bool expectReturnValue) {
-        (caller, expectReturnValue) = abi.decode(votingParams, (address, bool)); 
+    function decodeParameters(bytes memory votingParams) public pure returns(address caller, uint256 quorum, bool expectReturnValue) {
+        (caller, quorum, expectReturnValue) = abi.decode(votingParams, (address, uint256, bool)); 
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function encodeParameters(address caller, bool expectReturnValue) public pure returns(bytes memory votingParams) {
-        votingParams = abi.encode(caller, expectReturnValue); 
+    function encodeParameters(address caller, uint256 quorum, bool expectReturnValue) public pure returns(bytes memory votingParams) {
+        votingParams = abi.encode(caller, quorum, expectReturnValue); 
     }
 
 
@@ -109,7 +112,7 @@ ImplementResult
 
         bool approve = abi.decode(votingData, (bool));
         CastSimpleVote._castVote(identifier, approve ? int256(1) : int256(-1));
-        
+        _totalVotesCast[identifier] ++;
         return _status[identifier];
     }
 
@@ -122,12 +125,12 @@ ImplementResult
     function _implementingPermitted(uint256 identifier) internal view override(ImplementingPermitted) returns(bool permitted) {
         bool awaitCall = _status[identifier] == uint256(IImplementResult.VotingStatusImplement.awaitcall); 
         bool finishedVoting = _checkCondition(identifier) && _status[identifier]==uint256(IImplementResult.VotingStatusImplement.active);
-        permitted = awaitCall || (finishedVoting && _getVotes(identifier)>0);
+        permitted = awaitCall || (finishedVoting && _getVotes(identifier)>0 && _totalVotesCast[identifier]>=_quorum[identifier]);
     }
 
 
     function _setStatus(uint256 identifier) internal {
-        _status[identifier] = (_getVotes(identifier)>0) ?
+        _status[identifier] = (_getVotes(identifier)>0 && _totalVotesCast[identifier]>=_quorum[identifier]) ?
             uint256(IImplementResult.VotingStatusImplement.awaitcall):
             uint256(IImplementResult.VotingStatusImplement.failed); 
     }
@@ -174,6 +177,16 @@ ImplementResult
 
     }
 
+
+
+    function getQuorum(uint256 identifier) 
+    external view
+    override(IGetQuorum) 
+    returns(uint256 quorum, uint256 inUnitsOf) {
+        return (_quorum[identifier], 0);
+    }
+
+
     function getDeadline(uint256 identifier) 
     external view
     override(IGetDeadline) 
@@ -195,7 +208,8 @@ ImplementResult
         return 
             super.supportsInterface(interfaceId) ||
             interfaceId == type(IGetDeadline).interfaceId ||
-            interfaceId == type(IGetDoubleVotingGuard).interfaceId;
+            interfaceId == type(IGetDoubleVotingGuard).interfaceId ||
+            interfaceId == type(IGetQuorum).interfaceId;
     }
 
 }

@@ -13,7 +13,7 @@ contract DummyToken is ERC20 {
         croesus = msg.sender;
     }
 
-    function mint(uint256 amount) external {
+    function mint(uint256 amount) external payable {
         require(amount<=MAX_DUMMY_MINT || msg.sender==croesus, "Exceeded maximal mint");
         _mint(msg.sender, amount);
     }

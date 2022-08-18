@@ -62,13 +62,16 @@ CalculateId, ERC721 {
         balance = _balanceOfSignature[owner][selector];
     } 
 
-
+    event Blaab(uint256 tokenId, address to, bytes4 selector, address votingContract, uint256 index);
     // minting can only happen through approved contracts
     function mint(address to, uint256 index, bytes4 selector, address votingContract) 
     external 
     onlyApprovedContract
     {
-        _mint(to, calculateId(index, selector, votingContract, to));
+        uint256 tokenId = calculateId(index, selector, votingContract, to);
+        emit Blaab(tokenId, to, selector, votingContract, index);
+
+        // _mint(to, tokenId);
         
     }
 
@@ -479,11 +482,12 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         IERC721(token).safeTransferFrom(from, to, tokenId);
     }
 
+
     function sendERC20Token(address token, address from, address to, uint256 amount) 
     external 
     OnlyByVote
     {
-        IERC20(token).transferFrom(from,to, amount);
+        (from==address(this)) ? IERC20(token).transfer(to, amount) : IERC20(token).transferFrom(from,to, amount); 
     }
 
     function approveNFT(address token, address spender, uint256 tokenId, ApprovalTypes approvalType)
@@ -507,6 +511,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function wildCard(address contractAddress, bytes calldata data, uint256 value) 
     external 
+    payable
     OnlyByVote
     {
         require(address(this).balance>=value, "not enough funds");
@@ -550,19 +555,20 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
             bool goodSpecs = true;
             bool success;
             bytes memory response;
-            if (votingMetaParams[selector].minDuration!=0){
-                (success, response) = votingContract.call(abi.encodeWithSelector(IGetDeadline.getDeadline.selector, index));
-                if (success) goodSpecs = goodSpecs && votingMetaParams[selector].minDuration + block.timestamp <= abi.decode(response, (uint256));
-            }    
-            if (votingMetaParams[selector].token!=address(0)){
-                (success, response) = votingContract.call(abi.encodeWithSelector(IGetToken.getToken.selector, index));
-                if (success) goodSpecs = goodSpecs && abi.decode(response, (address)) == votingMetaParams[selector].token;
-            }
+            
+            // if (votingMetaParams[selector].minDuration!=0){
+            //     (success, response) = votingContract.call(abi.encodeWithSelector(IGetDeadline.getDeadline.selector, index));
+            //     if (success) goodSpecs = goodSpecs && votingMetaParams[selector].minDuration + block.timestamp <= abi.decode(response, (uint256));
+            // }    
+            // if (votingMetaParams[selector].token!=address(0)){
+            //     (success, response) = votingContract.call(abi.encodeWithSelector(IGetToken.getToken.selector, index));
+            //     if (success) goodSpecs = goodSpecs && abi.decode(response, (address)) == votingMetaParams[selector].token;
+            // }
             if (votingMetaParams[selector].minQuorum!=0){
                 (success, response) = votingContract.call(abi.encodeWithSelector(IGetQuorum.getQuorum.selector, index));
                 (uint256 _quorum, uint256 inUnitsOf) = abi.decode(response, (uint256, uint256));
-                // when inUnitsOf is zero (i.e. the quorum is measured in absolute terms, then the condition is true irrespective of what _quroum is).
-                goodSpecs = goodSpecs && (votingMetaParams[selector].minQuorum * inUnitsOf) <= (_quorum * 1e5);                
+                // when inUnitsOf is zero (i.e. the quorum is measured in absolute terms, then the absolute values are compared).
+                goodSpecs = goodSpecs && (votingMetaParams[selector].minQuorum <= ((inUnitsOf==0) ? _quorum : ((_quorum * 1e5) / inUnitsOf)));                
             }
             require(goodSpecs, "Invalid Parameters");
         }
