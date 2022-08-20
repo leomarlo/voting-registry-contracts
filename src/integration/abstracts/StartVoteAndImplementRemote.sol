@@ -76,7 +76,7 @@ InstanceInfoPrimitive
             identifier: identifier,
             votingContract: votingContract
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     
@@ -203,7 +203,7 @@ InstanceInfoPrimitive
             identifier: identifier,
             votingContract: _votingContract
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     

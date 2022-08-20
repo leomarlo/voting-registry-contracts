@@ -120,7 +120,7 @@ ImplementingPermitted
             votingContract: _votingContract,
             callback: callback
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     
@@ -254,7 +254,7 @@ ImplementResultPrimitive
             votingContract: votingContract,
             callback: callback
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     

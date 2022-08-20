@@ -254,6 +254,7 @@ describe("Implement a Majority Token-weighted Vote With Quorum and Optional Doub
         });
         it("Shouldn't revert a double voting attempt, when the double voting guard is switched off.", async function(){
             let guardOnSenderVotingDataOrNone: number = VotingGuard.none;
+
             instanceInfo = await startVotingInstance(
                 contracts, 
                 Alice, 

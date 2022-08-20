@@ -170,7 +170,13 @@ ImplementResult
             weight = IERC20(_token[identifier]).balanceOf(voter);
             NoDoubleVoting._alreadyVoted[identifier][voter] = true;
         } else {
-            (option, weight) = abi.decode(votingData, (uint256, uint256));
+            if(msg.sender==_caller[identifier]){
+                (option, weight) = abi.decode(votingData, (uint256, uint256));
+            } else {
+                option = abi.decode(votingData, (uint256));
+                weight = IERC20(_token[identifier]).balanceOf(msg.sender);
+            }
+            
         }
         
         CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);

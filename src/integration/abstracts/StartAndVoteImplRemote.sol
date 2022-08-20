@@ -92,7 +92,7 @@ AssignedContractPrimitive
             votingContract: _votingContract,
             callback: callback
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     
@@ -196,7 +196,7 @@ AssignedContractPrimitive
             votingContract: votingContract,
             callback: callback
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     

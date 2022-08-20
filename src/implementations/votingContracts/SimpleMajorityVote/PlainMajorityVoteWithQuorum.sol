@@ -50,7 +50,7 @@ ImplementResult
 {
 
     // GLOBAL DURATION
-    uint256 public constant VOTING_DURATION = 5 days;
+    // uint256 public constant VOTING_DURATION = 5 days;
     mapping(uint256=>uint256) internal _totalVotesCast;
     /// @dev We must implement a start function. 
     // We choose the start function from VotingWithImplementing, which handles 
@@ -67,27 +67,30 @@ ImplementResult
     {
         // Store the status in storage.
         _status[identifier] = uint256(IVotingContract.VotingStatus.active);
+        address caller;
+        uint256 duration;
+        uint256 quorum;
+        bool expectReturnValue;
         
-        (_caller[identifier], _quorum[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
-        Deadline._setDeadline(identifier, VOTING_DURATION);
+        (caller, quorum, duration, expectReturnValue) = decodeParameters(votingParams);
+        _caller[identifier] = caller;
+        _quorum[identifier] = quorum;
+        _expectReturnValue[identifier] = expectReturnValue;
+        Deadline._setDeadline(identifier, duration);
 
         // hash the callback
         _callbackHash[identifier] = keccak256(callback);
     }
 
-
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function decodeParameters(bytes memory votingParams) public pure returns(address caller, uint256 quorum, bool expectReturnValue) {
-        (caller, quorum, expectReturnValue) = abi.decode(votingParams, (address, uint256, bool)); 
+    function decodeParameters(bytes memory votingParams) public pure returns(address caller, uint256 quorum, uint256 duration, bool expectReturnValue) {
+        (caller, quorum, duration, expectReturnValue) = abi.decode(votingParams, (address, uint256, uint256, bool)); 
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function encodeParameters(address caller, uint256 quorum, bool expectReturnValue) public pure returns(bytes memory votingParams) {
-        votingParams = abi.encode(caller, quorum, expectReturnValue); 
+    function encodeParameters(address caller, uint256 quorum, uint256 duration, bool expectReturnValue) public pure returns(bytes memory votingParams) {
+        votingParams = abi.encode(caller, quorum, duration, expectReturnValue); 
     }
-
-
-
 
     /// @dev We must implement a vote function 
     function vote(uint256 identifier, bytes calldata votingData) 

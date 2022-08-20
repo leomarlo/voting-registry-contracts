@@ -123,7 +123,7 @@ ImplementResultPrimitive
             identifier: identifier,
             votingContract: votingContract
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     
@@ -292,7 +292,7 @@ ImplementingPermitted
             identifier: identifier,
             votingContract: _votingContract
         }));
-        _afterStart(identifier, votingParams, callback);
+        _afterStart(instances.length - 1, votingParams, callback);
     }
 
     function vote(uint256 identifier, bytes calldata votingData) 

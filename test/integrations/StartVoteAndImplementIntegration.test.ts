@@ -211,10 +211,6 @@ describe("Integration through starting, voting and implementing a Hybrid Voting 
     })
     describe("Implement", function(){
         let expectReturnFlag: boolean = false;
-        let response = {
-            success: 1,
-            failed: 2
-        }
         let incrementMinmlId: number
         let incrementHooksId: number
         let resetMinmlId: number
@@ -253,7 +249,7 @@ describe("Integration through starting, voting and implementing a Hybrid Voting 
             await contracts.integrationHybridHooks.connect(Alice).implement(incrementHooksId, incrementCalldata)
             expect(await contracts.integrationHybridHooks.implementations()).to.equal(1)
     
-            expect(await contracts.integrationHybridHooks.responseStatus(0)).to.equal(response.success)
+            expect(await contracts.integrationHybridHooks.responseStatus(0)).to.equal(true)
             
             // reset counter to zero
             await contracts.integrationHybridMinml.connect(Alice).implement(resetMinmlId, resetCalldata)

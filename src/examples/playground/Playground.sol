@@ -71,7 +71,7 @@ CalculateId, ERC721 {
         uint256 tokenId = calculateId(index, selector, votingContract, to);
         emit Blaab(tokenId, to, selector, votingContract, index);
 
-        // _mint(to, tokenId);
+        _mint(to, tokenId);
         
     }
 
@@ -541,6 +541,11 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
             "Not enough badges");
     }
 
+    // event Blaab2(uint256 playgroundIdentifier, bytes4 selector, address votingContract);
+    // error Blaab2DurationError(uint256 deadline, bytes response, uint256 minDuration, uint256 timestamp, address votingContract);
+    // error Blaab2Error(uint256 deadline, bytes response);
+    // error Blaab2DurationError(uint256 deadline, bytes response);
+
     function _afterStart(uint256 identifier, bytes memory votingParams, bytes calldata callback)
     internal override(StartVoteAndImplementHybridVotingImplRemoteHooks)
     {
@@ -556,14 +561,15 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
             bool success;
             bytes memory response;
             
-            // if (votingMetaParams[selector].minDuration!=0){
-            //     (success, response) = votingContract.call(abi.encodeWithSelector(IGetDeadline.getDeadline.selector, index));
-            //     if (success) goodSpecs = goodSpecs && votingMetaParams[selector].minDuration + block.timestamp <= abi.decode(response, (uint256));
-            // }    
-            // if (votingMetaParams[selector].token!=address(0)){
-            //     (success, response) = votingContract.call(abi.encodeWithSelector(IGetToken.getToken.selector, index));
-            //     if (success) goodSpecs = goodSpecs && abi.decode(response, (address)) == votingMetaParams[selector].token;
-            // }
+            if (votingMetaParams[selector].minDuration!=0){
+                (success, response) = votingContract.call(abi.encodeWithSelector(IGetDeadline.getDeadline.selector, index));
+                if (success) goodSpecs = goodSpecs && votingMetaParams[selector].minDuration + block.timestamp <= abi.decode(response, (uint256));
+                // if(!goodSpecs) revert Blaab2DurationError(abi.decode(response, (uint256)), response, votingMetaParams[selector].minDuration, block.timestamp, instances[identifier].votingContract);
+            }    
+            if (votingMetaParams[selector].token!=address(0)){
+                (success, response) = votingContract.call(abi.encodeWithSelector(IGetToken.getToken.selector, index));
+                if (success) goodSpecs = goodSpecs && abi.decode(response, (address)) == votingMetaParams[selector].token;
+            }
             if (votingMetaParams[selector].minQuorum!=0){
                 (success, response) = votingContract.call(abi.encodeWithSelector(IGetQuorum.getQuorum.selector, index));
                 (uint256 _quorum, uint256 inUnitsOf) = abi.decode(response, (uint256, uint256));
@@ -573,6 +579,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
             require(goodSpecs, "Invalid Parameters");
         }
         
+
         badges[nftAndBadgesInfo.mainBadge].mint(
             msg.sender,
             index,
@@ -582,6 +589,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         analytics.numberOfInstances += 1;
     }
 
+    
     function _beforeVote(uint256 identifier, bytes calldata votingData) 
     internal override(StartVoteAndImplementHybridVotingImplRemoteHooks)
     {
