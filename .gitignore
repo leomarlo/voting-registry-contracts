@@ -19,6 +19,7 @@ coverage
 
 ## sensitive information
 .npmignore
+.env
 
 ## contract compilation info
 compiler-output
