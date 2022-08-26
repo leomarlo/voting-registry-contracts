@@ -3,7 +3,8 @@ import { arrayify, hexlify, keccak256, Result } from "ethers/lib/utils";
 import { ContractReceipt, BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../scripts/interfaceIds";
+import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../scripts/utils/interfaceIds";
+import { durations, types } from "../../scripts/utils/playgroundVotingContracts";
 
 import {
     PlaygroundVotingBadge,
@@ -21,7 +22,6 @@ import {
 
 import { VotingPlaygroundInterface } from "../../typechain/VotingPlayground";
 import { DummyTokenInterface } from "../../typechain/DummyToken";
-import { string } from "hardhat/internal/core/params/argumentTypes";
 
 
 interface Contracts {
@@ -58,88 +58,11 @@ describe("Playground", function(){
     let Dave: SignerWithAddress
     let playgroundInterface : VotingPlaygroundInterface
     let tokenInterface : DummyTokenInterface
-    let durations = {
-        "snap": 180,  // 3 minutes
-        "short": 1800,  // 30 minutes
-        "medium": 86400,  // 1 day
-        "long": 432000,  // 5 days
-        "veryLong": 1209600  // 14 days (2 weeks)
-    }
+    
 
-    let types :{ [key: string]: { [key: string]: string | number | boolean }  }  = {
-        "changeMetaParameters": {
-            "security": "secure",
-            "duration": durations.long,
-            "badgeWeightedVote": true}, 
-        "changeAssignedContract": {
-            "security": "secure",
-            "duration": durations.medium,
-            "badgeWeightedVote": true}, 
-        "setMainBadge":{
-            "security": "secure",
-            "duration": durations.veryLong,
-            "badgeWeightedVote": true}, 
-        "setMinXpToStartAnything":{
-            "security": "secure",
-            "duration": durations.long,
-            "badgeWeightedVote": true}, 
-        "setMinXpToStartThisFunction":{
-            "security": "secure",
-            "duration": durations.long,
-            "badgeWeightedVote": true}, 
-        "setEnableTradingThreshold":{
-            "security": "secure",
-            "duration": durations.long,
-            "badgeWeightedVote": true},  
-        "setTradingEnabledGlobally":{
-            "security": "secure",
-            "duration": durations.long,
-            "badgeWeightedVote": true}, 
-        "setAcceptingNFTs":{
-            "security": "open",
-            "duration": durations.long,
-            "badgeWeightedVote": true},
-        "changeCounter":{
-            "security": "open",
-            "duration": durations.snap,
-            "badgeWeightedVote": true},
-        "changeOperation": {
-            "security": "open",
-            "duration": durations.medium,
-            "badgeWeightedVote": false},
-        "newIncumbent": {
-            "security": "open",
-            "duration": durations.medium,
-            "badgeWeightedVote": true},
-        "deployNewBadge": {
-            "security": "open",
-            "duration": durations.medium,
-            "badgeWeightedVote": true},
-        "deployNewContract": {
-            "security": "open",
-            "duration": durations.short,
-            "badgeWeightedVote": false},
-        "sendNFT": {
-            "security": "open",
-            "duration": durations.short,
-            "badgeWeightedVote": true},
-        "sendERC20Token":{
-            "security": "open",
-            "duration": durations.short,
-            "badgeWeightedVote": true},
-        "approveNFT": {
-            "security": "open",
-            "duration": durations.short,
-            "badgeWeightedVote": true},
-        "approveERC20Token": {
-            "security": "open",
-            "duration": durations.short,
-            "badgeWeightedVote": true},
-        "wildCard": {
-            "security": "open",
-            "duration": durations.short,
-            "badgeWeightedVote": true},
-        }
+    let hashedBytecode : string
+    let expectedBadgeAddress: string
+    let expectedBadgeAddressUint: BigNumber
     let minQuorum = 2 // at least two people need to vote. 550 // 0.55 %  
     let BadgeFactory: PlaygroundVotingBadge__factory
     let ERC20Factory: DummyToken__factory
@@ -200,23 +123,28 @@ describe("Playground", function(){
 
         let deployArguments = abi.encode(["string", "string"],["Playground Voting Badge", "PLAY"])
         let rawByteCode = BadgeFactory.bytecode + deployArguments.slice(2,);
+        hashedBytecode = keccak256(rawByteCode)
 
+        
         let PlaygroundFactory = await ethers.getContractFactory("VotingPlayground")
-        let playground: VotingPlayground = await PlaygroundFactory.connect(Alice).deploy(
+        let playground: VotingPlayground 
+
+        playground = await PlaygroundFactory.connect(Alice).deploy(
             registry.address,
             flagAndSelectors,
             votingContracts,
             minDurations,
             minQuorums,
             badgeWeightedVote,
-            abi.encode(["uint256"], [666]),
-            rawByteCode
+            hashedBytecode
         )
         // )
         await playground.deployed()
-        
-        let badge = await ethers.getContractAt("PlaygroundVotingBadge", await playground.badges(0));
-        
+        await playground.connect(Alice).deployNewBadge(ethers.constants.HashZero, rawByteCode, Alice.address)
+        let badgeAddress = await playground.badges(0)
+        // console.log('address', badgeAddress)
+        let badge = await ethers.getContractAt("PlaygroundVotingBadge", badgeAddress);
+    
         contracts = {
             majorityWithNftToken,
             majorityWithoutToken,
@@ -227,6 +155,10 @@ describe("Playground", function(){
             nft,
             token
         }
+
+        
+        
+       
     })
     describe("Deployment", function(){
         it("Should instantiate all the public variables", async function(){
@@ -577,7 +509,7 @@ describe("Playground", function(){
         })
         it("Should set the threshold that enables trading individually and generally.", async function(){
             // transfering badges should not be possible
-            let tokenId = await contracts.badge.calculateId(0,"0x00000000",Alice.address, Alice.address)
+            let tokenId = await contracts.badge.calculateId(0,playgroundInterface.getSighash("deployNewBadge"), Alice.address, Alice.address)
             expect(await contracts.badge.exists(tokenId)).to.equal(true)
             expect(await contracts.badge.ownerOf(tokenId)).to.equal(Alice.address)
             await expect(contracts.badge.connect(Alice).transferFrom(Alice.address, Bob.address, tokenId))

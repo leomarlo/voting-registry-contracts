@@ -3,8 +3,8 @@ import { Result } from "ethers/lib/utils";
 import { ContractReceipt, BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../scripts/interfaceIds";
-import { getEventArgs } from "../../scripts/getEventArgs";
+import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../scripts/utils/interfaceIds";
+import { getEventArgs } from "../../scripts/utils/getEventArgs";
 import {
     PlainMajorityVote,
     Counter

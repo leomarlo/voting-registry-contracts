@@ -249,17 +249,18 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         uint256[] memory minDurations,
         uint256[] memory minQuorums,
         bool[] memory badgeWeightedVote,
-        bytes32 badgeSalt,
-        bytes memory badgeBytecode
+        bytes32 hashedBadgeBytecode
         )
     {
         // set the registry;
         VOTING_REGISTRY = votingContractRegistry;
 
-        // set a few voting contracts
-        // assign the voting contract the increment function.
-        address badgeToken = _deployNewBadge(badgeSalt, badgeBytecode, msg.sender) ;
-        nftAndBadgesInfo.mainBadge = 0;
+        // // set a few voting contracts
+        // // assign the voting contract the increment function.
+        
+        address badgeToken = _computeDeploymentAddress(hashedBadgeBytecode);
+        // badges.push(IPlaygroundVotingBadge(badgeToken));
+        nftAndBadgesInfo.mainBadge = uint256(uint160(badgeToken));
         for (uint8 j; j<votingContracts.length; j++){
             bytes4 selector = bytes4(flagAndSelectors[j] << 8);
             fixedVotingContract[selector] = bytes1(flagAndSelectors[j])!=bytes1(0x00);
@@ -290,6 +291,9 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         assignedContract[selector] = newVotingContract;
     }
 
+    function _computeDeploymentAddress(bytes32 _hashedByteCode) internal view returns(address) {
+        return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff),address(this),bytes32(0),_hashedByteCode)))));
+    }
 
     // change the metaParameters for those functions
     function changeMetaParameters(
@@ -439,26 +443,24 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function deployNewBadge(bytes32 salt, bytes memory bytecode, address badger) 
     external
-    OnlyByVote
     returns(address deployedContract){
-        deployedContract = _deployNewBadge(salt, bytecode, badger);
-    }
-
-    function _deployNewBadge(bytes32 salt, bytes memory bytecode, address badger) 
-    internal returns(address deployedContract)
-    {
+        if(badges.length==0){
+            require(_computeDeploymentAddress(keccak256(bytecode))==address(uint160(nftAndBadgesInfo.mainBadge)), "Wrong ByteCode");
+            salt = bytes32(0);
+            nftAndBadgesInfo.mainBadge = 0;
+            // return deployedContract;IPlaygroundVotingBadge
+        } else {
+            if(!_isImplementer()) revert OnlyVoteImplementer(msg.sender);
+        }
         deployedContract = _deployContract(salt, bytecode);
-        IPlaygroundVotingBadge newBadge = IPlaygroundVotingBadge(deployedContract);
-        badges.push(newBadge);
-        // mint one badge to initiator;
-        newBadge.mint(
+        badges.push(IPlaygroundVotingBadge(deployedContract));
+        
+        badges[badges.length - 1].mint(
             badger,
             0,
             msg.sig,
             msg.sender);
     }
-
-
 
 
     function deployNewContract(bytes32 salt, bytes memory bytecode) 

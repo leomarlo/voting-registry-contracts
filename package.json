@@ -1,18 +1,19 @@
 {
-  "name": "@leomarlo/voting-registry-contracts",
+  "name": "@leomarlo/src-registry-contracts",
   "version": "2.0.2",
-  "description": "This package contains solidity contracts, abstract contracts and interfaces for a voting-registry and its inheritable template integrations.",
+  "description": "This package contains solidity contracts, abstract contracts and interfaces for a src-registry and its inheritable template integrations.",
   "main": "index.js",
   "scripts": {
     "test": "npm run compile",
-    "compile": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis voting/votingContractStandard/* voting/extensions/*/* voting/implementations/registration/* voting/implementations/votingContracts/*/* voting/registration/*/* voting/integration/*/* voting/examples/*/*"
+    "compile": "solcjs --abi --include-path node_modules/ --base-path . -o compiler-output/abis src/srcContractStandard/* src/extensions/*/* src/implementations/registration/* src/implementations/srcContracts/*/* src/registration/*/* src/integration/*/* src/examples/*/*",
+    "getGanache": "node scripts/getGanache.ts"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leomarlo/voting-registry-contracts.git"
+    "url": "git+https://github.com/leomarlo/src-registry-contracts.git"
   },
   "keywords": [
-    "voting",
+    "src",
     "registry",
     "solidity",
     "ethereum",
@@ -21,9 +22,9 @@
   "author": "Leonhard Horstmeyer <leonhard.horstmeyer@gmail.com>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/leomarlo/voting-registry-contracts/issues"
+    "url": "https://github.com/leomarlo/src-registry-contracts/issues"
   },
-  "homepage": "https://github.com/leomarlo/voting-registry-contracts#readme",
+  "homepage": "https://github.com/leomarlo/src-registry-contracts#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0",
     "solc": "^0.8.13"

@@ -23,3 +23,5 @@ coverage
 
 ## contract compilation info
 compiler-output
+
+scripts/verification/deploymentArgs/*
