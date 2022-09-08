@@ -1,6 +1,6 @@
 {
   "name": "@leomarlo/src-registry-contracts",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "This package contains solidity contracts, abstract contracts and interfaces for a src-registry and its inheritable template integrations.",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "url": "git+https://github.com/leomarlo/src-registry-contracts.git"
   },
   "keywords": [
-    "src",
+    "voting",
     "registry",
     "solidity",
     "ethereum",
