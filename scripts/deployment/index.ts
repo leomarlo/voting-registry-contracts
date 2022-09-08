@@ -113,13 +113,13 @@ async function deployPlayground(minQuorum: number, verbosity: number) {
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors
 let verbosity = 2
-let minquorum = 2
+let minquorum = 1
 deployPlayground(minquorum, verbosity)
       .catch((error) => {
       console.error(error);
       process.exitCode = 1;
     });
 
-export { 
-  deployPlayground
-}
+// export { 
+//   deployPlayground
+// }

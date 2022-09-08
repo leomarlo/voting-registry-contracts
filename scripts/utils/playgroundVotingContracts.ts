@@ -1,15 +1,23 @@
+import {playgroundSetting} from "../interfaces/playgroundSettings"
 
+// let durations = {
+//     "snap": 180,  // 3 minutes
+//     "short": 1800,  // 30 minutes
+//     "medium": 86400,  // 1 day
+//     "long": 432000,  // 5 days
+//     "veryLong": 1209600  // 14 days (2 weeks)
+// }
 
 let durations = {
-    "snap": 180,  // 3 minutes
-    "short": 1800,  // 30 minutes
-    "medium": 86400,  // 1 day
-    "long": 432000,  // 5 days
-    "veryLong": 1209600  // 14 days (2 weeks)
+    "snap": 120,  // 3 minutes
+    "short": 120,  // 30 minutes
+    "medium": 120,  // 1 day
+    "long": 120,  // 5 days
+    "veryLong": 120  // 14 days (2 weeks)
 }
 
 
-let types :{ [key: string]: { [key: string]: string | number | boolean }  }  = {
+let types : playgroundSetting  = {
     "changeMetaParameters": {
         "security": "secure",
         "duration": durations.long,
