@@ -9,7 +9,8 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-contract-sizer";
 import { saveDeploymentArgumentsToFile, getVerificationCommand, execShellCommand } from "./scripts/verification/utils"
-
+import { getGanacheCommand } from "./scripts/ganache/getGanache"
+// import { deployPlayground } from "./scripts/deployment/playground"
 dotenv.config();
 
 task("verifying", "Prints an account's balance")
@@ -27,9 +28,25 @@ task("saveDeploymentArgs", "Saves all the deployment Arguments")
   saveDeploymentArgumentsToFile(taskArgs.networkname)
 });
 
+task("getGanache", "print the statement that would start ganache with the correct settings")
+  .setAction(async () => {
+    console.log(getGanacheCommand())
+  })
+
+// task("deployPlayground", "Deploy the playground")
+//   .addParam("minquorum", "The initial MinQuorum")
+//   .addParam("verbosity", "The verbosity")
+//   .setAction(async (taskArgs, hre) => {
+//     deployPlayground(hre, taskArgs.minquorum, taskArgs.verbosity)
+//       .catch((error) => {
+//       console.error(error);
+//       process.exitCode = 1;
+//     });
+// })
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
-let network: string = "hardhat"
+let network: string = "rinkeby"
 const config: HardhatUserConfig = {
   solidity: "0.8.13",
   defaultNetwork: network,
@@ -50,6 +67,14 @@ const config: HardhatUserConfig = {
       url: process.env.MUMBAI_RPC_ENDPOINT,
       accounts: [process.env.ALICE as string, process.env.BOB as string, process.env.CHARLIE as string]
     },
+    goerli: {
+      url: process.env.GOERLI_RPC_ENDPOINT,
+      accounts: [process.env.ALICE as string, process.env.BOB as string, process.env.CHARLIE as string]
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_ENDPOINT,
+      accounts: [process.env.ALICE as string, process.env.BOB as string, process.env.CHARLIE as string]
+    }
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
