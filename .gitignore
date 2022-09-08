@@ -25,3 +25,4 @@ coverage
 compiler-output
 
 scripts/verification/deploymentArgs/*
+eip-template.md
