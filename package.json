@@ -1,6 +1,6 @@
 {
-  "name": "@leomarlo/src-registry-contracts",
-  "version": "2.0.3",
+  "name": "@leomarlo/voting-registry-contracts",
+  "version": "2.0.4",
   "description": "This package contains solidity contracts, abstract contracts and interfaces for a src-registry and its inheritable template integrations.",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leomarlo/src-registry-contracts.git"
+    "url": "git+https://github.com/leomarlo/voting-registry-contracts.git"
   },
   "keywords": [
     "voting",
@@ -22,9 +22,9 @@
   "author": "Leonhard Horstmeyer <leonhard.horstmeyer@gmail.com>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/leomarlo/src-registry-contracts/issues"
+    "url": "https://github.com/leomarlo/voting-registry-contracts/issues"
   },
-  "homepage": "https://github.com/leomarlo/src-registry-contracts#readme",
+  "homepage": "https://github.com/leomarlo/voting-registry-contracts#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0",
     "solc": "^0.8.13"
