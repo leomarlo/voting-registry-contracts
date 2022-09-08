@@ -12,7 +12,7 @@ import {
 
 
 
-async function deployRegistry(signer: SignerWithAddress, verbosity: number): Promise<ContractDeploymentInfo>{
+async function deployOnlyRegistry(signer: SignerWithAddress, verbosity: number): Promise<ContractDeploymentInfo>{
     let contractName = "VotingRegistry"
     let RegistryFactory = await ethers.getContractFactory("VotingRegistry")
     let registry: VotingRegistry = await RegistryFactory.connect(signer).deploy(IVOTINGCONTRACT_ID)
@@ -31,5 +31,5 @@ async function deployRegistry(signer: SignerWithAddress, verbosity: number): Pro
 }
 
 export {
-    deployRegistry
+    deployOnlyRegistry
 }

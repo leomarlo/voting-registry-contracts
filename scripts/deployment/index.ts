@@ -8,7 +8,8 @@ import { saveToFile } from "../utils/saveToFile";
 import { deploymentInfoPath, basePath } from "../utils/paths";
 import { saveDeploymentArgumentsToFile} from "../verification/utils"
 import { Deployment, NetworkToContractDeploymentInfo } from "../interfaces/deployment"
-import { deployRegistry } from "./registry";
+import { deployOnlyRegistry } from "./registry";
+import { deployOnlyPlaygroundAndBadge } from "./playground";
 
 import fs from 'fs'
 
@@ -40,13 +41,12 @@ async function deployPlayground(minQuorum: number, verbosity: number) {
 
     const abi = ethers.utils.defaultAbiCoder;
   
-    [ALICE, BOB, CHARLIE] = await ethers.getSigners()
+    [ALICE] = await ethers.getSigners()
 
     let rawdata = fs.readFileSync(deploymentInfoPath);
     
     let deploymentVariables : NetworkToContractDeploymentInfo =
       (rawdata.length==0) ? {} : JSON.parse(rawdata.toString())
-    
 
 
     // deploy the playground
@@ -88,106 +88,19 @@ async function deployPlayground(minQuorum: number, verbosity: number) {
     if (verbosity>0) console.log(`--> Deployed ${contractName}`)
     if (verbosity>1) console.log(`\t address: ${snapshot.address}\n\t network: ${network.name}`)
     
-    contractName = "VotingRegistry"
-    let RegistryFactory = await ethers.getContractFactory("VotingRegistry")
-    let registry: VotingRegistry = await RegistryFactory.connect(ALICE).deploy(IVOTINGCONTRACT_ID)
-    await registry.deployed() 
-    deploymentVariables[network.name]["VotingRegistry"] = {
-      "address": registry.address,
-      "path": basePath + "registration/registry/VotingRegistry.sol",
-      "arguments": [`"${IVOTINGCONTRACT_ID}"`]} 
+    let registryDeploymentInfo = await deployOnlyRegistry(ALICE, verbosity)
+    deploymentVariables[network.name] = Object.assign(
+      deploymentVariables[network.name], registryDeploymentInfo)
     
-    if (verbosity>0) console.log(`--> Deployed ${contractName}`)
-    if (verbosity>1) console.log(`\t address: ${registry.address}\n\t network: ${network.name}`)
-    
-    contractName = "DummyNFT"
-    let ERC721Factory = await ethers.getContractFactory("DummyNFT")
-    let nft: DummyNFT = await ERC721Factory.connect(ALICE).deploy()
-    await nft.deployed() 
-    deploymentVariables[network.name]["DummyNFT"] = {
-      "address": nft.address,
-      "path": basePath + "examples/dummies/ERC721Token.sol",
-      "arguments": [`"${IVOTINGCONTRACT_ID}"`]} 
-    
-    if (verbosity>0) console.log(`--> Deployed ${contractName}`)
-    if (verbosity>1) console.log(`\t address: ${nft.address}\n\t network: ${network.name}`)
-    
-
-    // prelude to voting playground deployment
-    let BadgeFactory = await ethers.getContractFactory("PlaygroundVotingBadge")
-    const playgroundMockup = await ethers.getContractAt("VotingPlayground", ethers.constants.AddressZero);
-    let playgroundInterface = playgroundMockup.interface;
-    
-    let flagAndSelectors : Array<string> = []
-    let votingContracts : Array<string> = []
-    let minDurations : Array<number> = []
-    let minQuorums : Array<number> = []
-    let badgeWeightedVote : Array<boolean> = []
-
-    let functions = Object.keys(types)
-    for (let i=0; i<functions.length; i++){
-        let fct : string = functions[i].toString();
-        flagAndSelectors.push(
-            (types[fct].security=="secure" ? "0x01": "0x00") + playgroundInterface.getSighash(fct).slice(2,)
-        )
-        votingContracts.push(
-            types[fct].badgeWeightedVote ? majorityWithNftToken.address : majorityWithoutToken.address
-        )
-        badgeWeightedVote.push(types[fct].badgeWeightedVote as boolean)
-        if (types[fct].duration)
-        minDurations.push(types[fct].duration as number)
-        minQuorums.push(minQuorum)
-    }
-
-    let deployArgumentArray = ["Playground Voting Badge", "PLAY"]
-    let deployArguments = abi.encode(["string", "string"], deployArgumentArray)
-    let rawByteCode = BadgeFactory.bytecode + deployArguments.slice(2,);
-    // let salt = abi.encode(["uint256"], [666])
-    let hashedBytecode = ethers.utils.keccak256(rawByteCode)
-    contractName = "VotingPlayground"
-    let PlaygroundFactory = await ethers.getContractFactory("VotingPlayground")
-    let playground: VotingPlayground = await PlaygroundFactory.connect(ALICE).deploy(
-        registry.address,
-        flagAndSelectors,
-        votingContracts,
-        minDurations,
-        minQuorums,
-        badgeWeightedVote,
-        hashedBytecode
-    )
-    await playground.deployed()
-    
-    deploymentVariables[network.name]["VotingPlayground"] = {
-      "address": playground.address,
-      "path": basePath + "examples/playground/Playground.sol",
-      "arguments": [
-        `"${registry.address}"`,
-        `[${flagAndSelectors.map((v)=>{return `"${v}"`})}]`,
-        `[${votingContracts.map((v)=>{return `"${v}"`})}]`,
-        `[${minDurations}]`,
-        `[${minQuorums}]`,
-        `[${badgeWeightedVote}]`,
-        `"${hashedBytecode}"`
-      ]} 
-    
-    if (verbosity>0) console.log(`--> Deployed ${contractName}`)
-    if (verbosity>1) console.log(`\t address: ${playground.address}\n\t network: ${network.name}`)
-    if (verbosity>1) console.log(`\t deployNewBadgeSelector: ${playgroundInterface.getSighash("deployNewBadge")}}`)
-    
-    let tx = await playground.connect(ALICE).deployNewBadge(ethers.constants.HashZero, rawByteCode, ALICE.address)
-        // console.log('address', badgeAddress)
-        // let badge = await ethers.getContractAt("PlaygroundVotingBadge", badgeAddress);
-    let receipt = await tx.wait()
-
-    contractName = "PlaygroundVotingBadge"
-    let badge = await ethers.getContractAt("PlaygroundVotingBadge", await playground.badges(0));
-    deploymentVariables[network.name]["PlaygroundVotingBadge"] = {
-      "address": badge.address,
-      "path": basePath + "examples/playground/Playground.sol",
-      "arguments": [`"${deployArgumentArray[0]}"`, `"${deployArgumentArray[1]}"`]} 
-    
-    if (verbosity>0) console.log(`--> Deployed ${contractName}`)
-    if (verbosity>1) console.log(`\t address: ${badge.address}\n\t network: ${network.name}`)
+    let playgroundDeploymentInfo = await deployOnlyPlaygroundAndBadge(
+      ALICE, 
+      minQuorum, 
+      deploymentVariables[network.name]["VotingRegistry"].address,
+      majorityWithNftToken.address,
+      majorityWithoutToken.address,
+      verbosity)
+    deploymentVariables[network.name] = Object.assign(
+      deploymentVariables[network.name], playgroundDeploymentInfo)
     
     saveToFile(deploymentVariables, deploymentInfoPath)
     if (verbosity>0) console.log(`--> Saved deployment information to the file ${deploymentInfoPath}deploymentInfo.json`)

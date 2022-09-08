@@ -11,7 +11,7 @@ import {
 } from "../../typechain"
 
 
-async function deployPlaygroundAndBadge(
+async function deployOnlyPlaygroundAndBadge(
   signer: SignerWithAddress,
   minQuorum: number, 
   registryAddress: string, 
@@ -112,5 +112,5 @@ async function deployPlaygroundAndBadge(
 
 
 export { 
-  deployPlaygroundAndBadge
+  deployOnlyPlaygroundAndBadge
 }
