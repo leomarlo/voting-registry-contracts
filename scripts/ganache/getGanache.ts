@@ -17,4 +17,8 @@ function getGanacheCommand () {
     return `ganache-cli -l ${gasLimit} -p ${port} ${accounts}`
 }
 
-console.log(getGanacheCommand())
+// console.log(getGanacheCommand())
+
+export {
+    getGanacheCommand
+}
