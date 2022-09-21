@@ -32,7 +32,7 @@ function saveDeploymentArgumentsToFile(network: string){
     let rawdata = fs.readFileSync(deploymentInfoPath);
     let deploymentVariables : { [key: string]: { [key: string]: Deployment  }  } =
       (rawdata.length==0) ? {} : JSON.parse(rawdata.toString())
-    console.log('deployment Variables', deploymentVariables)
+    // console.log('deployment Variables', deploymentVariables)
     if (!(network in deploymentVariables)) return;
     let deploymentVariablesList: Array<string> = Object.keys(deploymentVariables[network])
 

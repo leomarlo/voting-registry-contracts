@@ -9,14 +9,22 @@ import {  basePath } from "../utils/paths";
 import {
   VotingRegistry
 } from "../../typechain"
+import { BigNumber } from "ethers";
 
 
 
-async function deployOnlyRegistry(signer: SignerWithAddress, verbosity: number): Promise<ContractDeploymentInfo>{
+async function deployOnlyRegistry(signer: SignerWithAddress, gasPrice: BigNumber, verbosity: number): Promise<ContractDeploymentInfo>{
     let contractName = "VotingRegistry"
     let RegistryFactory = await ethers.getContractFactory("VotingRegistry")
-    let registry: VotingRegistry = await RegistryFactory.connect(signer).deploy(IVOTINGCONTRACT_ID)
-    await registry.deployed() 
+    let registry: VotingRegistry
+    if (gasPrice > BigNumber.from("0")){
+        let gasLimit: BigNumber =  BigNumber.from("603731")
+        registry = await RegistryFactory.connect(signer).deploy(IVOTINGCONTRACT_ID, {gasPrice, gasLimit})
+    } else {
+        registry = await RegistryFactory.connect(signer).deploy(IVOTINGCONTRACT_ID)   
+    }
+    let tx = await registry.deployed() 
+    console.log('Tx is', tx)
     let info: ContractDeploymentInfo = {
         "VotingRegistry": {
             "address": registry.address,
@@ -29,6 +37,15 @@ async function deployOnlyRegistry(signer: SignerWithAddress, verbosity: number):
     
     return info
 }
+
+// let LEO: SignerWithAddress
+// var verbosity: number = 2
+// var gasPrice: BigNumber = ethers.utils.parseUnits("5", "gwei")
+
+// async function deployRegistry(gasPrice: BigNumber, verbosity: number){
+//     [LEO] = await ethers.getSigners()
+//     await deployOnlyRegistry(LEO, gasPrice, verbosity)
+// }
 
 export {
     deployOnlyRegistry

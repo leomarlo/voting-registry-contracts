@@ -19,7 +19,6 @@ async function deployOnlyPlaygroundAndBadge(
   otherVotingAddress: string, 
   verbosity: number): Promise<ContractDeploymentInfo> {
     
-    if (verbosity>0) console.log("--> Start Deployment")
     let contractName : string;
 
     const abi = ethers.utils.defaultAbiCoder;
@@ -99,7 +98,7 @@ async function deployOnlyPlaygroundAndBadge(
     info = Object.assign(info, { "PlaygroundVotingBadge": 
       {
         "address": badge.address,
-        "path": basePath + "examples/playground/Playground.sol",
+        "path": basePath + "examples/playground/VotingBadge.sol",
         "arguments": [`"${deployArgumentArray[0]}"`, `"${deployArgumentArray[1]}"`]
       }}) 
     

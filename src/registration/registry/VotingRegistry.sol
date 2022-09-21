@@ -20,7 +20,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 2 of the License, or
+// by the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful, but
@@ -28,14 +28,12 @@
 // or FITNESS FOR A PARTICULAR PURPOSE. See the 
 // GNU Affero General Public License for more details.
 
-///@author Leonhard Horstmeyer  <leonhard.horstmeyer@gmail.com>
-///@notice This contract adds liquidity to Curve pools with ETH or ERC tokens.
+///@author Leonhard Horstmeyer  <leomarlo.eth@gmail.com>
+///@notice This contract handles the registration of new voting contracts.
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.13;
 
-
-// import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IVotingRegistry} from "./IVotingRegistry.sol";
 

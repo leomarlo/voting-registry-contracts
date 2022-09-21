@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import {IVotingRegistry} from "../../registration/registry/IVotingRegistry.sol";
 import {IGetDeadline} from "../../extensions/interfaces/IGetDeadline.sol";
@@ -63,6 +64,7 @@ enum Operation {add, subtract, divide, multiply, modulo, exponentiate}
 enum ApprovalTypes {limitedApproval, unapproveAll, approveAll}
 
 contract VotingPlayground is 
+IERC721Receiver,
 AssignedContractPrimitive,
 SecurityThroughAssignmentPrimitive,
 CalculateId,
@@ -477,7 +479,6 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     // function _beforeImplement(uint256 identifier) 
     // internal override(StartVoteAndImplementHybridVotingImplRemoteHooks)
     // {
-
     //     analytics.numberOfImplementations += 1;
     // }
 
@@ -531,8 +532,13 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) external returns (bytes4) {
-
+    ) 
+    external 
+    view
+    override(IERC721Receiver)
+    returns(bytes4)
+    {
+        data;
         return nftAndBadgesInfo.acceptingNFTs ? msg.sig: bytes4(0);
     }
 
