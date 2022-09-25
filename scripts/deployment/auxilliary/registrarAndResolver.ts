@@ -44,13 +44,15 @@ async function deployOnlyRegistrarAndResolver(
     if (verbosity>1) console.log(`\t address: ${resolver.address}\n\t network: ${network.name}`)
 
     contractName = "ControllableRegistrar"
-    // let nftName = "First Registrar"
-    // let nftSymbol = "REG1"
+    let nftName = "Official Registrar for Voting Contracts"
+    let nftSymbol = "REGV1"
     let RegistrarFactory = await ethers.getContractFactory("ControllableRegistrar")
     let registrar: ControllableRegistrar = await RegistrarFactory.connect(signer).deploy(
         nftWeightedVotingAddress,
         registryAddress,
-        resolver.address)
+        resolver.address,
+        nftName,
+        nftSymbol)
     //     nftName,
     //     nftSymbol,
     //     resolver.address)
@@ -66,7 +68,9 @@ async function deployOnlyRegistrarAndResolver(
         "arguments": [
             `"${nftWeightedVotingAddress}"`,
             `"${registryAddress}"`,
-            `"${resolver.address}"`
+            `"${resolver.address}"`,
+            `"\\"${nftName}\\""`,
+            `"\\"${nftSymbol}\\""`
         ]
         // "arguments": [
             // `"${nftWeightedVotingAddress}"`,
@@ -80,6 +84,9 @@ async function deployOnlyRegistrarAndResolver(
     if (verbosity>0) console.log(`--> Deployed ${contractName}`)
     if (verbosity>1) console.log(`\t address: ${registrar.address}\n\t network: ${network.name}`)
  
+    let tx = await resolver.connect(signer).setRegistrar(registrar.address)
+    if (verbosity>0) console.log(`--> Set new Controller of Resolver to Regisrar.`)
+    
     return info
 }
 
