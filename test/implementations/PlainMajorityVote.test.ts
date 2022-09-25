@@ -135,7 +135,7 @@ describe("Implement a plain Majority Vote", function(){
             votingParams = abi.encode(["address", "bool"], [contracts.counter.address, false])
             let tx = await contracts.majority.connect(Alice).start(votingParams, incrementCalldata)
             let identifier: number = getEventArgs(await tx.wait())[0].toNumber()
-            expect(await contracts.majority.getCaller(identifier)).to.equal(contracts.counter.address)
+            expect(await contracts.majority.getTarget(identifier)).to.equal(contracts.counter.address)
         });
         it("Should revert when invalid votingParams are passed.", async function() {
             await expect(contracts.majority.connect(Alice).start("0x", incrementCalldata))

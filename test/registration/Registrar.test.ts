@@ -70,7 +70,9 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
         let registrar: ControllableRegistrar = await RegistrarFactory.connect(Alice).deploy(
             majority.address,
             registry.address,
-            resolver.address)
+            resolver.address,
+            "Test Registrar",
+            "Reg")
         await registrar.deployed()
         registrarInterface = registrar.interface;
 

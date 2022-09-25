@@ -145,7 +145,7 @@ describe("Implement a Tournament Vote", function(){
         })
         it("Should set the integrator contract as the caller.", async function(){
             await contracts.integrator.connect(Alice).start(votingParamsOne, proposeImperatorCalldata)
-            expect(await contracts.tournament.getCaller(0)).to.equal(contracts.integrator.address);
+            expect(await contracts.tournament.getTarget(0)).to.equal(contracts.integrator.address);
         })
 
     })
