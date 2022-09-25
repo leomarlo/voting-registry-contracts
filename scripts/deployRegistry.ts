@@ -1,4 +1,4 @@
-import {deployOnlyRegistry} from './deployment/registry'
+import {deployOnlyRegistry} from './deployment/auxilliary/registry'
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";

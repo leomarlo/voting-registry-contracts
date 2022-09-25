@@ -9,10 +9,10 @@ import { saveToFile } from "../utils/saveToFile";
 import { deploymentInfoPath, basePath } from "../utils/paths";
 import { saveDeploymentArgumentsToFile} from "../verification/utils"
 import { Deployment, NetworkToContractDeploymentInfo } from "../interfaces/deployment"
-import { deployOnlyRegistry } from "./registry";
+import { deployOnlyRegistry } from "./auxilliary/registry";
 import { deployOnlyPlaygroundAndBadge } from "./playground";
-import { deployOnlyRegistrarAndResolver } from "./registrarAndResolver";
-import { deployOnlyTournament } from "./tournament";
+import { deployOnlyRegistrarAndResolver } from "./auxilliary/registrarAndResolver";
+import { deployOnlyTournament } from "./auxilliary/tournament";
 import http from 'http';
 dotenv.config()
 import fs from 'fs'
@@ -253,7 +253,7 @@ async function deployRegistry(verbosity: number, gasPrice: BigNumber) {
 var verbosity: number = 2
 // set gasPrice to "0" if you want it to be determined automatically.
 // set it to a positive value if you want to fix the gas price!
-var gasPrice: BigNumber = ethers.utils.parseUnits("4", "gwei")
+var gasPrice: BigNumber = ethers.utils.parseUnits("6", "gwei")
 
 deployRegistry(verbosity, gasPrice)
       .catch((error) => {

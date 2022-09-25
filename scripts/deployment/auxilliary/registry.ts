@@ -1,14 +1,14 @@
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { IVOTINGCONTRACT_ID, IERC165_ID } from "../utils/interfaceIds";
-import { ContractDeploymentInfo } from "../interfaces/deployment"
+import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../utils/interfaceIds";
+import { ContractDeploymentInfo } from "../../interfaces/deployment"
 
-import {  basePath } from "../utils/paths";
+import {  basePath } from "../../utils/paths";
 
 
 import {
   VotingRegistry
-} from "../../typechain"
+} from "../../../typechain"
 import { BigNumber } from "ethers";
 
 
@@ -18,16 +18,18 @@ async function deployOnlyRegistry(signer: SignerWithAddress, gasPrice: BigNumber
     let RegistryFactory = await ethers.getContractFactory("VotingRegistry")
     let registry: VotingRegistry
     if (gasPrice > BigNumber.from("0")){
-        let gasLimit: BigNumber =  BigNumber.from("603731")
-        registry = await RegistryFactory.connect(signer).deploy(IVOTINGCONTRACT_ID, {gasPrice, gasLimit})
+        // let gasLimit: BigNumber =  BigNumber.from("603731")
+        registry = await RegistryFactory.connect(signer).deploy(IVOTINGCONTRACT_ID, {gasPrice})
     } else {
         registry = await RegistryFactory.connect(signer).deploy(IVOTINGCONTRACT_ID)   
     }
     let tx = await registry.deployed() 
-    console.log('Tx is', tx)
+    // console.log('Tx is', tx)
     let info: ContractDeploymentInfo = {
         "VotingRegistry": {
             "address": registry.address,
+            "date": Date().toLocaleString(),
+            "gasLimit": tx.deployTransaction.gasLimit.toNumber(),
             "path": basePath + "registration/registry/VotingRegistry.sol",
             "arguments": [`"${IVOTINGCONTRACT_ID}"`]} 
     }

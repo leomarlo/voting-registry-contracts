@@ -1,14 +1,14 @@
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { IVOTINGCONTRACT_ID, IERC165_ID } from "../utils/interfaceIds";
-import { ContractDeploymentInfo } from "../interfaces/deployment"
+import { IVOTINGCONTRACT_ID, IERC165_ID } from "../../utils/interfaceIds";
+import { ContractDeploymentInfo } from "../../interfaces/deployment"
 
-import {  basePath } from "../utils/paths";
+import {  basePath } from "../../utils/paths";
 
 
 import {
   Tournament
-} from "../../typechain"
+} from "../../../typechain"
 
 
 
@@ -16,10 +16,12 @@ async function deployOnlyTournament(signer: SignerWithAddress, verbosity: number
     let contractName = "Tournament"
     let TournamentFactory = await ethers.getContractFactory("Tournament")
     let tournament: Tournament = await TournamentFactory.connect(signer).deploy()
-    await tournament.deployed() 
+    let tx = await tournament.deployed() 
     let info: ContractDeploymentInfo = {
         "Tournament": {
             "address": tournament.address,
+            "date": Date().toLocaleString(),
+            "gasLimit": tx.deployTransaction.gasLimit.toNumber(),
             "path": basePath + "implementations/votingContracts/Tournament/Tournament.sol",
             "arguments": []} 
     }
