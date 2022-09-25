@@ -22,7 +22,7 @@ import {StatusPrimitive} from "../../extensions/primitives/Status.sol";
 abstract contract StartAndVoteHybridVotingImplCallerMinml is 
 IStartAndVote, 
 IImplementingPermitted,
-InstanceInfoWithCallback, 
+InstanceInfoWithCallback,
 AssignedContractPrimitive, 
 HandleFailedImplementationResponse, 
 ImplementResultPrimitive,
@@ -91,7 +91,7 @@ ImplementingPermitted{
 abstract contract StartAndVoteHybridVotingImplCallerHooks is 
 IStartAndVote, 
 IImplementingPermitted,
-InstanceInfoWithCallback, 
+InstanceInfoWithCallback,
 AssignedContractPrimitive, 
 HandleImplementationResponse, 
 ImplementResultPrimitive,

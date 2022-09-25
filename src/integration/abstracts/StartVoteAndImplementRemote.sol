@@ -3,13 +3,14 @@ pragma solidity ^0.8.13;
 
 import {IStartVoteAndImplement} from "../interface/IVotingIntegration.sol";
 import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
+import {LegitInstanceHash, AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
 import { Instance, InstanceInfoPrimitive } from "../primitives/InstanceInfoPrimitive.sol";
 import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol";
 
 
 abstract contract StartVoteAndImplementOnlyCallbackImplRemoteMinml is
 IStartVoteAndImplement,
+LegitInstanceHash,
 AssignedContractPrimitive,
 InstanceInfoPrimitive
 {
@@ -28,6 +29,9 @@ InstanceInfoPrimitive
             identifier: identifier,
             votingContract: votingContract
         }));
+        bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+        LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
+        
     }
 
     
@@ -58,6 +62,7 @@ InstanceInfoPrimitive
 
 abstract contract StartVoteAndImplementOnlyCallbackImplRemoteHooks is 
 IStartVoteAndImplement,
+LegitInstanceHash,
 AssignedContractPrimitive,
 InstanceInfoPrimitive
 {
@@ -76,6 +81,9 @@ InstanceInfoPrimitive
             identifier: identifier,
             votingContract: votingContract
         }));
+        bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+        LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
+        
         _afterStart(instances.length - 1, votingParams, callback);
     }
 
@@ -122,6 +130,7 @@ InstanceInfoPrimitive
 
 abstract contract StartVoteAndImplementHybridVotingImplRemoteMinml is
 IStartVoteAndImplement,
+LegitInstanceHash,
 AssignedContractPrimitive,
 InstanceInfoPrimitive 
 {
@@ -133,16 +142,21 @@ InstanceInfoPrimitive
     override(IStartVoteAndImplement){
          _beforeStart(votingParams);
         address _votingContract;
+        uint256 identifier;
         if (callback.length<4){
             _votingContract = votingContract;
+            identifier = IVotingContract(_votingContract).start(votingParams, callback);
         } else {
             bytes4 selector = bytes4(callback[0:4]);
             if (!AssignedContractPrimitive._isVotableFunction(selector)){
                 revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             _votingContract = assignedContract[selector];
+            identifier = IVotingContract(_votingContract).start(votingParams, callback);
+            bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+            LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
+        
         }
-        uint256 identifier = IVotingContract(_votingContract).start(votingParams, callback);
         instances.push(Instance({
             identifier: identifier,
             votingContract: _votingContract
@@ -181,6 +195,7 @@ InstanceInfoPrimitive
 
 abstract contract StartVoteAndImplementHybridVotingImplRemoteHooks is 
 IStartVoteAndImplement,
+LegitInstanceHash,
 AssignedContractPrimitive,
 InstanceInfoPrimitive
 {
@@ -189,16 +204,22 @@ InstanceInfoPrimitive
     override(IStartVoteAndImplement){
         _beforeStart(votingParams, callback);
         address _votingContract;
+        uint256 identifier;
         if (callback.length<4){
             _votingContract = _getSimpleVotingContract(callback);
+            identifier = IVotingContract(_votingContract).start(votingParams, callback);
         } else {
             bytes4 selector = bytes4(callback[0:4]);
             if (!AssignedContractPrimitive._isVotableFunction(selector)){
                 revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             _votingContract = assignedContract[selector];
+            identifier = IVotingContract(_votingContract).start(votingParams, callback);
+            bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+            LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
+        
         }
-        uint256 identifier = IVotingContract(_votingContract).start(votingParams, callback);
+
         instances.push(Instance({
             identifier: identifier,
             votingContract: _votingContract

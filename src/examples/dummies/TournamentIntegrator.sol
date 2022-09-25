@@ -5,6 +5,7 @@ import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol
 import {
     OnlyVoteImplementer,
     AssignedContractPrimitive,
+    LegitInstanceHash,
     SecurityThroughAssignmentPrimitive
 } from "../../integration/primitives/AssignedContractPrimitive.sol";
 import {
@@ -14,7 +15,8 @@ import {
 
 
 
-contract DummyTournamentIntegrator is 
+contract DummyTournamentIntegrator is
+LegitInstanceHash, 
 AssignedContractPrimitive,
 SecurityThroughAssignmentPrimitive,
 StartOnlyCallbackMinml
@@ -32,7 +34,7 @@ StartOnlyCallbackMinml
 
     function proposeNewImperator(address _imperator) 
     external
-    OnlyByVote
+    OnlyByVote(true)
     returns(bool)
     {
         imperatorElect = _imperator;
@@ -40,7 +42,7 @@ StartOnlyCallbackMinml
 
     function fail(uint256 badNumber)
     external 
-    OnlyByVote
+    OnlyByVote(true)
     returns(bool)
     {
         revert("Zong!");
@@ -54,10 +56,8 @@ StartOnlyCallbackMinml
     }
 
 
-    modifier OnlyByVote {
-        if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
-        }
+    modifier OnlyByVote(bool checkIdentifier) {
+        if(!_isImplementer(checkIdentifier)) revert OnlyVoteImplementer(msg.sender);
         _;
     }
 

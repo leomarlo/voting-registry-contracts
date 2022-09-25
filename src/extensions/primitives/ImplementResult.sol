@@ -41,7 +41,10 @@ ImplementResultPrimitive
         (
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
-        ) = ImplementResultPrimitive._implement(callingContract, callback);
+        ) = ImplementResultPrimitive._implement(
+                callingContract, 
+                abi.encodePacked(callback, identifier)  // add the identifier to the calldata for good measure (added security!)
+            );
         
         // check whether the response from the call was susccessful
         if (_responseStatus == IImplementResult.Response.successful) {
@@ -103,8 +106,13 @@ ImplementResultPrimitive
             bytes memory _responseData
         ) = ImplementResultPrimitive._implement(
             CallerPrimitive._caller[identifier],
-            _modifyCallback(identifier, callback));
+            abi.encodePacked(
+                _modifyCallback(identifier, callback),
+                identifier
+            ));
         
+
+
         // check whether the response from the call was susccessful
         // calling a non-contract address by accident can result in a successful response, when it shouldn't.
         // That's why the user is encouraged to implement a return value to the target function and pass to the 

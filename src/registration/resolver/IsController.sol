@@ -15,6 +15,13 @@ abstract contract IsController {
         registrar = IRegistrar(_registrar);
     }
 
+    function setRegistrar(address _registrar)
+    external
+    OnlyRegistrar
+    {
+        registrar = IRegistrar(_registrar);
+    }
+
     function _senderIsController(address votingContract) internal view returns (bool isRegistrarController){
         isRegistrarController = registrar.getController(votingContract)==msg.sender;
     } 

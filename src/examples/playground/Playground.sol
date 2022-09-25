@@ -21,6 +21,7 @@ import {StartVoteAndImplementHybridVotingImplRemoteHooks} from "../../integratio
 import {
     OnlyVoteImplementer,
     AssignedContractPrimitive,
+    LegitInstanceHash,
     SecurityThroughAssignmentPrimitive
 } from "../../integration/primitives/AssignedContractPrimitive.sol";
 
@@ -65,6 +66,7 @@ enum ApprovalTypes {limitedApproval, unapproveAll, approveAll}
 
 contract VotingPlayground is 
 IERC721Receiver,
+LegitInstanceHash,
 AssignedContractPrimitive,
 SecurityThroughAssignmentPrimitive,
 CalculateId,
@@ -139,7 +141,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     // change the contract for certain functions
     function changeAssignedContract(bytes4 selector, address newVotingContract) 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         // check whether it is Registered
         require(IVotingRegistry(VOTING_REGISTRY).isRegistered(newVotingContract));
@@ -159,7 +161,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         address token
     )
     external
-    OnlyByVote
+    OnlyByVote(true)
     {
         require(!fixedVotingContract[selector]);
         votingMetaParams[selector] = VotingMetaParams({
@@ -176,21 +178,21 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function setMainBadge(uint256 newMainBadge) 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         if(newMainBadge>=badges.length) revert BadgeDoesntExist(newMainBadge, badges.length);
         nftAndBadgesInfo.mainBadge = newMainBadge;
     }
 
     function setMinXpToStartAnything(uint256 newXP) external
-    OnlyByVote
+    OnlyByVote(true)
     {
         require(newXP>0 && newXP<30, "Must be within bounds");
         minXpToStartAnything = newXP;
     }
 
     function setMinXpToStartThisFunction(bytes4 selector, uint256 newXP) external
-    OnlyByVote
+    OnlyByVote(true)
     {
         require(newXP<40, "Must be within bounds");
         minXpToStartThisFunction[selector] = newXP;
@@ -198,21 +200,21 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function setEnableTradingThreshold(uint256 newThreshold)
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         badges[nftAndBadgesInfo.mainBadge].changeEnableTradingThreshold(newThreshold);
     }
 
     function setTradingEnabledGlobally(bool enable)
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         badges[nftAndBadgesInfo.mainBadge].changeTradingEnabledGlobally(enable);
     }
 
     function setAcceptingNFTs(bool accept) 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         nftAndBadgesInfo.acceptingNFTs = accept;
     }
@@ -225,7 +227,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function changeCounter(uint256 by) 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         if (counter.operation==Operation.add){
             counter.counter += by;
@@ -245,14 +247,14 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function changeOperation(Operation newOperation)
     external
-    OnlyByVote
+    OnlyByVote(true)
     {
         counter.operation = newOperation;
     }
 
     function newIncumbent(string memory office, address newIncumbent)
     external
-    OnlyByVote 
+    OnlyByVote(true) 
     {
         // no empty incumbents
         require(newIncumbent!=address(0));
@@ -306,7 +308,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
             nftAndBadgesInfo.mainBadge = 0;
             // return deployedContract;IPlaygroundVotingBadge
         } else {
-            if(!_isImplementer()) revert OnlyVoteImplementer(msg.sender);
+            if(!_isImplementer(true)) revert OnlyVoteImplementer(msg.sender);
         }
         deployedContract = _deployContract(salt, bytecode);
         badges.push(IPlaygroundVotingBadge(deployedContract));
@@ -321,7 +323,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function deployNewContract(bytes32 salt, bytes memory bytecode) 
     external
-    OnlyByVote 
+    OnlyByVote(true) 
     returns(address deployedContract){
         deployedContract = _deployContract(salt, bytecode);
         deployedContracts.push(deployedContract);
@@ -335,7 +337,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function sendNFT(address token, address from, address to, uint256 tokenId) 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         IERC721(token).safeTransferFrom(from, to, tokenId);
     }
@@ -343,14 +345,14 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function sendERC20Token(address token, address from, address to, uint256 amount) 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         (from==address(this)) ? IERC20(token).transfer(to, amount) : IERC20(token).transferFrom(from,to, amount); 
     }
 
     function approveNFT(address token, address spender, uint256 tokenId, ApprovalTypes approvalType)
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         // check whether NFT or ERC20
         
@@ -362,7 +364,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function approveERC20Token(address token, address spender, uint256 amount)
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         IERC20(token).approve(spender, amount);
     }
@@ -370,7 +372,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     function wildCard(address contractAddress, bytes calldata data, uint256 value) 
     external 
     payable
-    OnlyByVote
+    OnlyByVote(true)
     {
         require(address(this).balance>=value, "not enough funds");
         (bool success, bytes memory response) = contractAddress.call{value: value}(data);
@@ -544,8 +546,8 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
 
     
-    modifier OnlyByVote {
-        if(!_isImplementer()) revert OnlyVoteImplementer(msg.sender);
+    modifier OnlyByVote(bool checkIdentifier) {
+        if(!_isImplementer(checkIdentifier)) revert OnlyVoteImplementer(msg.sender);
         _;
     }
 

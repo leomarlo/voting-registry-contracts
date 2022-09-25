@@ -31,6 +31,7 @@ import {IGetDoubleVotingGuard} from "../../../extensions/interfaces/IGetDoubleVo
 import {IGetToken} from "../../../extensions/interfaces/IGetToken.sol";
 
 
+
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract MajorityVoteWithNFTQuorumAndOptionalDVGuard is 
 CallbackHashPrimitive,
@@ -53,6 +54,9 @@ ExpectReturnValue,
 HandleImplementationResponse,
 ImplementResult
 {
+
+    // event VoteCasted(address voter, uint256 option, uint256 weight);
+
 
     /// @dev We must implement a start function. 
     function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback)
@@ -127,10 +131,6 @@ ImplementResult
             guardOnSenderVotingDataOrNone); 
     }
 
-
-    event VoteCasted(uint256 option, uint256 weight);
-
-
     /// @dev We must implement a vote function 
     function vote(uint256 identifier, bytes calldata votingData) 
     external 
@@ -169,7 +169,7 @@ ImplementResult
         
         CastYesNoAbstainVote.VoteOptions voteOption = CastYesNoAbstainVote.VoteOptions(option>2 ? 2 : option);
         CastYesNoAbstainVote._castVote(identifier, voteOption, weight);
-        emit VoteCasted(option, weight);
+        // emit VoteCasted(voter, option, weight);
         return _status[identifier];
     }
 

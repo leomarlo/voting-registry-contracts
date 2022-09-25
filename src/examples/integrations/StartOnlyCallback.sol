@@ -5,6 +5,7 @@ import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol
 import {
     OnlyVoteImplementer,
     AssignedContractPrimitive,
+    LegitInstanceHash,
     SecurityThroughAssignmentPrimitive
 } from "../../integration/primitives/AssignedContractPrimitive.sol";
 
@@ -17,6 +18,7 @@ import {
 
 
 contract StartOnlyCallbackMinmlExample is 
+LegitInstanceHash,
 AssignedContractPrimitive,
 SecurityThroughAssignmentPrimitive,
 StartOnlyCallbackMinml
@@ -36,14 +38,14 @@ StartOnlyCallbackMinml
 
     function increment() 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         i = i + 1;
     }
 
     function reset(uint256 _i)
     external
-    OnlyDeployerOrByVote
+    OnlyDeployerOrByVote(true)
     {
         i = _i;
     }
@@ -56,15 +58,13 @@ StartOnlyCallbackMinml
     }
 
 
-    modifier OnlyByVote {
-        if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
-        }
+    modifier OnlyByVote(bool checkIdentifier) {
+        if(!_isImplementer(checkIdentifier)) revert OnlyVoteImplementer(msg.sender);
         _;
     }
 
-    modifier OnlyDeployerOrByVote {
-        require(deployer==msg.sender || SecurityThroughAssignmentPrimitive._isImplementer(), "Only deployer or by vote");
+    modifier OnlyDeployerOrByVote(bool checkIdentifier) {
+        require(deployer==msg.sender || SecurityThroughAssignmentPrimitive._isImplementer(checkIdentifier), "Only deployer or by vote");
         _;
     }
 }
@@ -72,7 +72,8 @@ StartOnlyCallbackMinml
 
 
 
-contract StartOnlyCallbackHooksExample is 
+contract StartOnlyCallbackHooksExample is
+LegitInstanceHash, 
 AssignedContractPrimitive,
 SecurityThroughAssignmentPrimitive,
 StartOnlyCallbackHooks
@@ -94,14 +95,14 @@ StartOnlyCallbackHooks
 
     function increment() 
     external 
-    OnlyByVote
+    OnlyByVote(true)
     {
         i = i + 1;
     }
 
     function reset(uint256 _i)
     external
-    OnlyDeployerOrByVote
+    OnlyDeployerOrByVote(true)
     {
         i = _i;
     }
@@ -122,16 +123,14 @@ StartOnlyCallbackHooks
     }
 
 
-    modifier OnlyByVote {
-        if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
-        }
+    modifier OnlyByVote(bool checkIdentifier) {
+        if(!_isImplementer(checkIdentifier)) revert OnlyVoteImplementer(msg.sender);
         _;
     }
 
-    modifier OnlyDeployerOrByVote {
+    modifier OnlyDeployerOrByVote(bool checkIdentifier) {
         require(
-            _isImplementer() ||
+            _isImplementer(checkIdentifier) ||
             deployer==msg.sender, 
             "Only deployer or by vote");
         _;

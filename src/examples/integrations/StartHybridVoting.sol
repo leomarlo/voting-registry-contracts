@@ -5,6 +5,7 @@ import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol
 import {
     OnlyVoteImplementer,
     AssignedContractPrimitive,
+    LegitInstanceHash,
     SecurityThroughAssignmentPrimitive
 } from "../../integration/primitives/AssignedContractPrimitive.sol";
 import {
@@ -16,6 +17,7 @@ import {CounterPrimitive} from "../dummies/Counter.sol";
 
 contract StartHybridVotingMinmlExample is 
 CounterPrimitive,
+LegitInstanceHash,
 AssignedContractPrimitive,
 SecurityThroughAssignmentPrimitive,
 StartHybridVotingMinml
@@ -38,7 +40,7 @@ StartHybridVotingMinml
     virtual
     external 
     override(CounterPrimitive)
-    OnlyByVote
+    OnlyByVote(true)
     {
         i = i + 1;
     }
@@ -46,7 +48,7 @@ StartHybridVotingMinml
     function reset(uint256 _i)
     virtual
     external
-    OnlyDeployerOrByVote
+    OnlyDeployerOrByVote(true)
     {
         i = _i;
     }
@@ -59,15 +61,13 @@ StartHybridVotingMinml
     }
 
 
-    modifier OnlyByVote {
-        if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
-        }
+    modifier OnlyByVote(bool checkIdentifier) {
+        if(!_isImplementer(checkIdentifier)) revert OnlyVoteImplementer(msg.sender);
         _;
     }
 
-    modifier OnlyDeployerOrByVote {
-        require(deployer==msg.sender || _isImplementer(), "Only deployer or by vote");
+    modifier OnlyDeployerOrByVote(bool checkIdentifier) {
+        require(deployer==msg.sender || _isImplementer(checkIdentifier), "Only deployer or by vote");
         _;
     }
 }
@@ -77,6 +77,7 @@ StartHybridVotingMinml
 
 contract StartHybridVotingHooksExample is 
 CounterPrimitive,
+LegitInstanceHash,
 AssignedContractPrimitive,
 SecurityThroughAssignmentPrimitive,
 StartHybridVotingHooks
@@ -100,14 +101,14 @@ StartHybridVotingHooks
     function increment() 
     external 
     override(CounterPrimitive)
-    OnlyByVote
+    OnlyByVote(true)
     {
         i = i + 1;
     }
 
     function reset(uint256 _i)
     external
-    OnlyDeployerOrByVote
+    OnlyDeployerOrByVote(true)
     {
         i = _i;
     }
@@ -136,16 +137,14 @@ StartHybridVotingHooks
     }
 
 
-    modifier OnlyByVote {
-        if(!_isImplementer()){
-            revert OnlyVoteImplementer(msg.sender);
-        }
+    modifier OnlyByVote(bool checkIdentifier) {
+        if(!_isImplementer(checkIdentifier)) revert OnlyVoteImplementer(msg.sender);
         _;
     }
 
-    modifier OnlyDeployerOrByVote {
+    modifier OnlyDeployerOrByVote(bool checkIdentifier) {
         require(
-            SecurityThroughAssignmentPrimitive._isImplementer() ||
+            SecurityThroughAssignmentPrimitive._isImplementer(checkIdentifier) ||
             deployer==msg.sender, 
             "Only deployer or by vote");
         _;

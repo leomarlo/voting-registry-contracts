@@ -3,11 +3,11 @@ pragma solidity ^0.8.13;
 
 import {IStart} from "../interface/IVotingIntegration.sol";
 import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
-import {AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
+import {LegitInstanceHash, AssignedContractPrimitive} from "../primitives/AssignedContractPrimitive.sol";
 // import {IndexedVotingContracts} from "../primitives/IndexedVotingContractsMapping.sol";
 
 
-abstract contract StartOnlyCallbackHooks is IStart, AssignedContractPrimitive {
+abstract contract StartOnlyCallbackHooks is IStart, LegitInstanceHash, AssignedContractPrimitive {
 
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
@@ -18,6 +18,8 @@ abstract contract StartOnlyCallbackHooks is IStart, AssignedContractPrimitive {
             revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
         uint256 identifier = IVotingContract(assignedContract[selector]).start(votingParams, callback);
+        bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+        LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
         _afterStart(identifier, votingParams, callback);
     }
 
@@ -27,7 +29,8 @@ abstract contract StartOnlyCallbackHooks is IStart, AssignedContractPrimitive {
 
 }
 
-abstract contract StartOnlyCallbackMinml is IStart, AssignedContractPrimitive {
+abstract contract StartOnlyCallbackMinml is IStart, LegitInstanceHash, AssignedContractPrimitive {
+    
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStart){
@@ -36,7 +39,9 @@ abstract contract StartOnlyCallbackMinml is IStart, AssignedContractPrimitive {
         if (!AssignedContractPrimitive._isVotableFunction(selector)){
             revert AssignedContractPrimitive.IsNotVotableFunction(selector);
         }
-        IVotingContract(assignedContract[selector]).start(votingParams, callback);
+        uint256 identifier = IVotingContract(assignedContract[selector]).start(votingParams, callback);
+        bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+        LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;    
     }
 
     function _beforeStart(bytes memory votingParams) virtual internal {}
@@ -44,7 +49,11 @@ abstract contract StartOnlyCallbackMinml is IStart, AssignedContractPrimitive {
 
 
 
-abstract contract StartHybridVotingHooks is IStart, AssignedContractPrimitive {
+abstract contract StartHybridVotingHooks is 
+IStart, 
+LegitInstanceHash,
+AssignedContractPrimitive {
+    
     function start(bytes memory votingParams, bytes calldata callback) 
     external 
     override(IStart){
@@ -58,7 +67,10 @@ abstract contract StartHybridVotingHooks is IStart, AssignedContractPrimitive {
                 revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
             identifier = IVotingContract(assignedContract[selector]).start(votingParams, callback);
+            bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+            LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
         }
+        
         _afterStart(identifier, votingParams, callback);
     }
 
@@ -69,7 +81,10 @@ abstract contract StartHybridVotingHooks is IStart, AssignedContractPrimitive {
     function _getSimpleVotingContract(bytes calldata callback) virtual internal view returns(address) {}
 }
 
-abstract contract StartHybridVotingMinml is IStart, AssignedContractPrimitive {
+abstract contract StartHybridVotingMinml is 
+IStart, 
+LegitInstanceHash,
+AssignedContractPrimitive {
 
     address public votingContract;
 
@@ -85,8 +100,11 @@ abstract contract StartHybridVotingMinml is IStart, AssignedContractPrimitive {
             if (!AssignedContractPrimitive._isVotableFunction(selector)){
                 revert AssignedContractPrimitive.IsNotVotableFunction(selector);
             }
-            IVotingContract(assignedContract[selector]).start(votingParams, callback);
+            uint256 identifier = IVotingContract(assignedContract[selector]).start(votingParams, callback);
+            bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
+            LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
         }
+        
     }
 
     function _beforeStart(bytes memory votingParams) virtual internal {}

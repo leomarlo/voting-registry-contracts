@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {IImplementResult} from "../../extensions/interfaces/IImplementResult.sol";
 import {
     OnlyVoteImplementer,
+    LegitInstanceHash,
     AssignedContractPrimitive,
     SecurityThroughAssignmentPrimitive
 } from "../../integration/primitives/AssignedContractPrimitive.sol";

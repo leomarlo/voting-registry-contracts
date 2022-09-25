@@ -15,6 +15,7 @@ abstract contract ExpectReturnValue {
 
 abstract contract ImplementResultPrimitive {
 
+    
     /// @dev a generic internal helper function that calls a function with a given selector in a given contract with some calldata.
     /// @param _contract the address of the contract, whose function ought to be called.
     /// @param callback the calldata for the function call.
