@@ -26,19 +26,24 @@ LegitInstanceHash,
 SecurityThroughAssignmentPrimitive,
 StartOnlyCallbackMinml {
 
-    IResolverWithControl immutable public RESOLVER;
+    IResolverWithControl public RESOLVER;
 
     constructor(
         address _initialVotingContract,
         address _registry,
-        address _resolver) 
-    RegistrarWithDeployerPrimitive(_registry, "First Official Voting Contract Registrar", "REG1"){
+        address _resolver,
+        string memory _name,
+        string memory _symbol) 
+    RegistrarWithDeployerPrimitive(_registry, _name, _symbol){
         assignedContract[bytes4(keccak256("changeRegistrarControlledKeys(bytes32,bool)"))] = _initialVotingContract;
         assignedContract[bytes4(keccak256("setInformation(bytes32,address,uint256)"))] = _initialVotingContract;   
         RESOLVER = IResolverWithControl(_resolver);
     }
 
-    // function _beforeStart(bytes memory votingParams) virtual internal {}
+    function register(address votingContract) virtual external {
+        register(votingContract, address(RESOLVER), msg.sender);
+    }
+
 
     function deployAndRegister(bytes32 salt, bytes memory bytecode) 
     external 
@@ -47,6 +52,13 @@ StartOnlyCallbackMinml {
         votingContract = _deployAndRegister(salt, bytecode, address(RESOLVER));
     }
 
+    function setInformation(string memory key, address votingContract, uint256 amount)
+    external 
+    OnlyByVote(true)
+    returns(bool)
+    {
+        RESOLVER.setInformation(keccak256(abi.encode(key)), votingContract, amount);
+    }
 
     function setInformation(bytes32 key, address votingContract, uint256 amount)
     external 

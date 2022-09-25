@@ -8,7 +8,7 @@ import {NoDoubleVoting} from "../../../extensions/primitives/NoDoubleVoting.sol"
 import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
 import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
-import {CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TargetGetter} from "../../../extensions/primitives/Target.sol";
 import {HandleDoubleVotingGuard} from "../../../extensions/primitives/NoDoubleVoting.sol";
 
 import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
@@ -23,7 +23,7 @@ IGetDeadline,
 Deadline,
 IGetDoubleVotingGuard,
 StatusGetter,
-CallerGetter,
+TargetGetter,
 BaseVotingContract
 {
 

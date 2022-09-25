@@ -12,7 +12,7 @@ import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastYesNoAbstainVote} from "../../../extensions/primitives/CastYesNoAbstainVote.sol";
 import {CallbackHashPrimitive} from "../../../extensions/primitives/CallbackHash.sol";
 import {CheckCalldataValidity} from "../../../extensions/primitives/CheckCalldataValidity.sol";
-import {CallerPrimitive, CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TargetPrimitive, TargetGetter} from "../../../extensions/primitives/Target.sol";
 import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
 import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
@@ -35,7 +35,7 @@ import {IGetToken} from "../../../extensions/interfaces/IGetToken.sol";
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract MajorityVoteWithNFTQuorumAndOptionalDVGuard is 
 CallbackHashPrimitive,
-CallerGetter,
+TargetGetter,
 StatusGetter,
 CheckCalldataValidity,
 TokenPrimitive,
@@ -55,8 +55,6 @@ HandleImplementationResponse,
 ImplementResult
 {
 
-    // event VoteCasted(address voter, uint256 option, uint256 weight);
-
 
     /// @dev We must implement a start function. 
     function _start(uint256 identifier, bytes memory votingParams, bytes calldata callback)
@@ -69,22 +67,22 @@ ImplementResult
         
         address tokenAddress;
         uint256 duration;
-        uint256 quorumInHolders;
+        uint256 quorumInTokens;
         bool expectReturnValue;
         HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone;
     
         (tokenAddress, 
          duration,
-         quorumInHolders,
+         quorumInTokens,
          expectReturnValue, 
          guardOnSenderVotingDataOrNone
         ) = decodeParameters(votingParams);
         
-        _caller[identifier] = msg.sender;
+        _target[identifier] = msg.sender;
         _token[identifier] = tokenAddress;
         _expectReturnValue[identifier] = expectReturnValue;
         _guardOnSenderVotingDataOrNone[identifier] = guardOnSenderVotingDataOrNone;
-        _quorum[identifier] = quorumInHolders;
+        _quorum[identifier] = quorumInTokens;
 
         Deadline._setDeadline(identifier, duration);
 
@@ -99,14 +97,14 @@ ImplementResult
     returns(
         address token,
         uint256 duration,
-        uint256 quorumInHolders,
+        uint256 quorumInTokens,
         bool expectReturnValue,
         HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone)
     {
         (
             token, 
             duration,
-            quorumInHolders,
+            quorumInTokens,
             expectReturnValue, 
             guardOnSenderVotingDataOrNone
         ) = abi.decode(votingParams, (address, uint256, uint256, bool, HandleDoubleVotingGuard.VotingGuard)); 
@@ -116,7 +114,7 @@ ImplementResult
     function encodeParameters(
         address token,
         uint256 duration,
-        uint256 quorumInHolders,
+        uint256 quorumInTokens,
         bool expectReturnValue,
         HandleDoubleVotingGuard.VotingGuard guardOnSenderVotingDataOrNone) 
     public
@@ -126,7 +124,7 @@ ImplementResult
         votingParams = abi.encode(
             token,
             duration,
-            quorumInHolders,
+            quorumInTokens,
             expectReturnValue,
             guardOnSenderVotingDataOrNone); 
     }
@@ -163,7 +161,12 @@ ImplementResult
             weight = IERC721(_token[identifier]).balanceOf(voter);
             NoDoubleVoting._alreadyVoted[identifier][voter] = true;
         } else {
-            (option, weight) = abi.decode(votingData, (uint256, uint256));
+            if(msg.sender==_target[identifier]){
+                (option, weight) = abi.decode(votingData, (uint256, uint256));
+            } else {
+                option = abi.decode(votingData, (uint256));
+                weight = IERC721(_token[identifier]).balanceOf(msg.sender);
+            }
         }
         
         

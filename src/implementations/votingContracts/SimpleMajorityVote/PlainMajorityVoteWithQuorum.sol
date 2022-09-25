@@ -8,7 +8,7 @@ import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
 import {CallbackHashPrimitive} from "../../../extensions/primitives/CallbackHash.sol";
 import {CheckCalldataValidity} from "../../../extensions/primitives/CheckCalldataValidity.sol";
-import {CallerPrimitive, CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TargetPrimitive, TargetGetter} from "../../../extensions/primitives/Target.sol";
 import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
 import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
@@ -32,7 +32,7 @@ import {ImplementResult} from "../../../extensions/primitives/ImplementResult.so
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract PlainMajorityVoteWithQuorum is 
 CallbackHashPrimitive,
-CallerGetter,
+TargetGetter,
 StatusGetter,
 CheckCalldataValidity,
 IGetDoubleVotingGuard,
@@ -67,13 +67,13 @@ ImplementResult
     {
         // Store the status in storage.
         _status[identifier] = uint256(IVotingContract.VotingStatus.active);
-        address caller;
+        address target;
         uint256 duration;
         uint256 quorum;
         bool expectReturnValue;
         
-        (caller, quorum, duration, expectReturnValue) = decodeParameters(votingParams);
-        _caller[identifier] = caller;
+        (target, quorum, duration, expectReturnValue) = decodeParameters(votingParams);
+        _target[identifier] = target;
         _quorum[identifier] = quorum;
         _expectReturnValue[identifier] = expectReturnValue;
         Deadline._setDeadline(identifier, duration);
@@ -83,13 +83,13 @@ ImplementResult
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function decodeParameters(bytes memory votingParams) public pure returns(address caller, uint256 quorum, uint256 duration, bool expectReturnValue) {
-        (caller, quorum, duration, expectReturnValue) = abi.decode(votingParams, (address, uint256, uint256, bool)); 
+    function decodeParameters(bytes memory votingParams) public pure returns(address target, uint256 quorum, uint256 duration, bool expectReturnValue) {
+        (target, quorum, duration, expectReturnValue) = abi.decode(votingParams, (address, uint256, uint256, bool)); 
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function encodeParameters(address caller, uint256 quorum, uint256 duration, bool expectReturnValue) public pure returns(bytes memory votingParams) {
-        votingParams = abi.encode(caller, quorum, duration, expectReturnValue); 
+    function encodeParameters(address target, uint256 quorum, uint256 duration, bool expectReturnValue) public pure returns(bytes memory votingParams) {
+        votingParams = abi.encode(target, quorum, duration, expectReturnValue); 
     }
 
     /// @dev We must implement a vote function 

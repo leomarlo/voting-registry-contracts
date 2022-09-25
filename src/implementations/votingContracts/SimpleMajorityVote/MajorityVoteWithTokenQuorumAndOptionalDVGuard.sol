@@ -12,7 +12,7 @@ import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastYesNoAbstainVote} from "../../../extensions/primitives/CastYesNoAbstainVote.sol";
 import {CallbackHashPrimitive} from "../../../extensions/primitives/CallbackHash.sol";
 import {CheckCalldataValidity} from "../../../extensions/primitives/CheckCalldataValidity.sol";
-import {CallerPrimitive, CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TargetPrimitive, TargetGetter} from "../../../extensions/primitives/Target.sol";
 import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
 import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
@@ -36,7 +36,7 @@ error QuorumExceeded(uint256 quorum);
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract MajorityVoteWithTokenQuorumAndOptionalDVGuard is 
 CallbackHashPrimitive,
-CallerGetter,
+TargetGetter,
 StatusGetter,
 CheckCalldataValidity,
 TokenPrimitive,
@@ -82,7 +82,7 @@ ImplementResult
             revert QuorumExceeded(quorum);
         }
 
-        _caller[identifier] = msg.sender;
+        _target[identifier] = msg.sender;
         _token[identifier] = tokenAddress;
         _expectReturnValue[identifier] = expectReturnValue;
         _guardOnSenderVotingDataOrNone[identifier] = guardOnSenderVotingDataOrNone;
@@ -170,7 +170,7 @@ ImplementResult
             weight = IERC20(_token[identifier]).balanceOf(voter);
             NoDoubleVoting._alreadyVoted[identifier][voter] = true;
         } else {
-            if(msg.sender==_caller[identifier]){
+            if(msg.sender==_target[identifier]){
                 (option, weight) = abi.decode(votingData, (uint256, uint256));
             } else {
                 option = abi.decode(votingData, (uint256));

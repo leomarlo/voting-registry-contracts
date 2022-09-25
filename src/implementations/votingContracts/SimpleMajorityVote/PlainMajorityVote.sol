@@ -8,7 +8,7 @@ import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
 import {CallbackHashPrimitive} from "../../../extensions/primitives/CallbackHash.sol";
 import {CheckCalldataValidity} from "../../../extensions/primitives/CheckCalldataValidity.sol";
-import {CallerPrimitive, CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TargetPrimitive, TargetGetter} from "../../../extensions/primitives/Target.sol";
 import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
 import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
@@ -31,7 +31,7 @@ import {ImplementResult} from "../../../extensions/primitives/ImplementResult.so
 /// @dev This implementation of a snapshot vote is not sybill-proof.
 contract PlainMajorityVote is 
 CallbackHashPrimitive,
-CallerGetter,
+TargetGetter,
 StatusGetter,
 CheckCalldataValidity,
 IGetDoubleVotingGuard,
@@ -65,7 +65,7 @@ ImplementResult
         // Store the status in storage.
         _status[identifier] = uint256(IVotingContract.VotingStatus.active);
         
-        (_caller[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
+        (_target[identifier], _expectReturnValue[identifier]) = decodeParameters(votingParams);
         Deadline._setDeadline(identifier, VOTING_DURATION);
 
         // hash the callback
@@ -74,13 +74,13 @@ ImplementResult
 
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function decodeParameters(bytes memory votingParams) public pure returns(address caller, bool expectReturnValue) {
-        (caller, expectReturnValue) = abi.decode(votingParams, (address, bool)); 
+    function decodeParameters(bytes memory votingParams) public pure returns(address target, bool expectReturnValue) {
+        (target, expectReturnValue) = abi.decode(votingParams, (address, bool)); 
     }
 
     /// We obtain the caller and a flag (whether the target function returns a value) from the votingParams' only argument.
-    function encodeParameters(address caller, bool expectReturnValue) public pure returns(bytes memory votingParams) {
-        votingParams = abi.encode(caller, expectReturnValue); 
+    function encodeParameters(address target, bool expectReturnValue) public pure returns(bytes memory votingParams) {
+        votingParams = abi.encode(target, expectReturnValue); 
     }
 
 

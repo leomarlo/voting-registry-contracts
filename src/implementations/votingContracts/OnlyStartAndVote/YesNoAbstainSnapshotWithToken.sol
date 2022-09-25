@@ -12,7 +12,7 @@ import {
 import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastYesNoAbstainVote} from "../../../extensions/primitives/CastYesNoAbstainVote.sol";
 import {StatusGetter, StatusError} from "../../../extensions/primitives/Status.sol";
-import {CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TargetGetter} from "../../../extensions/primitives/Target.sol";
 import {TokenPrimitive} from "../../../extensions/primitives/TokenPrimitive.sol";
 
 import {IGetDeadline} from "../../../extensions/interfaces/IGetDeadline.sol";
@@ -29,7 +29,7 @@ Deadline,
 TokenPrimitive,
 IGetDoubleVotingGuard,
 StatusGetter,
-CallerGetter,
+TargetGetter,
 BaseVotingContract
 {
 

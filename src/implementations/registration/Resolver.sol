@@ -49,6 +49,13 @@ IsController
         _lookup[key][votingContract] = amount;
     }
 
+    function setInformation(string memory key, address votingContract, uint256 amount)
+    external 
+    OnlyAuthorized(keccak256(abi.encode(key)), votingContract)
+    {
+        _lookup[keccak256(abi.encode(key))][votingContract] = amount;
+    }
+
     function changeRegistrarControlledKeys(bytes32 key, bool onlyRegistrar) 
     external
     override(IResolverWithControl)

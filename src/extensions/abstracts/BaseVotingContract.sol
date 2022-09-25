@@ -35,13 +35,13 @@ pragma solidity ^0.8.13;
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IVotingContract} from "../../votingContractStandard/IVotingContract.sol";
 
-import { CallerPrimitive} from "../primitives/Caller.sol";
+import { TargetPrimitive} from "../primitives/Target.sol";
 import { StatusPrimitive} from "../primitives/Status.sol";
 
 /// @title Vote Contract - Main implementation of the inheritable vote contract.
 /// @author Leonhard Horstmeyer  <leonhard.horstmeyer@gmail.com>
 /// @dev This contract implements the necessary functions that a simple Vote Contract should implement.
-abstract contract BaseVotingContract is CallerPrimitive, StatusPrimitive, IERC165, IVotingContract {
+abstract contract BaseVotingContract is TargetPrimitive, StatusPrimitive, IERC165, IVotingContract {
     
 
     //////////////////////////////////////////////////

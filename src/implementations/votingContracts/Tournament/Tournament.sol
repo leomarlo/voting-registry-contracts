@@ -7,7 +7,7 @@ import {Deadline} from "../../../extensions/primitives/Deadline.sol";
 import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
 import {CallbackHashPrimitive} from "../../../extensions/primitives/CallbackHash.sol";
 import {CheckCalldataValidity} from "../../../extensions/primitives/CheckCalldataValidity.sol";
-import {CallerPrimitive, CallerGetter} from "../../../extensions/primitives/Caller.sol";
+import {TargetPrimitive, TargetGetter} from "../../../extensions/primitives/Target.sol";
 import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
 import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
@@ -86,7 +86,7 @@ error AlreadyVoted(uint256 identifier, uint256 group, address voter);
 /// @dev This voting contract allows several rounds of voting, like in a tournament
 contract Tournament is 
 CallbackHashPrimitive,
-CallerGetter,
+TargetGetter,
 StatusGetter,
 CheckCalldataValidity,
 TokenPrimitive,
@@ -113,7 +113,7 @@ ImplementResultWithInsertion
     override(BaseVotingContract) 
     {
         // set the caller
-        _caller[identifier] = msg.sender;
+        _target[identifier] = msg.sender;
 
         // get voting params
         (uint48 insertAtByte,

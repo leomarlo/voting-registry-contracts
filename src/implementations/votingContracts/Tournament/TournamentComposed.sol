@@ -8,7 +8,7 @@
 // import {CastSimpleVote} from "../../../extensions/primitives/CastSimpleVote.sol";
 // import {CallbackHashPrimitive} from "../../../extensions/primitives/CallbackHash.sol";
 // import {CheckCalldataValidity} from "../../../extensions/primitives/CheckCalldataValidity.sol";
-// import {CallerPrimitive, CallerGetter} from "../../../extensions/primitives/Caller.sol";
+// import {TargetPrimitive, TargetGetter} from "../../../extensions/primitives/Target.sol";
 // import {BaseVotingContract} from "../../../extensions/abstracts/BaseVotingContract.sol";
 // import {ImplementingPermitted} from "../../../extensions/primitives/ImplementingPermitted.sol";
 // import {IImplementResult} from "../../../extensions/interfaces/IImplementResult.sol";
@@ -33,7 +33,7 @@
 
 // contract TournamentComposed is
 // CallbackHashPrimitive,
-// CallerGetter,
+// TargetGetter,
 // StatusGetter,
 // Deadline,
 // CheckCalldataValidity,
@@ -64,7 +64,7 @@
 //         ) = decodeParameters(votingParams);
 
 //         // set the caller
-//         _caller[identifier] = msg.sender;
+//         _target[identifier] = msg.sender;
 
 //         // rounds should be bigger 1
 //         if (rounds==0) revert InvalidRounds(identifier, 0, permutation.length);

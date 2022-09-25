@@ -31,7 +31,7 @@ abstract contract RegistrarPrimitive is ERC721 {
         controller = ownerOf(tokenId);
     }
 
-    function register(address votingContract, address resolver, address controller) virtual external {
+    function register(address votingContract, address resolver, address controller) virtual public {
         _register(votingContract, resolver);
         _setController(votingContract, controller);
     }

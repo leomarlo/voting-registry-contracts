@@ -3,14 +3,14 @@ pragma solidity ^0.8.13;
 
 import {IImplementResult} from "../interfaces/IImplementResult.sol";
 import {IImplementingPermitted} from "../interfaces/IImplementingPermitted.sol";
-import {CallerPrimitive} from "./Caller.sol";
+import {TargetPrimitive} from "./Target.sol";
 import {CheckCalldataValidity} from "./CheckCalldataValidity.sol";
 import {ImplementingPermitted} from "./ImplementingPermitted.sol";
 import {ImplementResultPrimitive, HandleImplementationResponse} from "./ImplementResultPrimitive.sol";
 
 abstract contract ImplementResult is
 IImplementResult,
-CallerPrimitive,
+TargetPrimitive,
 ImplementingPermitted,
 HandleImplementationResponse,
 ImplementResultPrimitive
@@ -35,7 +35,7 @@ ImplementResultPrimitive
         _requireValidCallbackData(identifier, callback);
 
         // retrieve calling contract from the identifier.
-        address callingContract = CallerPrimitive._caller[identifier];
+        address callingContract = TargetPrimitive._target[identifier];
         
         // implement the result
         (
@@ -74,7 +74,7 @@ ImplementResultPrimitive
 
 abstract contract ImplementResultWithInsertion is
 IImplementResult,
-CallerPrimitive,
+TargetPrimitive,
 ImplementingPermitted,
 HandleImplementationResponse,
 ImplementResultPrimitive
@@ -105,7 +105,7 @@ ImplementResultPrimitive
             IImplementResult.Response _responseStatus,
             bytes memory _responseData
         ) = ImplementResultPrimitive._implement(
-            CallerPrimitive._caller[identifier],
+            TargetPrimitive._target[identifier],
             abi.encodePacked(
                 _modifyCallback(identifier, callback),
                 identifier
