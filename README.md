@@ -113,7 +113,7 @@ One `SHOULD` add another layer of control and security by providing guards again
 
 To mitigate undesired calls the developer `SHOULD` implement a function that checks whether the alleged voting contract is allowed to call the function with selector `msg.sig`. In other words one needs to check whether the calling address `msg.sender` is approved.
 ```js
-function _isImplementer() internal returns(bool);
+function _isImplementer(checkIdentifier) internal returns(bool);
 ```
 This could then also be wrapped into a customized `modifier` that reverts the call when it is not originating from an approved address or has some other customized rights that allows a call. 
 
@@ -124,7 +124,7 @@ mapping(bytes4=>address) assignedContract;
 ```
 When starting a new voting instance with `bytes votingParams` and `bytes callback`, the voting contract is already specified via `assignedContract[bytes4(callback[0:4])]`. This mapping could then also be used to define
 ```js
-function _isImplementer() internal view returns(bool) {
+function _isImplementer(checkIdentifier) internal view returns(bool) {
     return assignedContract[msg.sig]==msg.sender;
 }
 ``` 
