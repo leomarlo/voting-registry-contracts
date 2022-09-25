@@ -52,7 +52,6 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
         let registry: VotingRegistry = await RegistryFactory.connect(Alice).deploy(`${IVOTINGCONTRACT_ID}`)
         await registry.deployed()
 
-        let ResolverFactory = await ethers.getContractFactory("ResolverWithControl")
 
         let MajorityFactory = await ethers.getContractFactory("MajorityVoteWithNFTQuorumAndOptionalDVGuard")
         let majority: MajorityVoteWithNFTQuorumAndOptionalDVGuard = await MajorityFactory.connect(Alice).deploy()
@@ -63,19 +62,20 @@ describe("Controllable Registrar with Bytecode Deployment", function(){
         await snapshot.deployed()
         SnapshotBytecode = SnapshotFactory.bytecode;
 
+        let ResolverFactory = await ethers.getContractFactory("ResolverWithControl")
+        let resolver: ResolverWithControl = await ResolverFactory.connect(Alice).deploy() 
+        await resolver.deployed()
+
         let RegistrarFactory = await ethers.getContractFactory("ControllableRegistrar")
         let registrar: ControllableRegistrar = await RegistrarFactory.connect(Alice).deploy(
             majority.address,
             registry.address,
-            "TestRegistrar",
-            "REG",
-            abi.encode(["uint256"],[1]),
-            ResolverFactory.bytecode)
+            resolver.address)
         await registrar.deployed()
         registrarInterface = registrar.interface;
 
-        let resolver: ResolverWithControl = await ethers.getContractAt("ResolverWithControl", await registrar.RESOLVER(), Alice)
-        
+        await resolver.connect(Alice).setRegistrar(registrar.address);
+
         contracts = {
             registrar,
             majority,
