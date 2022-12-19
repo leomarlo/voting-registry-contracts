@@ -39,7 +39,7 @@ task("getGanache", "print the statement that would start ganache with the correc
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
-let network: string = "hardhat"
+let network: string = "localhost"
 const config: HardhatUserConfig = {
   solidity: "0.8.13",
   defaultNetwork: network,

@@ -184,8 +184,8 @@ var verbosity: number = 2
 // var what = 'registry'
 // var what = 'nftWeightedVotingContract'
 var what = [
-  // 'registry',
-  // 'nftWeightedVotingContract',
+  'registry',
+  'nftWeightedVotingContract',
   'registrarAndResolver']
   // 'plainMajorityWithQuorum']
 deploy(what, verbosity, gasPrice)
