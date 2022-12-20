@@ -3,6 +3,6 @@ scripts
 test
 .env.example
 .env
-
+test.js
 .eslint*
 .prettier*

@@ -10,6 +10,7 @@ artifacts
 
 ## might need scripts at some later point
 # scripts
+test.js
 
 ## types
 typechain
