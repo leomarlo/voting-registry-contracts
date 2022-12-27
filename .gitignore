@@ -25,6 +25,7 @@ coverage
 ## contract compilation info
 compiler-output
 
-scripts/verification/deploymentArgs/*
+scripts/verification/deploymentArgs/hardhat*
+scripts/verification/deploymentArgs/localhost*
 eip-template.md
 TODOs.md
