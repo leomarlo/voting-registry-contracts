@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "CastYesNoAbstainVote",
+  "sourceName": "src/extensions/primitives/CastYesNoAbstainVote.sol",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea264697066735822122074c21eed75e8d0ff781c594f79a12c07242b5d4b8c485578e1cfdb1e91a53ba064736f6c634300080d0033",
+  "deployedBytecode": "0x6080604052600080fdfea264697066735822122074c21eed75e8d0ff781c594f79a12c07242b5d4b8c485578e1cfdb1e91a53ba064736f6c634300080d0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

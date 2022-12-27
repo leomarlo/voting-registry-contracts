@@ -1,0 +1,148 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "StartAndVoteOnlyCallbackImplCallerHooks",
+  "sourceName": "src/integration/abstracts/StartAndVoteImplCaller.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "status",
+          "type": "uint256"
+        }
+      ],
+      "name": "ImplementingNotPermitted",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        }
+      ],
+      "name": "IsNotVotableFunction",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        }
+      ],
+      "name": "Implemented",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        }
+      ],
+      "name": "NotImplemented",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        }
+      ],
+      "name": "implementingPermitted",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "permitted",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "instances",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "votingContract",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callback",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "votingParams",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callback",
+          "type": "bytes"
+        }
+      ],
+      "name": "start",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "votingData",
+          "type": "bytes"
+        }
+      ],
+      "name": "vote",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

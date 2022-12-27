@@ -1,0 +1,51 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "NoDoubleVotingPublic",
+  "sourceName": "src/extensions/primitives/NoDoubleVoting.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "voter",
+          "type": "address"
+        }
+      ],
+      "name": "AlreadyVoted",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "voter",
+          "type": "address"
+        }
+      ],
+      "name": "hasAlreadyVoted",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "alreadyVoted",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

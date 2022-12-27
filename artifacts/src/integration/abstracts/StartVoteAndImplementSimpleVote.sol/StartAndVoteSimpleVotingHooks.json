@@ -1,0 +1,115 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "StartAndVoteSimpleVotingHooks",
+  "sourceName": "src/integration/abstracts/StartVoteAndImplementSimpleVote.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        }
+      ],
+      "name": "Implemented",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        }
+      ],
+      "name": "NotImplemented",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callback",
+          "type": "bytes"
+        }
+      ],
+      "name": "implement",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "instances",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "votingContract",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "votingParams",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callback",
+          "type": "bytes"
+        }
+      ],
+      "name": "start",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "votingData",
+          "type": "bytes"
+        }
+      ],
+      "name": "vote",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

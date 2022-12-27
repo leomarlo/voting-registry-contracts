@@ -1,0 +1,30 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IStatusGetter",
+  "sourceName": "src/extensions/interfaces/IStatusGetter.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        }
+      ],
+      "name": "getStatus",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "status",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

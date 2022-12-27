@@ -1,0 +1,35 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IImplementResult",
+  "sourceName": "src/extensions/interfaces/IImplementResult.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "identifier",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callback",
+          "type": "bytes"
+        }
+      ],
+      "name": "implement",
+      "outputs": [
+        {
+          "internalType": "enum IImplementResult.Response",
+          "name": "response",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

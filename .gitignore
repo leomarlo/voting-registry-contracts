@@ -6,7 +6,8 @@ package-lock.json
 cache
 
 ## artifacts
-artifacts
+artifacts/@*
+artifacts/build-info*
 
 ## might need scripts at some later point
 # scripts

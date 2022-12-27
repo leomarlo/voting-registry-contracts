@@ -1,0 +1,22 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "SecurityPrimitive",
+  "sourceName": "src/integration/primitives/AssignedContractPrimitive.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "imposter",
+          "type": "address"
+        }
+      ],
+      "name": "IsNotImplementer",
+      "type": "error"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
