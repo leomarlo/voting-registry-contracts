@@ -115,7 +115,6 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
         // // set a few voting contracts
         // // assign the voting contract the increment function.
-        
         address badgeToken = _computeDeploymentAddress(hashedBadgeBytecode);
         // badges.push(IPlaygroundVotingBadge(badgeToken));
         nftAndBadgesInfo.mainBadge = uint256(uint160(badgeToken));
@@ -227,37 +226,41 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
 
     function changeCounter(uint256 by) 
     external 
-    OnlyByVote(true)
+    returns (bool)
     {
+        require((_numberOfOffices[msg.sender]>0) || _isImplementer(true), "not allowed");
         if (counter.operation==Operation.add){
             counter.counter += by;
         } else if (counter.operation==Operation.subtract) {
             counter.counter -= by;
         } else if (counter.operation==Operation.multiply) {
             counter.counter *= by;
-        } else if (counter.operation==Operation.divide) {
-            counter.counter = counter.counter / by;
-        } else if (counter.operation==Operation.modulo) {
-            counter.counter = counter.counter % by;
-        } else if (counter.operation==Operation.exponentiate) {
-            counter.counter = counter.counter ** by;
-        } 
+        }
+        // } else if (counter.operation==Operation.divide) {
+        //     counter.counter = counter.counter / by;
+        // } else if (counter.operation==Operation.modulo) {
+        //     counter.counter = counter.counter % by;
+        // } else if (counter.operation==Operation.exponentiate) {
+        //     counter.counter = counter.counter ** by;
+        // } 
         
     }
 
     function changeOperation(Operation newOperation)
     external
-    OnlyByVote(true)
+    returns (bool)
     {
+        require(donationsBy[msg.sender]>1e18 || _isImplementer(true), "not allowed");
         counter.operation = newOperation;
     }
 
-    function newIncumbent(string memory office, address newIncumbent)
+    function newIncumbent(string memory office, address _newIncumbent)
     external
     OnlyByVote(true) 
+    returns (bool)
     {
         // no empty incumbents
-        require(newIncumbent!=address(0));
+        require(_newIncumbent!=address(0));
         // check whether we should add a new office
         if (_incumbents[office].indexPlusOne==0){
             offices.push(office);
@@ -266,8 +269,8 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
             _numberOfOffices[_incumbents[office].incumbent] -= 1;
         }
         // set the new _incumbents and office
-        _incumbents[office].incumbent = newIncumbent;
-        _numberOfOffices[newIncumbent] += 1;
+        _incumbents[office].incumbent = _newIncumbent;
+        _numberOfOffices[_newIncumbent] += 1;
     }
 
     function getAssignedContract(bytes4 selector) external view returns(address _assignedContract) {
@@ -343,6 +346,14 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     }
 
 
+    function sendNativeToken(address payable to, uint256 amount) 
+    external 
+    OnlyByVote(true)
+    {
+        (bool sent, ) = to.call{value: amount}("");
+        require(sent, "Failed to send");
+    }
+
     function sendERC20Token(address token, address from, address to, uint256 amount) 
     external 
     OnlyByVote(true)
@@ -375,7 +386,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     OnlyByVote(true)
     {
         require(address(this).balance>=value, "not enough funds");
-        (bool success, bytes memory response) = contractAddress.call{value: value}(data);
+        (bool success, ) = contractAddress.call{value: value}(data);
         require(success, "not successful");
     }
 

@@ -71,6 +71,8 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: process.env.SEPOLIA_RPC_ENDPOINT,
       accounts: [process.env.ALICE as string, process.env.BOB as string, process.env.CHARLIE as string]
+    },
+    hardhat: {
     }
   },
   gasReporter: {

@@ -1,21 +1,20 @@
 import {playgroundSetting} from "../interfaces/playgroundSettings"
 
-// let durations = {
-//     "snap": 180,  // 3 minutes
-//     "short": 1800,  // 30 minutes
-//     "medium": 86400,  // 1 day
-//     "long": 432000,  // 5 days
-//     "veryLong": 1209600  // 14 days (2 weeks)
-// }
-
 let durations = {
-    "snap": 120,  // 3 minutes
-    "short": 120,  // 30 minutes
-    "medium": 120,  // 1 day
-    "long": 120,  // 5 days
-    "veryLong": 120  // 14 days (2 weeks)
+    "snap": 90,  // 1 minutes and 30 seconds
+    "short": 300,  // 5 minutes
+    "medium": 86400,  // 1 day
+    "long": 432000,  // 5 days
+    "veryLong": 1209600  // 14 days (2 weeks)
 }
 
+// let durations = {
+//     "snap": 120,  // 3 minutes
+//     "short": 120,  // 30 minutes
+//     "medium": 120,  // 1 day
+//     "long": 120,  // 5 days
+//     "veryLong": 120  // 14 days (2 weeks)
+// }
 
 let types : playgroundSetting  = {
     "changeMetaParameters": {
