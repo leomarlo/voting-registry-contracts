@@ -29,7 +29,7 @@ interface IVotingContract is IERC165{
     enum VotingStatus {inactive, completed, failed, active}
 
     /// @notice When a new instance is started this event gets triggered.
-    event VotingInstanceStarted(uint256 identifier, address caller);
+    event VotingInstanceStarted(uint256 indexed identifier, address caller);
 
     /// @notice starts a new voting instance.
     /// @param votingParams byte-encoded parameters that configure the voting instance

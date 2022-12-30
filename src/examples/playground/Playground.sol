@@ -98,7 +98,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
     mapping(bytes4=>bool) public fixedVotingContract;
     // setting parameters
 
-
+    event VotingInstanceStarted(uint256 indexed index, address sender, bytes target);
 
     constructor(
         address votingContractRegistry,
@@ -361,15 +361,15 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
         (from==address(this)) ? IERC20(token).transfer(to, amount) : IERC20(token).transferFrom(from,to, amount); 
     }
 
-    function approveNFT(address token, address spender, uint256 tokenId, ApprovalTypes approvalType)
+    function approveNFT(address token, address spender, uint256 tokenId)
     external 
     OnlyByVote(true)
     {
         // check whether NFT or ERC20
-        
-        (approvalType==ApprovalTypes.limitedApproval)?
-        IERC721(token).approve(spender, tokenId):
-        IERC721(token).setApprovalForAll(spender, approvalType==ApprovalTypes.approveAll);
+        // (approvalType==ApprovalTypes.limitedApproval)?
+        IERC721(token).approve(spender, tokenId);
+        // :
+        // IERC721(token).setApprovalForAll(spender, approvalType==ApprovalTypes.approveAll);
     }
 
 
@@ -448,6 +448,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
                 goodSpecs = goodSpecs && (votingMetaParams[selector].minQuorum <= ((inUnitsOf==0) ? _quorum : ((_quorum * 1e5) / inUnitsOf)));                
             }
             require(goodSpecs, "Invalid Parameters");
+            emit VotingInstanceStarted(identifier, msg.sender, callback.length<4 ? callback: callback[0:4]);
         }
         
 

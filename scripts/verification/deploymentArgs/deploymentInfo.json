@@ -1,16 +1,16 @@
 {
   "localhost": {
     "MajorityVoteWithNFTQuorumAndOptionalDVGuard": {
-      "address": "0x07803d183f85D31AbE3D0A7C6f7479A99363a33A",
-      "date": "Tue Dec 27 2022 23:57:53 GMT+0100 (Central European Standard Time)",
-      "gasLimit": 1961905,
+      "address": "0x993A54b4447f5FD7401ACDCD67Bb53f932409410",
+      "date": "Fri Dec 30 2022 11:40:18 GMT+0100 (Central European Standard Time)",
+      "gasLimit": 1961689,
       "path": "src/implementations/votingContracts/SimpleMajorityVote/MajorityVoteWithNFTQuorumAndOptionalDVGuard.sol",
       "arguments": []
     },
     "PlainMajorityVoteWithQuorum": {
-      "address": "0xF88fa119a347e2c527f3d0F2Dc154882E2C946CC",
-      "date": "Tue Dec 27 2022 23:57:54 GMT+0100 (Central European Standard Time)",
-      "gasLimit": 1590165,
+      "address": "0x06CEB0320e55C7d198d87ccb055A29E1e12E6b37",
+      "date": "Fri Dec 30 2022 11:40:18 GMT+0100 (Central European Standard Time)",
+      "gasLimit": 1589925,
       "path": "src/implementations/votingContracts/SimpleMajorityVote/PlainMajorityVoteWithQuorum.sol",
       "arguments": []
     },
@@ -20,8 +20,8 @@
       "arguments": []
     },
     "VotingRegistry": {
-      "address": "0xA94A3572343f0684FB2C3584853992D47e4F9261",
-      "date": "Tue Dec 27 2022 23:57:53 GMT+0100 (Central European Standard Time)",
+      "address": "0xe391fDe59f9f10E2E1aC68CaA516D9984927e0Ef",
+      "date": "Fri Dec 30 2022 11:40:18 GMT+0100 (Central European Standard Time)",
       "gasLimit": 601731,
       "path": "src/registration/registry/VotingRegistry.sol",
       "arguments": [
@@ -29,23 +29,23 @@
       ]
     },
     "VotingPlayground": {
-      "address": "0x4BF632e194D498F733d256AB13183004eA428788",
-      "date": "Tue Dec 27 2022 23:57:55 GMT+0100 (Central European Standard Time)",
-      "gasLimit": 7067848,
+      "address": "0xe3b6c0e2006983F6FAf6b27E64E399a009BE6851",
+      "date": "Fri Dec 30 2022 11:40:19 GMT+0100 (Central European Standard Time)",
+      "gasLimit": 7085834,
       "path": "src/implementations/registration/RegistrarAndResolver.sol",
       "arguments": [
-        "\"0xA94A3572343f0684FB2C3584853992D47e4F9261\"",
-        "[\"0x018f92cafb\",\"0x01a0e8ca96\",\"0x0132d7b3b9\",\"0x01fabfdb1d\",\"0x01a6629027\",\"0x01ef4a45a1\",\"0x011d0a40c9\",\"0x003d974365\",\"0x00c519fdc5\",\"0x005698d48a\",\"0x00ec9ad785\",\"0x004dea6274\",\"0x003048760d\",\"0x00df610fcd\",\"0x0091fae275\",\"0x00ca32d40b\",\"0x00204d899d\",\"0x00458b8f48\"]",
-        "[\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0xF88fa119a347e2c527f3d0F2Dc154882E2C946CC\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0xF88fa119a347e2c527f3d0F2Dc154882E2C946CC\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\",\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\"]",
-        "[432000,86400,1209600,432000,432000,432000,432000,432000,90,86400,86400,86400,300,300,300,300,300,300]",
-        "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]",
-        "[true,true,true,true,true,true,true,true,true,false,true,true,false,true,true,true,true,true]",
+        "\"0xe391fDe59f9f10E2E1aC68CaA516D9984927e0Ef\"",
+        "[\"0x018f92cafb\",\"0x01a0e8ca96\",\"0x0132d7b3b9\",\"0x01fabfdb1d\",\"0x01a6629027\",\"0x01ef4a45a1\",\"0x011d0a40c9\",\"0x003d974365\",\"0x00c519fdc5\",\"0x005698d48a\",\"0x00ec9ad785\",\"0x004dea6274\",\"0x003048760d\",\"0x0053ead2d3\",\"0x00df610fcd\",\"0x0091fae275\",\"0x007336aaf0\",\"0x00204d899d\",\"0x00458b8f48\"]",
+        "[\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x06CEB0320e55C7d198d87ccb055A29E1e12E6b37\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x06CEB0320e55C7d198d87ccb055A29E1e12E6b37\",\"0x06CEB0320e55C7d198d87ccb055A29E1e12E6b37\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\",\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\"]",
+        "[432000,86400,1209600,432000,432000,432000,432000,432000,90,86400,86400,86400,300,300,300,300,300,300,300]",
+        "[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]",
+        "[true,true,true,true,true,true,true,true,true,false,true,true,false,false,true,true,true,true,true]",
         "\"0xf81c46173674ae2c93082a62e206c813fef8df55ccebfdd187e6daa0895a7530\""
       ]
     },
     "PlaygroundVotingBadge": {
-      "address": "0xf66b1a67700E5186827975A09f1ad6Efa067C477",
-      "date": "Tue Dec 27 2022 23:57:55 GMT+0100 (Central European Standard Time)",
+      "address": "0xF7b8fd9aFA4ef2F4C6fCD797cffD1AA72f353D7a",
+      "date": "Fri Dec 30 2022 11:40:19 GMT+0100 (Central European Standard Time)",
       "gasLimit": 3271033,
       "path": "src/examples/playground/VotingBadge.sol",
       "arguments": [
@@ -54,35 +54,35 @@
       ]
     },
     "ControllableRegistrar": {
-      "address": "0x23b8F911CD48dAecE4963f2CD40C56De2237A3B0",
-      "date": "Tue Dec 27 2022 23:57:54 GMT+0100 (Central European Standard Time)",
-      "gasLimit": 3316977,
+      "address": "0x561ba0048836848E98417f201609aF64fAfc0B51",
+      "date": "Fri Dec 30 2022 11:40:18 GMT+0100 (Central European Standard Time)",
+      "gasLimit": 3316965,
       "path": "src/implementations/registration/RegistrarAndResolver.sol",
       "arguments": [
-        "\"0x07803d183f85D31AbE3D0A7C6f7479A99363a33A\"",
-        "\"0xA94A3572343f0684FB2C3584853992D47e4F9261\"",
-        "\"0x346082DB603d864a2a1ab16B13125bB6B16c7e03\"",
+        "\"0x993A54b4447f5FD7401ACDCD67Bb53f932409410\"",
+        "\"0xe391fDe59f9f10E2E1aC68CaA516D9984927e0Ef\"",
+        "\"0x197004078Cbd8DAc2771947c01Cd0a791d1E82F9\"",
         "\"\\\"Official Registrar for Voting Contracts\\\"\"",
         "\"\\\"REGV1\\\"\""
       ]
     },
     "ResolverWithControl": {
-      "address": "0x346082DB603d864a2a1ab16B13125bB6B16c7e03",
-      "date": "Tue Dec 27 2022 23:57:53 GMT+0100 (Central European Standard Time)",
+      "address": "0x197004078Cbd8DAc2771947c01Cd0a791d1E82F9",
+      "date": "Fri Dec 30 2022 11:40:18 GMT+0100 (Central European Standard Time)",
       "gasLimit": 800707,
       "path": "src/implementations/registration/Resolver.sol",
       "arguments": []
     },
     "DummyToken": {
-      "address": "0x767Fd7cF09ea3f218431a0f48975F14A42FbBEa5",
-      "date": "Tue Dec 27 2022 23:57:55 GMT+0100 (Central European Standard Time)",
+      "address": "0x8AC173cD6B083Aadd023Afee11F58e50D23d8181",
+      "date": "Fri Dec 30 2022 11:40:19 GMT+0100 (Central European Standard Time)",
       "gasLimit": 1369130,
       "path": "src/examples/dummies/ERC20Token.sol",
       "arguments": []
     },
     "DummyNFT": {
-      "address": "0xF5c55dcE789b091E926A300E080646DF6d7cBE5e",
-      "date": "Tue Dec 27 2022 23:57:55 GMT+0100 (Central European Standard Time)",
+      "address": "0xfC03015A973F290B8faeA0259c57103853d7a182",
+      "date": "Fri Dec 30 2022 11:40:19 GMT+0100 (Central European Standard Time)",
       "gasLimit": 2245964,
       "path": "src/examples/dummies/ERC721Token.sol",
       "arguments": []

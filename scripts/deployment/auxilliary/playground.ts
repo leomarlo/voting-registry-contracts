@@ -173,7 +173,6 @@ async function startVotingInstances(
     let majorityVCWithNFTWeight = await ethers.getContractAt("MajorityVoteWithNFTQuorumAndOptionalDVGuard", votingContracts[0], signer) 
 
     const Operation = {add:0, subtract:1, divide:2, multiply:3, modulo:4, exponentiate:5}
-    let ApprovalType = {"limitedApproval":0, "unapproveAll":1, "approveAll":2}
 
     // start voting instances
     let k = 0
@@ -247,7 +246,7 @@ async function startVotingInstances(
                 ["address", "uint256", "uint256", "bool", "uint8"],
                 [badge.address, duration, minQuorum, expectReturnValue, guardOnSenderVotingDataOrNone])
     let callbackLimited = playground.interface.encodeFunctionData("approveNFT", 
-                [nft.address, signer.address, tokenId, ApprovalType.limitedApproval])
+                [nft.address, signer.address, tokenId])
     tx = await playground.connect(signer).start(votingParams, callbackLimited)
     await tx.wait()
     await playground.connect(signer).vote(k, APPROVE)

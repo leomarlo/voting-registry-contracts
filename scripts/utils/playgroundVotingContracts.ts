@@ -69,6 +69,10 @@ let types : playgroundSetting  = {
         "security": "open",
         "duration": durations.short,
         "badgeWeightedVote": false},
+    "sendNativeToken": {
+        "security": "open",
+        "duration": durations.short,
+        "badgeWeightedVote": false},
     "sendNFT": {
         "security": "open",
         "duration": durations.short,

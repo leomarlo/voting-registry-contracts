@@ -205,6 +205,7 @@ InstanceInfoPrimitive
         _beforeStart(votingParams, callback);
         address _votingContract;
         uint256 identifier;
+        bytes5 flagAndSelector;
         if (callback.length<4){
             _votingContract = _getSimpleVotingContract(callback);
             identifier = IVotingContract(_votingContract).start(votingParams, callback);
@@ -217,9 +218,7 @@ InstanceInfoPrimitive
             identifier = IVotingContract(_votingContract).start(votingParams, callback);
             bytes32 instanceHash = LegitInstanceHash._getInstanceHash(assignedContract[selector], identifier);
             LegitInstanceHash._isLegitInstanceHash[instanceHash] = true;
-        
         }
-
         instances.push(Instance({
             identifier: identifier,
             votingContract: _votingContract
