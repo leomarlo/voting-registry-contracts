@@ -448,7 +448,7 @@ StartVoteAndImplementHybridVotingImplRemoteHooks {
                 goodSpecs = goodSpecs && (votingMetaParams[selector].minQuorum <= ((inUnitsOf==0) ? _quorum : ((_quorum * 1e5) / inUnitsOf)));                
             }
             require(goodSpecs, "Invalid Parameters");
-            emit VotingInstanceStarted(identifier, msg.sender, callback.length<4 ? callback: callback[0:4]);
+            emit VotingInstanceStarted(identifier, msg.sender, callback);
         }
         
 

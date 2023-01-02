@@ -2,14 +2,14 @@
   "localhost": {
     "MajorityVoteWithNFTQuorumAndOptionalDVGuard": {
       "address": "0x10fE87731dd857a521990b0325cD6b8cde6e00B0",
-      "date": "Fri Dec 30 2022 11:47:41 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:57 GMT+0100 (Central European Standard Time)",
       "gasLimit": 1961689,
       "path": "src/implementations/votingContracts/SimpleMajorityVote/MajorityVoteWithNFTQuorumAndOptionalDVGuard.sol",
       "arguments": []
     },
     "PlainMajorityVoteWithQuorum": {
       "address": "0x49316981860A30fFa54bacb66946A3094812542f",
-      "date": "Fri Dec 30 2022 11:47:41 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:57 GMT+0100 (Central European Standard Time)",
       "gasLimit": 1589925,
       "path": "src/implementations/votingContracts/SimpleMajorityVote/PlainMajorityVoteWithQuorum.sol",
       "arguments": []
@@ -21,7 +21,7 @@
     },
     "VotingRegistry": {
       "address": "0x19004B8bb3a2B3d03D87580cA769C592793ad42E",
-      "date": "Fri Dec 30 2022 11:47:41 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:56 GMT+0100 (Central European Standard Time)",
       "gasLimit": 601731,
       "path": "src/registration/registry/VotingRegistry.sol",
       "arguments": [
@@ -30,8 +30,8 @@
     },
     "VotingPlayground": {
       "address": "0x43Ac57Ce472cDE718eA0cF992FDD5e1dAd234799",
-      "date": "Fri Dec 30 2022 11:47:42 GMT+0100 (Central European Standard Time)",
-      "gasLimit": 7085630,
+      "date": "Mon Jan 02 2023 16:33:58 GMT+0100 (Central European Standard Time)",
+      "gasLimit": 7077653,
       "path": "src/implementations/registration/RegistrarAndResolver.sol",
       "arguments": [
         "\"0x19004B8bb3a2B3d03D87580cA769C592793ad42E\"",
@@ -45,7 +45,7 @@
     },
     "PlaygroundVotingBadge": {
       "address": "0x5cA7DF717114C073CdeBcd93d024Ff282CaBb0a0",
-      "date": "Fri Dec 30 2022 11:47:42 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:58 GMT+0100 (Central European Standard Time)",
       "gasLimit": 3271033,
       "path": "src/examples/playground/VotingBadge.sol",
       "arguments": [
@@ -55,7 +55,7 @@
     },
     "ControllableRegistrar": {
       "address": "0xB067ab26a81b02803BD833545B59CF60061fF71f",
-      "date": "Fri Dec 30 2022 11:47:41 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:57 GMT+0100 (Central European Standard Time)",
       "gasLimit": 3316941,
       "path": "src/implementations/registration/RegistrarAndResolver.sol",
       "arguments": [
@@ -68,21 +68,21 @@
     },
     "ResolverWithControl": {
       "address": "0xBdE58dB64887cA83Af1777459Fe3cD2fB19f3426",
-      "date": "Fri Dec 30 2022 11:47:41 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:57 GMT+0100 (Central European Standard Time)",
       "gasLimit": 800707,
       "path": "src/implementations/registration/Resolver.sol",
       "arguments": []
     },
     "DummyToken": {
       "address": "0x033E39890ACC21de078943B5847276140e5A892a",
-      "date": "Fri Dec 30 2022 11:47:42 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:58 GMT+0100 (Central European Standard Time)",
       "gasLimit": 1369130,
       "path": "src/examples/dummies/ERC20Token.sol",
       "arguments": []
     },
     "DummyNFT": {
       "address": "0xdDF5715b4Bd09F71B18c160CFd024196cc959DF8",
-      "date": "Fri Dec 30 2022 11:47:42 GMT+0100 (Central European Standard Time)",
+      "date": "Mon Jan 02 2023 16:33:58 GMT+0100 (Central European Standard Time)",
       "gasLimit": 2245964,
       "path": "src/examples/dummies/ERC721Token.sol",
       "arguments": []
